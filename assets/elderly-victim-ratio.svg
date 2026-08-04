@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <!-- gridlines -->
+  <g stroke="#94a3b8" stroke-opacity="0.25" stroke-width="1">
+    <line x1="70" y1="91.4" x2="620" y2="91.4" />
+    <line x1="70" y1="174.3" x2="620" y2="174.3" />
+    <line x1="70" y1="257.1" x2="620" y2="257.1" />
+  </g>
+  <line x1="70" y1="340" x2="620" y2="340" stroke="#94a3b8" stroke-opacity="0.6" stroke-width="1.5" />
+
+  <!-- y axis labels -->
+  <g fill="#64748b" font-size="13" text-anchor="end">
+    <text x="60" y="96.4">30%</text>
+    <text x="60" y="179.3">20%</text>
+    <text x="60" y="262.1">10%</text>
+    <text x="60" y="345">0</text>
+  </g>
+
+  <!-- bars -->
+  <g>
+    <rect x="107" y="207.4" width="64" height="132.6" rx="3" fill="#94a3b8" />
+    <rect x="244" y="174.3" width="64" height="165.7" rx="3" fill="#94a3b8" />
+    <rect x="382" y="132.9" width="64" height="207.1" rx="3" fill="#94a3b8" />
+    <rect x="519" y="86.5" width="64" height="253.5" rx="3" fill="#ef4444" />
+  </g>
+
+  <!-- trend line -->
+  <polyline points="139,207.4 276,174.3 414,132.9 551,86.5" fill="none" stroke="#ef4444" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- value labels -->
+  <g font-size="15" font-weight="600" text-anchor="middle">
+    <text x="139" y="199.4" fill="#64748b">16%</text>
+    <text x="276" y="166.3" fill="#64748b">20%</text>
+    <text x="414" y="124.9" fill="#64748b">25%</text>
+    <text x="551" y="78.5" fill="#ef4444">30.6%</text>
+  </g>
+
+  <!-- x axis labels -->
+  <g font-size="13" text-anchor="middle" fill="#64748b">
+    <text x="139" y="363">2020</text>
+    <text x="276" y="363">2022</text>
+    <text x="414" y="363">2024</text>
+    <text x="551" y="363" fill="#ef4444" font-weight="600">2025</text>
+    <text x="551" y="381" fill="#ef4444" font-size="12">상반기</text>
+  </g>
+</svg>

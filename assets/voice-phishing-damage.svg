@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <!-- gridlines -->
+  <g stroke="#94a3b8" stroke-opacity="0.25" stroke-width="1">
+    <line x1="70" y1="50" x2="620" y2="50" />
+    <line x1="70" y1="122.5" x2="620" y2="122.5" />
+    <line x1="70" y1="195" x2="620" y2="195" />
+    <line x1="70" y1="267.5" x2="620" y2="267.5" />
+  </g>
+  <line x1="70" y1="340" x2="620" y2="340" stroke="#94a3b8" stroke-opacity="0.6" stroke-width="1.5" />
+
+  <!-- y axis labels -->
+  <g fill="#64748b" font-size="13" text-anchor="end">
+    <text x="60" y="55">10,000</text>
+    <text x="60" y="127.5">7,500</text>
+    <text x="60" y="200">5,000</text>
+    <text x="60" y="272.5">2,500</text>
+    <text x="60" y="345">0</text>
+  </g>
+
+  <!-- bars -->
+  <g>
+    <rect x="85" y="154.5" width="48" height="185.5" rx="3" fill="#94a3b8" />
+    <rect x="164" y="137" width="48" height="203" rx="3" fill="#94a3b8" />
+    <rect x="242" y="115.4" width="48" height="224.6" rx="3" fill="#94a3b8" />
+    <rect x="321" y="182.3" width="48" height="157.7" rx="3" fill="#94a3b8" />
+    <rect x="400" y="210.3" width="48" height="129.7" rx="3" fill="#94a3b8" />
+    <rect x="478" y="92.2" width="48" height="247.8" rx="3" fill="#ef4444" />
+    <rect x="557" y="83.2" width="48" height="256.8" rx="3" fill="#ef4444" />
+  </g>
+
+  <!-- value labels -->
+  <g font-size="14" font-weight="600" text-anchor="middle">
+    <text x="109" y="146.5" fill="#64748b">6,398</text>
+    <text x="188" y="129" fill="#64748b">7,000</text>
+    <text x="266" y="107.4" fill="#64748b">7,744</text>
+    <text x="345" y="174.3" fill="#64748b">5,438</text>
+    <text x="424" y="202.3" fill="#64748b">4,472</text>
+    <text x="502" y="84.2" fill="#ef4444">8,545</text>
+    <text x="581" y="75.2" fill="#ef4444">8,856</text>
+  </g>
+
+  <!-- x axis labels -->
+  <g font-size="13" text-anchor="middle" fill="#64748b">
+    <text x="109" y="363">2019</text>
+    <text x="188" y="363">2020</text>
+    <text x="266" y="363">2021</text>
+    <text x="345" y="363">2022</text>
+    <text x="424" y="363">2023</text>
+    <text x="502" y="363" fill="#ef4444" font-weight="600">2024</text>
+    <text x="581" y="363" fill="#ef4444" font-weight="600">2025</text>
+    <text x="581" y="381" fill="#ef4444" font-size="12">1~8월</text>
+  </g>
+</svg>
