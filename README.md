@@ -34,17 +34,3 @@ xychart-beta
 **안심동행 AI**는 이 사이에 존재하지 않던 **중간 단계**를 만듭니다. 감시가 아닌 동행으로, 부모님의 자기결정권을 지키면서 가족이 함께 보호합니다.
 
 > 출처: 경찰청 보이스피싱 현황, 금융감독원 보도자료, 통계개발원 (2025)
-
-## 기술 스택
-
-- Frontend: React + Vite + TypeScript + Tailwind v4
-- Backend: FastAPI (예정)
-- DB: Supabase (예정)
-
-## 실행
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
