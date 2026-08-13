@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { takeTurn, FIRST_QUESTION, type ChatMessage } from "./api/guardian";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 type Role = "parent" | "child";
@@ -101,7 +102,7 @@ export default function App() {
   const [page, setPage]   = useState<"home" | "guardian" | "transfer">("home");
 
   // 가족 연동 상태
-  const [guardianStep, setGuardianStep] = useState<"select" | "code" | "done">("select");
+  const [guardianStep, setGuardianStep] = useState<"intro" | "select" | "code" | "done">("intro");
   const [guardianRole, setGuardianRole] = useState<"parent" | "child" | null>(null);
   const [code, setCode]   = useState(["", "", "", ""]);
 
@@ -113,10 +114,13 @@ export default function App() {
   const [transferAmt, setTransferAmt]           = useState("");
 
   // AI 대화 상태
-  const [chatMessages, setChatMessages] = useState<{ role: "ai" | "user"; text: string }[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput]       = useState("");
-  const [chatStage, setChatStage]       = useState(0);
+  const [chatStage, setChatStage]       = useState(0);   // 부모님이 답한 횟수
+  const [chatDone, setChatDone]         = useState(false);
   const [isAiTyping, setIsAiTyping]     = useState(false);
+  const [aiFallback, setAiFallback]     = useState(false); // LLM 실패로 폴백 사용 중
+  const [riskLabels, setRiskLabels]     = useState<string[]>([]);
   const [goldenChecks, setGoldenChecks] = useState([false, false, false]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -183,8 +187,9 @@ export default function App() {
       } else if (result === "db-warning") {
         setTransferStep("db-warning");
       } else {
-        setChatMessages([{ role: "ai", text: "처음 보내는 계좌예요. 어떤 돈인지 여쭤봐도 될까요? 😊" }]);
-        setChatStage(1);
+        setChatMessages([{ role: "ai", text: FIRST_QUESTION }]);
+        setChatStage(0);
+        setChatDone(false);
         setTransferStep("ai-chat");
       }
     }, 1800);
@@ -200,6 +205,8 @@ export default function App() {
       account: `${recipientBank} ${recipientAccount}`,
       bank: recipientBank,
       risk: "HIGH",
+      signals: riskLabels.length ? riskLabels : DEMO_ALERT.signals,
+      conversation: chatMessages,
       time: nowTime,
       _ts: Date.now(),
     }));
@@ -209,8 +216,9 @@ export default function App() {
   const resetTransfer = () => {
     setTransferStep("input");
     setRecipientAccount(""); setRecipientBank(""); setRecipientName(""); setTransferAmt("");
-    setChatMessages([]); setChatInput(""); setChatStage(0);
-    setIsAiTyping(false); setGoldenChecks([false, false, false]);
+    setChatMessages([]); setChatInput(""); setChatStage(0); setChatDone(false);
+    setIsAiTyping(false); setAiFallback(false); setRiskLabels([]);
+    setGoldenChecks([false, false, false]);
   };
 
   const selectRecent = (r: typeof KNOWN_RECIPIENTS[number]) => {
@@ -221,27 +229,39 @@ export default function App() {
 
   const canSubmit = recipientAccount.replace(/\D/g, "").length >= 8 && parseAmt(transferAmt) > 0;
 
-  const handleChatSend = () => {
-    if (!chatInput.trim() || isAiTyping || chatStage >= 3) return;
-    const msg = chatInput.trim();
-    setChatMessages((p) => [...p, { role: "user", text: msg }]);
-    setChatInput(""); setIsAiTyping(true);
+  // 4층 AI 의도 분석 — Gemini가 질문·신호 추출, 규칙이 보류 판정
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || isAiTyping || chatDone) return;
 
-    if (chatStage === 1) {
-      setTimeout(() => {
-        setChatMessages((p) => [...p, { role: "ai", text: "구청이나 기관에서 연락을 받으신 건가요? 전화로 오셨나요, 문자로 오셨나요?" }]);
-        setChatStage(2); setIsAiTyping(false);
-      }, 1400);
-    } else if (chatStage === 2) {
-      setTimeout(() => {
-        setChatMessages((p) => [...p, { role: "ai", text: "잠깐요, 확인해 드릴게요... 🔍" }]);
-        setIsAiTyping(false);
-        setTimeout(() => {
-          setChatMessages((p) => [...p, { role: "ai", text: "⚠️ 주의가 필요해요.\n\n환급을 받으려면 수수료를 먼저 내야 한다는 건 보이스피싱의 대표 수법이에요. 따님에게 함께 확인받아볼게요." }]);
-          setChatStage(3);
-          setTimeout(() => setTransferStep("hold"), 2200);
-        }, 900);
-      }, 1400);
+    const msg = chatInput.trim();
+    const history: ChatMessage[] = [...chatMessages, { role: "user", text: msg }];
+    const turn = chatStage + 1;
+
+    setChatMessages(history);
+    setChatInput("");
+    setChatStage(turn);
+    setIsAiTyping(true);
+
+    const verdict = await takeTurn(
+      {
+        amount: parseAmt(transferAmt),
+        recipientName,
+        account: recipientAccount,
+        bank: recipientBank,
+      },
+      history,
+      turn
+    );
+
+    setIsAiTyping(false);
+    setAiFallback(verdict.fallback);
+    if (verdict.risk.labels.length) setRiskLabels(verdict.risk.labels);
+    setChatMessages((p) => [...p, { role: "ai", text: verdict.message }]);
+
+    // 보류 여부는 서버의 규칙 엔진이 이미 판정했다.
+    if (verdict.done) {
+      setChatDone(true);
+      setTimeout(() => setTransferStep(verdict.hold ? "hold" : "success"), verdict.hold ? 2200 : 1600);
     }
   };
 
@@ -496,9 +516,23 @@ export default function App() {
                 {/* ── AI 대화 ── */}
                 {transferStep === "ai-chat" && (
                   <div className="flex flex-col gap-3">
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                      <svg viewBox="0 0 24 24" fill="#f59e0b" className="w-4 h-4 shrink-0"><path d="M12 2L2 21h20L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
-                      <p className="text-[12px] text-amber-700">신고 DB: <strong>이력 없음</strong> — 새 계좌 · 고액이라 AI가 확인해요</p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <svg viewBox="0 0 24 24" fill="#f59e0b" className="w-4 h-4 shrink-0"><path d="M12 2L2 21h20L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
+                        <p className="text-[12px] text-amber-700">신고 DB: <strong>이력 없음</strong> — 새 계좌 · 고액이라 AI가 확인해요</p>
+                      </div>
+                      {riskLabels.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pl-6">
+                          {riskLabels.map((l) => (
+                            <span key={l} className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                              {l}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {aiFallback && (
+                        <p className="text-[11px] text-amber-600 pl-6">※ AI 연결이 불안정해 사전 정의 시나리오로 진행 중이에요</p>
+                      )}
                     </div>
                     <div className="bg-white rounded-2xl p-4 flex flex-col gap-3 min-h-[300px] max-h-[380px] overflow-y-auto">
                       {chatMessages.map((msg, i) => (
@@ -517,7 +551,7 @@ export default function App() {
                       )}
                       <div ref={chatEndRef} />
                     </div>
-                    {chatStage < 3 && (
+                    {!chatDone && (
                       <div className="flex gap-2">
                         <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleChatSend()} placeholder="답변을 입력하세요..." disabled={isAiTyping}
                           className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-[14px] focus:border-blue-400 focus:outline-none transition-colors disabled:bg-gray-50" />
@@ -544,7 +578,7 @@ export default function App() {
                       </div>
                       <div className="bg-white/15 rounded-xl p-4 flex flex-col gap-2">
                         <div className="flex items-center justify-between"><span className="text-blue-100 text-[12px]">위험도 판정</span><span className="bg-red-400 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">HIGH</span></div>
-                        <p className="text-white text-[13px]">선입금 모순 · 기관 사칭 · 긴급성 감지</p>
+                        <p className="text-white text-[13px]">{riskLabels.length ? riskLabels.join(" · ") + " 감지" : "위험 신호 감지"}</p>
                         <p className="text-blue-200 text-[12px]">{transferAmt}원 · {recipientAccount}{recipientBank ? ` · ${recipientBank}` : ""}</p>
                       </div>
                     </div>
@@ -634,25 +668,59 @@ export default function App() {
             {page === "guardian" && (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-3 py-2">
-                  <button onClick={() => setPage("home")} className="text-gray-500 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M15 18l-6-6 6-6" /></svg></button>
+                  <button onClick={() => { if (guardianStep === "select") setGuardianStep("intro"); else setPage("home"); }} className="text-gray-500 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M15 18l-6-6 6-6" /></svg></button>
                   <p className="text-[17px] font-bold text-gray-900">안심동행 AI</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 rounded-2xl p-4 flex items-center gap-4">
                   <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-14 h-14 shrink-0"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
                   <div><p className="text-[17px] font-bold text-white">부모님 금융을 가족이 함께 지켜요</p><p className="text-[12px] text-blue-100 mt-1">AI가 이상 거래를 감지하고 가족에게 알려드려요</p></div>
                 </div>
-                {guardianStep === "select" && (
+                {guardianStep === "intro" && (
                   <div className="flex flex-col gap-3">
                     <div className="bg-white rounded-2xl p-5">
-                      <p className="text-[15px] font-bold text-gray-900 mb-4">이렇게 지켜드려요</p>
-                      {[{step:"1",title:"AI가 거래를 분석해요",desc:"송금할 때 AI가 패턴·의도를 실시간 확인"},{step:"2",title:"위험하면 대화로 확인해요",desc:"의심 거래 시 부드럽게 한 번 더 여쭤봐요"},{step:"3",title:"가족에게 알려드려요",desc:"위험도가 높으면 자녀에게 알림을 보내 함께 판단해요"}].map((item) => (
+                      <p className="text-[15px] font-bold text-gray-900">이렇게 지켜드려요</p>
+                      <p className="text-[12px] text-gray-400 mt-1 mb-4">송금할 때 이 순서로 위험을 살펴봐요</p>
+                      {[
+                        {step:"1",title:"휴대폰부터 살펴봐요",desc:"몰래 조종하거나 은행을 흉내 낸 앱이 깔려 있는지 확인해요"},
+                        {step:"2",title:"연락처가 진짜인지 확인해요",desc:"받으신 번호·문자·링크가 기관의 공식 연락처와 같은지 대조해요"},
+                        {step:"3",title:"평소와 다른 움직임을 알아채요",desc:"잔액을 자꾸 확인하거나 적금을 깨는 등 낯선 흐름을 살펴요"},
+                        {step:"4",title:"송금 내용을 살펴봐요",desc:"평소와 같으면 그대로 보내드리고, 다를 때만 한 번 더 확인해요"},
+                        {step:"5",title:"왜 보내시는지 여쭤봐요",desc:"AI가 대화로 확인해요. 통화 중이시면 끊고 5분 뒤에 다시 안내해요"},
+                        {step:"6",title:"혼자 결정하지 않게 도와드려요",desc:"알림만 받을지 함께 승인할지, 보호 단계는 부모님이 직접 고르세요"},
+                        {step:"7",title:"피해를 입어도 되돌려요",desc:"지급정지·신고·피해구제 절차를 순서대로 안내해드려요"},
+                      ].map((item) => (
                         <div key={item.step} className="flex items-start gap-3 mb-4 last:mb-0">
                           <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-[13px] font-bold flex items-center justify-center shrink-0 mt-0.5">{item.step}</div>
                           <div><p className="text-[14px] font-semibold text-gray-900">{item.title}</p><p className="text-[12px] text-gray-400 mt-0.5">{item.desc}</p></div>
                         </div>
                       ))}
+                      <div className="mt-5 pt-4 border-t border-gray-100 flex items-start gap-3">
+                        <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5"><svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 2v20M2 12h20" /></svg></div>
+                        <div><p className="text-[14px] font-semibold text-gray-900">은행이 달라도 가족이 연결돼요</p><p className="text-[12px] text-gray-400 mt-0.5">부모님과 자녀분이 서로 다른 은행을 쓰셔도 함께 지켜드려요</p></div>
+                      </div>
                     </div>
-                    <p className="text-[15px] font-semibold text-gray-900 text-center">역할을 선택해주세요</p>
+                    <div className="bg-white rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                        <p className="text-[15px] font-bold text-gray-900">이건 꼭 약속드려요</p>
+                      </div>
+                      {[
+                        {t:"자녀는 잔액과 거래내역을 볼 수 없어요",d:"어떤 단계를 고르셔도 통장 잔액, 어디에 쓰셨는지는 부모님만 보십니다"},
+                        {t:"위험한 순간의 상황만 전달돼요",d:"\"처음 보는 곳에 큰 금액을 보내려 하십니다\" 정도만 자녀에게 알려요"},
+                        {t:"언제든 그만두실 수 있어요",d:"보호 단계를 낮추거나 연결을 해제하는 것은 부모님 뜻대로예요"},
+                      ].map((item) => (
+                        <div key={item.t} className="flex items-start gap-3 mb-4 last:mb-0">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0 mt-0.5"><path d="M20 6L9 17l-5-5" /></svg>
+                          <div><p className="text-[14px] font-semibold text-gray-900">{item.t}</p><p className="text-[12px] text-gray-400 mt-0.5">{item.d}</p></div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => setGuardianStep("select")} className="w-full py-4 rounded-2xl text-[16px] font-semibold text-white bg-blue-500 active:scale-[0.98] transition-all">시작하기</button>
+                  </div>
+                )}
+                {guardianStep === "select" && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-[15px] font-semibold text-gray-900 text-center mt-2">역할을 선택해주세요</p>
                     {[{r:"parent" as const,label:"부모님",desc:"AI와 자녀에게 안심동행 권한을 위임해요"},{r:"child" as const,label:"자녀",desc:"부모님 금융을 함께 지켜드려요"}].map((item) => (
                       <button key={item.r} onClick={() => { setGuardianRole(item.r); setGuardianStep("code"); }} className="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all">
                         <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center"><svg viewBox="0 0 32 32" fill="#3b82f6" className="w-7 h-7"><circle cx="16" cy="10" r="5" /><path d="M16 16c-5 0-9 3.5-9 8v2h18v-2c0-4.5-4-8-9-8z" /></svg></div>
@@ -682,7 +750,7 @@ export default function App() {
                     <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg></div>
                     <p className="text-[17px] font-bold text-gray-900">연동 완료!</p>
                     <p className="text-[13px] text-gray-400 text-center whitespace-pre-line">{guardianRole === "parent" ? "딸 지혜님과 안심동행이 연결되었습니다.\n이제 AI가 이상 거래를 감지하면 자녀에게 알려드려요." : "어머니 김영순님과 안심동행이 연결되었습니다.\n부모님의 이상 거래를 함께 지켜볼 수 있어요."}</p>
-                    <button onClick={() => { setPage("home"); setGuardianStep("select"); setCode(["", "", "", ""]); }} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-blue-500 active:scale-[0.98] transition-all">홈으로 돌아가기</button>
+                    <button onClick={() => { setPage("home"); setGuardianStep("intro"); setCode(["", "", "", ""]); }} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-blue-500 active:scale-[0.98] transition-all">홈으로 돌아가기</button>
                   </div>
                 )}
               </div>
