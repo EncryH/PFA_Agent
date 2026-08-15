@@ -16,7 +16,9 @@ import ParentHome from "./screens/ParentHome";
 import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
 import Verify from "./screens/Verify";
+import IncomingCall from "./screens/IncomingCall";
 import NotificationShade from "./shared/NotificationShade";
+import { DEMO_SCENARIOS } from "./shared/callscreen";
 
 type ParentPage = "home" | "guardian" | "transfer" | "history" | "verify";
 
@@ -26,18 +28,25 @@ export default function App() {
   const [page, setPage] = useState<ParentPage>("home");
   const [accountIdx, setAccountIdx] = useState(0);   // 거래내역을 보는 계좌
   const [showNotifications, setShowNotifications] = useState(false);
+  const [demoIdx, setDemoIdx] = useState(0);
+  const [activeCall, setActiveCall] = useState<typeof DEMO_SCENARIOS[number] | null>(null);
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
 
+  const triggerDemoCall = () => {
+    setActiveCall(DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length]);
+    setDemoIdx((i) => (i + 1) % DEMO_SCENARIOS.length);
+  };
+
   // 배경: 부모(한결은행)는 푸른빛, 자녀(나눔은행)는 올리브빛 — 다른 은행임을 배경으로도 구분
   return (
-    <div className={`mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? "theme-parent bg-[#fafbfe]" : "theme-child bg-white"}`}>
+    <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? "theme-parent bg-[#fafbfe]" : "theme-child bg-white"}`}>
 
       {/*
         두 앱을 항상 마운트해 두고 보이기만 전환한다.
         역할을 오가도 송금 진행 상황·입력값·대화가 그대로 남아야 MVP 시연이 끊기지 않는다.
       */}
-      <div className={role === "parent" ? "contents" : "hidden"}>
+      <div className={`${role === "parent" ? "contents" : "hidden"}`}>
           <header className="sticky top-0 z-20 bg-[#fafbfe] flex items-center justify-between px-5 py-4">
             <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
               <svg viewBox="0 0 24 24" fill="#2563eb" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
@@ -45,6 +54,20 @@ export default function App() {
             </button>
             <div className="flex gap-2 items-center">
               <button className="text-gray-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg></button>
+              {/* 전화 수신 시뮬레이션 버튼 */}
+              <button
+                onClick={triggerDemoCall}
+                className="relative text-gray-400 active:scale-90 transition-transform"
+                title="전화 수신 시뮬레이션"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+                </svg>
+                {/* 시나리오 뱃지 */}
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center leading-none">
+                  {(demoIdx % DEMO_SCENARIOS.length) + 1}
+                </span>
+              </button>
               <button onClick={() => setShowNotifications(true)} className="text-gray-400 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg></button>
               <RoleToggle role="parent" onToggle={toggleRole} />
             </div>
@@ -86,6 +109,7 @@ export default function App() {
         <ChildApp onSwitchRole={toggleRole} />
       </div>
       {role === "parent" && showNotifications && <NotificationShade role="parent" onClose={() => setShowNotifications(false)} />}
+      {activeCall && <IncomingCall call={activeCall} onDismiss={() => setActiveCall(null)} />}
     </div>
   );
 }
