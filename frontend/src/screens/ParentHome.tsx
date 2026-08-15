@@ -12,8 +12,8 @@ const PRODUCTS = [
 ];
 
 export default function ParentHome({
-  onTransfer, onGuardian, onAccount,
-}: { onTransfer: () => void; onGuardian: () => void; onAccount: (i: number) => void }) {
+  onTransfer, onGuardian, onAccount, onVerify,
+}: { onTransfer: () => void; onGuardian: () => void; onAccount: (i: number) => void; onVerify: () => void }) {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
 
   useEffect(() => {
@@ -65,6 +65,21 @@ export default function ParentHome({
         </div>
         <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
       </div>
+
+      {/* 상대방 검증 버튼 */}
+      <button onClick={onVerify} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
+        <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
+            <path d="M11 8v3m0 3h.01" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-bold text-gray-900">상대방 검증</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">번호·링크·기관명 안전 여부 확인</p>
+        </div>
+        <span className="text-[12px] font-semibold text-orange-500">검증하기</span>
+      </button>
 
       {paired && (
         <button onClick={onGuardian} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all">

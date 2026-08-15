@@ -15,9 +15,10 @@ import Guardian from "./screens/Guardian";
 import ParentHome from "./screens/ParentHome";
 import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
+import Verify from "./screens/Verify";
 import NotificationShade from "./shared/NotificationShade";
 
-type ParentPage = "home" | "guardian" | "transfer" | "history";
+type ParentPage = "home" | "guardian" | "transfer" | "history" | "verify";
 
 export default function App() {
   const [role, setRole] = useState<Role>("parent");
@@ -52,6 +53,7 @@ export default function App() {
           <main className="flex-1 px-3 pb-4">
             {page === "transfer" && <Transfer onExit={() => setPage("home")} />}
             {page === "guardian" && <Guardian appRole="parent" onExit={() => setPage("home")} />}
+            {page === "verify"   && <Verify onBack={() => setPage("home")} />}
             {page === "history" && (
               <History
                 account={MY_ACCOUNTS[accountIdx]}
@@ -65,6 +67,7 @@ export default function App() {
                 onTransfer={() => setPage("transfer")}
                 onGuardian={() => setPage("guardian")}
                 onAccount={(i) => { setAccountIdx(i); setPage("history"); }}
+                onVerify={() => setPage("verify")}
               />
             )}
           </main>
