@@ -114,9 +114,37 @@ body {
   to { opacity: 1; }
 }
 
+@keyframes notification-shade-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-105%); opacity: 0.65; }
+}
+
+@keyframes notification-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .notification-shade { animation: notification-shade-in 280ms cubic-bezier(.2,.8,.2,1) both; }
 .notification-backdrop { animation: notification-backdrop-in 220ms ease-out both; }
+.notification-shade-out { animation: notification-shade-out 260ms cubic-bezier(.4,0,1,1) both; }
+.notification-backdrop-out { animation: notification-backdrop-out 260ms ease-in both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .notification-shade, .notification-backdrop { animation: none; }
+  .notification-shade, .notification-backdrop, .notification-shade-out, .notification-backdrop-out { animation: none; }
 }
+
+/* 부모 앱 큰글씨 모드 — 간편 홈과 나머지 부모 화면의 가독성을 함께 높인다. */
+.senior-mode .text-\[9px\]  { font-size: 12px !important; }
+.senior-mode .text-\[10px\] { font-size: 13px !important; }
+.senior-mode .text-\[11px\] { font-size: 14px !important; }
+.senior-mode .text-\[12px\] { font-size: 15px !important; }
+.senior-mode .text-\[13px\] { font-size: 16px !important; }
+.senior-mode .text-\[14px\] { font-size: 17px !important; }
+.senior-mode .text-\[15px\] { font-size: 18px !important; }
+.senior-mode .text-\[16px\] { font-size: 19px !important; }
+.senior-mode .text-\[17px\] { font-size: 20px !important; }
+.senior-mode .text-\[18px\] { font-size: 22px !important; }
+.senior-mode .text-\[20px\] { font-size: 24px !important; }
+.senior-mode .text-\[26px\] { font-size: 30px !important; }
+.senior-mode main p { line-height: 1.5; }
+.senior-mode .parent-bottom-nav .text-\[11px\] { font-size: 11px !important; }

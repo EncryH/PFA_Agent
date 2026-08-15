@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type NotificationShadeProps = {
   role: "parent" | "child";
@@ -8,18 +8,32 @@ type NotificationShadeProps = {
 };
 
 export default function NotificationShade({ role, hasRiskAlert = false, onClose, onOpenRiskAlert }: NotificationShadeProps) {
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+  const closeTimer = useRef<number | null>(null);
+
+  const requestClose = useCallback((afterClose = onClose) => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setClosing(true);
+    closeTimer.current = window.setTimeout(afterClose, 260);
   }, [onClose]);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && requestClose();
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+  }, [requestClose]);
 
   const now = new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-center" role="dialog" aria-label="알림창" aria-modal="true">
-      <button aria-label="알림창 닫기" onClick={onClose} className="absolute inset-0 bg-black/30 notification-backdrop" />
-      <section className="notification-shade relative w-full max-w-[430px] self-start rounded-b-[30px] bg-[#f4f6fa]/95 px-4 pb-5 pt-3 shadow-2xl backdrop-blur-xl">
+      <button aria-label="알림창 닫기" onClick={() => requestClose()} className={`absolute inset-0 bg-black/30 ${closing ? "notification-backdrop-out" : "notification-backdrop"}`} />
+      <section className={`${closing ? "notification-shade-out" : "notification-shade"} relative flex h-dvh max-h-dvh w-full max-w-[430px] flex-col self-start overflow-hidden bg-[#f4f6fa]/95 px-4 pb-4 pt-3 shadow-2xl backdrop-blur-xl`}>
         <div className="mb-4 flex items-center justify-between px-1 text-[12px] font-semibold text-gray-700">
           <span>{now}</span>
           <div className="flex items-center gap-2">
@@ -29,14 +43,13 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           </div>
         </div>
 
-        <div className="mb-3 flex items-end justify-between px-1">
+        <div className="mb-3 px-1">
           <div><p className="text-[27px] font-bold tracking-tight text-gray-900">알림</p><p className="text-[12px] text-gray-500">오늘</p></div>
-          <button onClick={onClose} className="rounded-full bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-gray-600 shadow-sm">닫기</button>
         </div>
 
-        <div className="flex max-h-[58vh] flex-col gap-2 overflow-y-auto overscroll-contain">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pb-6">
           {role === "child" && hasRiskAlert && (
-            <button onClick={onOpenRiskAlert} className="w-full rounded-2xl border border-red-100 bg-white/95 p-4 text-left shadow-sm active:scale-[0.98] transition-transform">
+            <button onClick={() => requestClose(onOpenRiskAlert ?? onClose)} className="w-full rounded-2xl border border-red-100 bg-white/95 p-4 text-left shadow-sm active:scale-[0.98] transition-transform">
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500 text-[18px] text-white">!</span>
                 <div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="text-[13px] font-bold text-gray-900">안심동행 AI</p><span className="text-[10px] text-gray-400">지금</span></div><p className="mt-1 text-[13px] font-semibold text-red-600">어머니의 위험 송금을 확인해주세요</p><p className="mt-0.5 text-[12px] text-gray-500">평소와 다른 300만원 송금이 잠시 보류됐어요.</p></div>
@@ -59,7 +72,10 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           </div>
         </div>
 
-        <button aria-label="위로 밀어 알림창 닫기" onClick={onClose} className="mx-auto mt-4 block h-1.5 w-28 rounded-full bg-gray-400/70" />
+        <div className="shrink-0 border-t border-gray-200/70 pt-3">
+          <button aria-label="알림창 닫기" onClick={() => requestClose()} className="mx-auto block h-1.5 w-28 rounded-full bg-gray-400/70" />
+          <p className="mt-2 text-center text-[11px] text-gray-400">아래 막대를 누르면 닫혀요</p>
+        </div>
       </section>
     </div>
   );

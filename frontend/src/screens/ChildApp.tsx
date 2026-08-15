@@ -7,7 +7,7 @@
 // 위험 이벤트의 최소 정보(금액·수취계좌·판정 근거)만 전달된다.
 
 import { useState, useEffect } from "react";
-import { parentTabs, parentIcons, RoleToggle } from "../shared/ui";
+import { parentTabs, parentIcons } from "../shared/ui";
 import { DEMO_ALERT, CHILD_ACCOUNT, fmtAccount, type DemoAlert } from "../shared/data";
 import History from "./History";
 import Transfer from "./Transfer";
@@ -17,7 +17,7 @@ import NotificationShade from "../shared/NotificationShade";
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
 
-export default function ChildApp({ onSwitchRole }: { onSwitchRole: () => void }) {
+export default function ChildApp() {
   // 자녀 앱도 은행 앱이므로 하단 탭은 부모 앱과 같다.
   // 안심동행 관련 화면(알림·설정)은 헤더 아이콘으로 들어간다.
   const [tab, setTab] = useState<Tab>("홈");
@@ -82,7 +82,6 @@ export default function ChildApp({ onSwitchRole }: { onSwitchRole: () => void })
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
             {paired && alert && !response && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"><span className="text-[9px] font-bold text-white">1</span></div>}
           </button>
-          <RoleToggle role="child" onToggle={onSwitchRole} />
         </div>
       </header>
 

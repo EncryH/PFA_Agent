@@ -11,9 +11,27 @@ const PRODUCTS = [
   { title: "주택청약종합저축",  desc: "비과세 · 소득공제" },
 ];
 
+function AnsimBanner({ paired, onClick }: { paired: boolean; onClick: () => void }) {
+  return (
+    <div onClick={onClick} className="mt-3 rounded-2xl p-6 bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+      <div>
+        <p className="text-[14px] font-semibold text-white mb-1">안심동행 AI</p>
+        <p className="text-[20px] text-white leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
+        <p className="text-[12px] text-white mt-2">{paired ? "연결 상태 보기" : "시작하기"} &gt;</p>
+      </div>
+      <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
+    </div>
+  );
+}
+
 export default function ParentHome({
-  onTransfer, onGuardian, onAccount,
-}: { onTransfer: () => void; onGuardian: () => void; onAccount: (i: number) => void }) {
+  onTransfer, onGuardian, onAccount, largeText,
+}: {
+  onTransfer: () => void;
+  onGuardian: () => void;
+  onAccount: (i: number) => void;
+  largeText: boolean;
+}) {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
 
   useEffect(() => {
@@ -25,6 +43,51 @@ export default function ParentHome({
       window.removeEventListener("storage", syncPairing);
     };
   }, []);
+
+  if (largeText) {
+    const mainAccount = MY_ACCOUNTS[0];
+
+    return (
+      <div className="flex flex-col gap-4 pt-2">
+        <div className="px-1">
+          <p className="text-[24px] font-bold text-gray-900">김영순님, 안녕하세요</p>
+          <p className="mt-1 text-[16px] text-gray-600">원하시는 메뉴를 눌러주세요.</p>
+        </div>
+
+        <section className="rounded-3xl border-2 border-blue-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <BankLogo bank={mainAccount.bank} size={42} />
+            <div>
+              <p className="text-[18px] font-bold text-gray-900">내 입출금 통장</p>
+              <p className="mt-1 text-[15px] text-gray-500">한결은행 · 110-1234-567</p>
+            </div>
+          </div>
+          <p className="my-6 text-center text-[32px] font-bold tracking-tight text-gray-950">{mainAccount.balance}원</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => onAccount(0)} className="min-h-16 rounded-2xl border-2 border-blue-200 bg-blue-50 text-[18px] font-bold text-blue-800 active:scale-[0.98] transition-transform">거래내역 보기</button>
+            <button onClick={onTransfer} className="min-h-16 rounded-2xl bg-blue-600 text-[18px] font-bold text-white active:scale-[0.98] transition-transform">송금하기</button>
+          </div>
+        </section>
+
+        <AnsimBanner paired={paired} onClick={onGuardian} />
+
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="text-[20px] font-bold text-gray-900">금융상품</h2>
+          <p className="mt-1 text-[15px] text-gray-500">필요한 상품을 쉽고 크게 확인하세요.</p>
+          <div className="mt-4 flex flex-col gap-3">
+            {PRODUCTS.slice(0, 2).map((product) => (
+              <button key={product.title} className="flex min-h-16 items-center justify-between rounded-2xl bg-blue-50 px-5 py-4 text-left active:scale-[0.98] transition-transform">
+                <span><span className="block text-[17px] font-bold text-gray-900">{product.title}</span><span className="mt-1 block text-[14px] text-gray-600">{product.desc}</span></span>
+                <span className="text-[24px] text-blue-600">›</span>
+              </button>
+            ))}
+          </div>
+          <button className="mt-3 min-h-14 w-full rounded-2xl border-2 border-gray-200 text-[17px] font-bold text-gray-700">금융상품 모두 보기</button>
+        </section>
+
+      </div>
+    );
+  }
 
   return (
     <>
@@ -57,14 +120,7 @@ export default function ParentHome({
         <button className="text-[13px] text-gray-500 bg-gray-100 rounded-md px-4 py-1.5 font-medium">내역</button>
       </div>
 
-      <div onClick={onGuardian} className="mt-3 rounded-2xl p-6 bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-        <div>
-          <p className="text-[14px] font-semibold text-white mb-1">안심동행 AI</p>
-          <p className="text-[20px] text-white leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
-          <p className="text-[12px] text-white mt-2">{paired ? "연결 상태 보기" : "시작하기"} &gt;</p>
-        </div>
-        <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
-      </div>
+      <AnsimBanner paired={paired} onClick={onGuardian} />
 
       {paired && (
         <button onClick={onGuardian} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all">
@@ -103,6 +159,7 @@ export default function ParentHome({
           ))}
         </div>
       </div>
+
     </>
   );
 }
