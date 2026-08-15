@@ -31,9 +31,9 @@ function backendApi(apiKey: string): Plugin {
           for await (const c of req) chunks.push(c as Buffer)
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
 
-          // backend/ 는 Vite 감시 대상이 아니라 Node ESM 캐시에 남는다.
-          // 쿼리로 캐시를 무효화해 서버 재시작 없이 수정이 반영되게 한다 (개발 전용).
-          const { handleIntent } = await import(`${handlerPath}?t=${Date.now()}`)
+          // backend/ 수정 후에는 dev 서버를 재시작해야 반영된다.
+          // (Node ESM 캐시는 프로세스 단위라 쿼리 무효화로는 중첩 import 까지 못 지운다)
+          const { handleIntent } = await import(handlerPath)
           const result = await handleIntent(body, apiKey)
 
           res.statusCode = 200

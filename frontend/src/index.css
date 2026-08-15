@@ -21,6 +21,68 @@ body {
   background-color: #ffffff;
 }
 
+/*
+ * 앱 강조색 — 부모(한결은행)는 파랑, 자녀(나눔은행)는 초록.
+ * 송금 화면처럼 두 앱이 공유하는 컴포넌트는 이 변수만 참조한다.
+ */
+.theme-parent {
+  --ac-50:  #eff6ff;
+  --ac-100: #dbeafe;
+  --ac-200: #bfdbfe;
+  --ac-300: #93c5fd;
+  --ac-400: #60a5fa;
+  --ac-500: #3b82f6;
+  --ac-600: #2563eb;
+  --ac-700: #1d4ed8;
+  /* 진한 히어로 (송금 보류 화면) — 흰 글씨가 얹히므로 채도를 유지한다 */
+  --ac-hero-from: #1d4ed8;
+  --ac-hero-via:  #3b82f6;
+  --ac-hero-to:   #22d3ee;
+
+  /* 안심동행 소개 배너 — 홈 광고 배너와 같은 톤 */
+  --ac-band-from:   #1d4ed8;
+  --ac-band-via:    #3b82f6;
+  --ac-band-to:     #22d3ee;
+  --ac-band-border: transparent;
+  --ac-band-text:   #ffffff;
+  --ac-band-sub:    #ffffff;
+  --ac-band-icon:   #ffffff;
+}
+
+.theme-child {
+  --ac-50:  #ecfdf5;
+  --ac-100: #d1fae5;
+  --ac-200: #a7f3d0;
+  --ac-300: #6ee7b7;
+  --ac-400: #34d399;
+  --ac-500: #10b981;
+  --ac-600: #059669;
+  --ac-700: #047857;
+
+  --ac-hero-from: #047857;
+  --ac-hero-via:  #10b981;
+  --ac-hero-to:   #2dd4bf;
+
+  --ac-band-from:   #eff8f3;
+  --ac-band-via:    #f4faf7;
+  --ac-band-to:     #ffffff;
+  --ac-band-border: #dcece4;
+  --ac-band-text:   #1f4a3a;
+  --ac-band-sub:    #3c7a63;
+  --ac-band-icon:   #2A9D6E;
+}
+
+/* 바텀시트 — 아래에서 위로 올라오는 은행 선택 */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -41,4 +103,20 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: #93c5fd transparent;
+}
+@keyframes notification-shade-in {
+  from { transform: translateY(-105%); opacity: 0.65; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes notification-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.notification-shade { animation: notification-shade-in 280ms cubic-bezier(.2,.8,.2,1) both; }
+.notification-backdrop { animation: notification-backdrop-in 220ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-shade, .notification-backdrop { animation: none; }
 }

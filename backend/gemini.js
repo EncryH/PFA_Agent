@@ -7,9 +7,10 @@ import { SIGNAL_CODES } from "./signals.js";
 // 모델 변경은 루트 .env 의 GEMINI_MODEL 로. 사용 가능 목록은
 // https://generativelanguage.googleapis.com/v1beta/models?key=... 로 확인.
 //
-// 2.5-flash 를 쓰는 이유: 최신 3.x preview 계열은 무료 티어 일일 한도가
-// 20회 수준이라 심사·데모 중 429 로 막힌다. 2.5-flash 는 한도가 훨씬 넉넉하다.
-const DEFAULT_MODEL = "gemini-2.5-flash";
+// 구글이 구모델을 수시로 내린다(2.0-flash·2.5-flash 모두 404 로 막힘).
+// 404 가 뜨면 위 목록을 다시 조회해 살아있는 모델로 교체할 것.
+// 대안: gemini-3.5-flash, gemini-flash-latest
+const DEFAULT_MODEL = "gemini-3.6-flash";
 const endpoint = (model, key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
