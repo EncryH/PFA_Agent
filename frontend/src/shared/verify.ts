@@ -161,6 +161,64 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
   };
 }
 
+// ─── 금융위원회 등록 금융기관 로컬 DB (API 장애 시 폴백) ────────────────────
+// 출처: 금융위원회 금융회사 공시 (2025 기준)
+export const KNOWN_FN_COMPANIES: Record<string, string> = {
+  // 은행
+  "KB국민은행":   "은행", "신한은행": "은행", "하나은행": "은행",
+  "우리은행":     "은행", "NH농협은행": "은행", "IBK기업은행": "은행",
+  "카카오뱅크":   "은행", "토스뱅크": "은행", "케이뱅크": "은행",
+  "SC제일은행":   "은행", "한국씨티은행": "은행", "DGB대구은행": "은행",
+  "BNK부산은행":  "은행", "광주은행": "은행", "전북은행": "은행",
+  "BNK경남은행":  "은행", "제주은행": "은행", "Sh수협은행": "은행",
+  "한국산업은행": "은행", "한국수출입은행": "은행", "중소기업은행": "은행",
+  // 증권
+  "미래에셋증권": "금융투자", "삼성증권": "금융투자", "KB증권": "금융투자",
+  "한국투자증권": "금융투자", "신한투자증권": "금융투자", "하나증권": "금융투자",
+  "메리츠증권":   "금융투자", "NH투자증권": "금융투자", "키움증권": "금융투자",
+  "대신증권":     "금융투자", "한화투자증권": "금융투자", "교보증권": "금융투자",
+  // 생명보험
+  "삼성생명":   "생명보험", "한화생명": "생명보험", "교보생명": "생명보험",
+  "신한라이프": "생명보험", "KB라이프생명": "생명보험", "흥국생명": "생명보험",
+  // 손해보험
+  "삼성화재":   "손해보험", "DB손해보험": "손해보험", "현대해상": "손해보험",
+  "KB손해보험": "손해보험", "메리츠화재": "손해보험", "하나손해보험": "손해보험",
+  // 카드
+  "신한카드": "여신전문", "삼성카드": "여신전문", "KB국민카드": "여신전문",
+  "현대카드": "여신전문", "롯데카드": "여신전문", "우리카드": "여신전문",
+  "하나카드": "여신전문", "BC카드": "여신전문",
+  // 캐피탈
+  "현대캐피탈":     "여신전문", "KB캐피탈": "여신전문", "하나캐피탈": "여신전문",
+  "우리금융캐피탈": "여신전문", "신한캐피탈": "여신전문",
+  // 저축은행
+  "SBI저축은행": "저축은행", "OK저축은행": "저축은행",
+  "웰컴저축은행": "저축은행", "페퍼저축은행": "저축은행",
+};
+
+// FSC API 응답이 에러 포맷인지 확인
+function isFscError(json: unknown): boolean {
+  return !!(json && typeof json === "object" && "OpenAPI_ServiceResponse" in (json as object));
+}
+
+// FSC API 호출 (실패 시 null 반환)
+async function fetchFscApi(name: string): Promise<{ fncoNm: string; corpRegNo?: string }[] | null> {
+  const key = import.meta.env.VITE_FSC_API_KEY as string | undefined;
+  if (!key) return null;
+  try {
+    const url =
+      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getBasList` +
+      `?serviceKey=${key}&resultType=json&numOfRows=5&pageNo=1&fncoNm=${encodeURIComponent(name)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (isFscError(json)) return null;            // API 서비스 중단 등 에러
+    const items = json?.response?.body?.items?.item;
+    if (!items) return null;
+    return Array.isArray(items) ? items : [items];
+  } catch {
+    return null;
+  }
+}
+
 // ─── 기관명 검증 ────────────────────────────────────────────────────────────
 export async function verifyInstitution(name: string): Promise<VerifyResult> {
   const trimmed = name.trim();
@@ -171,28 +229,10 @@ export async function verifyInstitution(name: string): Promise<VerifyResult> {
     return { status: "safe", label: "공식 감독·정부기관", detail: govHit };
   }
 
-  // 2차: 금융위원회 OpenAPI
-  const key = import.meta.env.VITE_FSC_API_KEY as string | undefined;
-  if (!key) {
-    return { status: "unknown", label: "API 키 없음", detail: "금융위원회 API 키가 설정되지 않았습니다." };
-  }
-
-  try {
-    const url =
-      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getBasList` +
-      `?serviceKey=${key}&resultType=json&numOfRows=5&pageNo=1&fncoNm=${encodeURIComponent(trimmed)}`;
-    const res = await fetch(url);
-    const json = await res.json();
-
-    const items = json?.response?.body?.items?.item;
-    if (!items) {
-      return { status: "caution", label: "등록 기관 없음", detail: "금융위원회 등록 금융사 목록에 없습니다. 직접 확인을 권장합니다." };
-    }
-
-    const list: { fncoNm: string; corpRegNo?: string }[] =
-      Array.isArray(items) ? items : [items];
-
-    const exact = list.find((it) => it.fncoNm === trimmed);
+  // 2차: 금융위원회 OpenAPI (성공 시 우선 사용)
+  const apiItems = await fetchFscApi(trimmed);
+  if (apiItems) {
+    const exact = apiItems.find((it) => it.fncoNm === trimmed);
     if (exact) {
       return {
         status: "safe",
@@ -200,14 +240,40 @@ export async function verifyInstitution(name: string): Promise<VerifyResult> {
         detail: `금융위원회에 정식 등록된 금융사입니다.${exact.corpRegNo ? ` 법인번호: ${exact.corpRegNo}` : ""}`,
       };
     }
-
-    const similar = list.map((it) => it.fncoNm).join(", ");
+    const similar = apiItems.map((it) => it.fncoNm).join(", ");
     return {
       status: "caution",
       label: "유사 기관명 존재",
       detail: `정확히 일치하지 않습니다. 유사 등록명: ${similar}`,
     };
-  } catch {
-    return { status: "unknown", label: "조회 실패", detail: "금융위원회 API 호출에 실패했습니다." };
   }
+
+  // 3차: 로컬 DB 폴백 (API 장애·키 만료 시)
+  const localHit = KNOWN_FN_COMPANIES[trimmed];
+  if (localHit) {
+    return {
+      status: "safe",
+      label: "금융위원회 등록 기관",
+      detail: `금융위원회 등록 ${localHit} — 공식 금융회사입니다.`,
+    };
+  }
+
+  // 부분 일치 탐색 (예: "KB" → "KB국민은행", "KB증권" 등)
+  const partialMatches = Object.keys(KNOWN_FN_COMPANIES).filter(
+    (k) => k.includes(trimmed) || trimmed.includes(k.replace(/은행|증권|보험|카드|캐피탈|저축은행/g, "").trim())
+  ).slice(0, 3);
+
+  if (partialMatches.length > 0) {
+    return {
+      status: "caution",
+      label: "유사 기관명 존재",
+      detail: `정확히 일치하지 않습니다. 유사 등록 기관: ${partialMatches.join(", ")}`,
+    };
+  }
+
+  return {
+    status: "caution",
+    label: "등록 기관 없음",
+    detail: "금융위원회 등록 금융사 목록에 없습니다. 직접 확인을 권장합니다.",
+  };
 }

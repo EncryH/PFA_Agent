@@ -1,6 +1,6 @@
 // 전화 수신 스크리닝 — 블랙리스트/화이트리스트 대조 + FSC API 검증
 
-import { OFFICIAL_PHONES, OFFICIAL_GOV_BODIES } from './verify'
+import { OFFICIAL_PHONES, OFFICIAL_GOV_BODIES, KNOWN_FN_COMPANIES } from './verify'
 
 export interface CallScreenResult {
   status: 'safe' | 'danger' | 'unknown'
@@ -80,7 +80,7 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
       }
     }
 
-    // 금융사 → FSC API로 실존 여부 검증
+    // 금융사 → FSC API 검증 → 실패 시 로컬 DB 폴백
     let fsaVerified = false
     try {
       const key = import.meta.env.VITE_FSC_API_KEY as string | undefined
@@ -91,13 +91,21 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
           `&fncoNm=${encodeURIComponent(institutionName)}`
         const res = await fetch(url)
         const json = await res.json()
-        const items = json?.response?.body?.items?.item
-        if (items) {
-          const list: { fncoNm: string }[] = Array.isArray(items) ? items : [items]
-          fsaVerified = list.some((it) => it.fncoNm === institutionName)
+        // OpenAPI_ServiceResponse = 에러 포맷 (서비스 중단 등)
+        if (!json?.OpenAPI_ServiceResponse) {
+          const items = json?.response?.body?.items?.item
+          if (items) {
+            const list: { fncoNm: string }[] = Array.isArray(items) ? items : [items]
+            fsaVerified = list.some((it) => it.fncoNm === institutionName)
+          }
         }
       }
-    } catch { /* FSC API 실패 시 화이트리스트만으로 판단 */ }
+    } catch { /* FSC API 네트워크 오류 */ }
+
+    // API 실패 시 로컬 DB로 대체 검증
+    if (!fsaVerified) {
+      fsaVerified = institutionName in KNOWN_FN_COMPANIES
+    }
 
     return {
       status: 'safe',
