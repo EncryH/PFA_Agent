@@ -40,6 +40,7 @@ export default function App() {
   const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
   const [behaviorSignals, setBehaviorSignals] = useState<BehaviorSignals>(INITIAL_SIGNALS);
   const [balanceOverrides, setBalanceOverrides] = useState<Record<number, string>>({});
+  const [closedAccounts, setClosedAccounts] = useState<Set<number>>(new Set());
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
@@ -100,7 +101,19 @@ export default function App() {
                 account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
                 onTransfer={() => setPage("transfer")}
-                onEarlyClosure={() => setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }))}
+                isClosed={closedAccounts.has(savingsIdx)}
+                onEarlyClosure={(amount) => {
+                  setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }));
+                  setClosedAccounts((prev) => new Set(prev).add(savingsIdx));
+                  setBalanceOverrides((prev) => {
+                    const mainCurrent = parseAmt(liveAccounts[0].balance);
+                    return {
+                      ...prev,
+                      [savingsIdx]: "0",
+                      [0]: (mainCurrent + amount).toLocaleString("ko-KR"),
+                    };
+                  });
+                }}
               />
             )}
             {page === "history" && (

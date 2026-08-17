@@ -22,11 +22,13 @@ export default function SavingsDetail({
   onBack,
   onTransfer,
   onEarlyClosure,
+  isClosed = false,
 }: {
   account: typeof MY_ACCOUNTS[number];
   onBack: () => void;
   onTransfer: () => void;
-  onEarlyClosure: () => void;
+  onEarlyClosure: (amount: number) => void;
+  isClosed?: boolean;
 }) {
   const [step, setStep] = useState<SavingsStep>("detail");
 
@@ -118,15 +120,23 @@ export default function SavingsDetail({
         </div>
 
         {/* 중도해지 버튼 */}
-        <button
-          onClick={() => setStep("confirm")}
-          className="w-full py-3.5 rounded-xl text-[15px] font-bold text-red-600 border-2 border-red-200 bg-red-50 active:scale-[0.98] transition-all"
-        >
-          중도해지 신청
-        </button>
-        <p className="text-[11px] text-gray-400 text-center -mt-2">
-          ⚠ 중도해지 시 이자 손실이 발생할 수 있어요
-        </p>
+        {isClosed ? (
+          <div className="w-full py-3.5 rounded-xl text-[15px] font-bold text-gray-400 border-2 border-gray-200 bg-gray-50 text-center">
+            해지 완료된 계좌입니다
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setStep("confirm")}
+              className="w-full py-3.5 rounded-xl text-[15px] font-bold text-red-600 border-2 border-red-200 bg-red-50 active:scale-[0.98] transition-all"
+            >
+              중도해지 신청
+            </button>
+            <p className="text-[11px] text-gray-400 text-center -mt-2">
+              ⚠ 중도해지 시 이자 손실이 발생할 수 있어요
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -183,7 +193,7 @@ export default function SavingsDetail({
         </p>
 
         <button
-          onClick={() => { onEarlyClosure(); setStep("done"); }}
+          onClick={() => { onEarlyClosure(info.afterPenaltyBalance); setStep("done"); }}
           className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-red-500 active:scale-[0.98] transition-all"
         >
           해지 확인
