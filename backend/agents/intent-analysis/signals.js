@@ -32,6 +32,16 @@ export const SIGNAL_CODES = Object.keys(SIGNALS);
 export const HOLD_THRESHOLD = 50;  // 이상이면 5층 가족 확인으로
 export const MAX_TURNS = 4;        // 질문 상한 — 부모님을 지치게 하지 않는다
 
+/**
+ * 결론 전 최소 질문 수.
+ *
+ * 한 번 묻고 바로 보류하면 가족에게 넘길 근거가 한 줄뿐이고,
+ * 부모님도 왜 막혔는지 납득하지 못한다. 위험 신호가 이미 높아도
+ * 최소 이만큼은 물어 상황을 구체화한 뒤 판정한다.
+ * 송금은 그 사이에도 계속 정지 상태이므로 캐묻는 동안 위험이 늘지 않는다.
+ */
+export const MIN_TURNS_BEFORE_VERDICT = 3;
+
 /** 추출된 신호 코드 배열 → 점수·등급·라벨 */
 export function scoreSignals(codes = [], { patternRiskScore = 0 } = {}) {
   const valid = [...new Set(codes)].filter((c) => c in SIGNALS);

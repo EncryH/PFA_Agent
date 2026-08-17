@@ -12,6 +12,13 @@ import { FRAUD_TYPE_CODES } from "./fraud-types.js";
 // 404 가 뜨면 위 목록을 다시 조회해 살아있는 모델로 교체할 것.
 // 대안: gemini-3.5-flash, gemini-flash-latest
 const DEFAULT_MODEL = "gemini-3.6-flash";
+
+// 추론 깊이. 이 작업은 신호 추출과 질문 생성이라 깊은 추론이 필요 없다.
+// 기본값으로 두면 사고 토큰이 출력 토큰의 3배 이상 쓰여 응답이 12~15초까지 늘어난다.
+// minimal 로 낮추면 3~6초로 줄고, 추출 품질 차이는 확인되지 않았다.
+// 이 모델은 thinkingBudget:0 을 400 으로 거부하므로 thinkingLevel 을 쓴다.
+const DEFAULT_THINKING_LEVEL = "minimal";
+
 const endpoint = (model, key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
@@ -183,6 +190,9 @@ export async function extractIntent(transfer, messages, apiKey, retrieval = { fr
       temperature: 0.1,  // 신호 추출은 창의성이 아니라 일관성이 중요하다
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
+      thinkingConfig: {
+        thinkingLevel: process.env.GEMINI_THINKING_LEVEL || DEFAULT_THINKING_LEVEL,
+      },
     },
   });
 

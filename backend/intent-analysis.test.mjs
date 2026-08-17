@@ -111,7 +111,7 @@ test("의도 분석은 개인정보를 마스킹하고 근거·유형·점수를
         patternRiskScore: 35,
       },
       messages: [{ role: "user", text: "010-1234-5678로 전화가 와서 보증금을 보내래요" }],
-      turn: 1,
+      turn: 3,   // 최소 질문 수를 채운 뒤라야 결론이 나온다
     }, "test-key");
 
     assert.equal(sentBody.includes("110-123-456789"), false);
@@ -169,7 +169,7 @@ test("대화 앞뒤가 다르면 쉬운 문장으로 알려주고 위험 신호�
         { role: "ai", text: "누가 보내 달라고 했나요?" },
         { role: "user", text: "은행 상담사가 대출 보증금을 오늘 안에 보내래요" },
       ],
-      turn: 2,
+      turn: 3,
     }, "test-key");
 
     assert.ok(result.risk.codes.includes("ANSWER_CONTRADICTION"));
@@ -180,4 +180,67 @@ test("대화 앞뒤가 다르면 쉬운 문장으로 알려주고 위험 신호�
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("위험이 확인돼도 최소 질문 수를 채우기 전에는 결론을 내지 않는다", async () => {
+  const originalFetch = globalThis.fetch;
+  const llmReply = {
+    done: true,                       // LLM 이 그만하자고 해도 규칙이 더 묻게 한다
+    next_question: "",
+    purpose: "안전계좌 이전",
+    requester: "검찰청 수사관",
+    channel: "전화",
+    impersonation: "prosecution",
+    interaction_direction: "external_actor_to_customer",
+    attack_stage: "money_request",
+    signals: ["SAFE_ACCOUNT_TRANSFER", "AGENCY_IMPERSONATION"],
+    fraud_type: "agency_impersonation",
+    requested_actions: ["transfer"],
+    answer_contradictions: [],
+    missing_information: [],
+    evidence_phrases: ["안전계좌로 옮기래요"],
+    explanation: "기관을 사칭해 안전계좌로 옮기라는 요구입니다.",
+  };
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    candidates: [{ content: { parts: [{ text: JSON.stringify(llmReply) }] } }],
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+
+  const body = (turn) => ({
+    transfer: { amount: 12_000_000, isFirstTransfer: true, patternRiskScore: 40 },
+    messages: [{ role: "user", text: "검찰청에서 전화가 와서 안전계좌로 옮기라고 했어요" }],
+    turn,
+  });
+
+  try {
+    const first = await handleIntent(body(1), "test-key");
+    assert.equal(first.risk.level, "HIGH");     // 위험은 이미 확인됐다
+    assert.equal(first.hold, false);            // 그래도 아직 보류하지 않는다
+    assert.equal(first.done, false);            // 대화를 계속한다
+    assert.match(first.message, /확인이 필요해 보여요/);
+    assert.match(first.message, /걱정되는 점이 있어요/);   // 위험은 지금 알려준다
+    assert.match(first.message, /안전계좌/);               // 신호에 맞는 후속 질문
+
+    const third = await handleIntent(body(3), "test-key");
+    assert.equal(third.hold, true);             // 최소 질문 수를 채우면 보류
+    assert.equal(third.done, true);
+    assert.match(third.message, /지금은 보내지 마세요/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("LLM 없이 폴백일 때도 최소 질문 수 규칙은 같다", async () => {
+  const transfer = { amount: 12_000_000, isFirstTransfer: true, patternRiskScore: 40, callInProgress: true };
+  const messages = [{ role: "user", text: "대출받으려면 보증금을 먼저 보내라고 해서요" }];
+
+  const first = await handleIntent({ transfer, messages, turn: 1 }, "");   // 키 없음 → 폴백
+  assert.equal(first.fallback, true);
+  assert.equal(first.risk.level, "HIGH");
+  assert.equal(first.hold, false);
+  assert.equal(first.done, false);
+
+  const third = await handleIntent({ transfer, messages, turn: 3 }, "");
+  assert.equal(third.fallback, true);
+  assert.equal(third.hold, true);
+  assert.equal(third.done, true);
 });
