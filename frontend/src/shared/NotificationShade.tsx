@@ -60,7 +60,8 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
       hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
     }).format(new Date(iso));
 
-  const family = role === "parent" ? "따님" : "어머니";
+  // 받침에 따라 조사가 달라진다 — "따님과" / "어머니와"
+  const familyWith = role === "parent" ? "따님과" : "어머니와";
 
   // 보호 단계는 부모가 정하지만, 바뀐 사실은 양쪽 앱에 똑같이 남는다.
   const levelName = (level?: number) => PROTECTION_LEVELS[level ?? 2]?.name ?? "";
@@ -82,7 +83,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
       return e.type === "paired"
         ? {
             icon: "family" as const,
-            title: `${family}과 안심동행이 연결됐어요`,
+            title: `${familyWith} 안심동행이 연결됐어요`,
             body: role === "parent"
               ? "이제 위험한 송금이 있으면 따님이 함께 확인해드려요."
               : "어머니 계좌에 위험한 거래가 생기면 알려드려요.",
@@ -90,7 +91,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           }
         : {
             icon: "unlink" as const,
-            title: `${family}과 안심동행 연결이 해제됐어요`,
+            title: `${familyWith} 안심동행 연결이 해제됐어요`,
             body: "이제 위험 거래 알림이 전달되지 않아요. 계좌와 거래내역은 그대로예요.",
             date: stamp(e.at),
           };
