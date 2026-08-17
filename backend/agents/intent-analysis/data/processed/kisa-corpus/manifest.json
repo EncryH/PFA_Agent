@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_name": "통합 KISA 전화상담 Corpus 매니페스트",
+  "generated_at": "2026-08-16T22:49:51.9645579+09:00",
+  "source_sets": [
+    {
+      "set": 1,
+      "zip_file": "과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 1종_20250923.zip",
+      "source_url": "https://www.data.go.kr/data/15150829/fileData.do",
+      "record_count": 100
+    },
+    {
+      "set": 2,
+      "zip_file": "과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 2종_20250923.zip",
+      "source_url": "https://www.data.go.kr/data/15150830/fileData.do",
+      "record_count": 100
+    },
+    {
+      "set": 3,
+      "zip_file": "과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 3종_20250923.zip",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "record_count": 100
+    }
+  ],
+  "deduplication": {
+    "criteria": [
+      "source_id exact match",
+      "protected transcript SHA-256 exact match",
+      "whitespace and punctuation normalized transcript SHA-256 match"
+    ],
+    "duplicate_id_groups": 0,
+    "exact_content_duplicate_groups": 0,
+    "normalized_content_duplicate_groups": 0,
+    "duplicate_details": []
+  },
+  "totals": {
+    "source_records": 300,
+    "unique_records": 300,
+    "removed_as_duplicates": 0
+  },
+  "files": [
+    "kisa-set-1.json",
+    "kisa-set-2.json",
+    "kisa-set-3.json",
+    "kisa-integrated-corpus.json",
+    "near-duplicate-report.json"
+  ]
+}

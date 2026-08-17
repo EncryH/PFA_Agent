@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "method": "normalized character 7-shingle Jaccard similarity",
+  "threshold": 0.9,
+  "compared_records": 300,
+  "compared_pairs": 44850,
+  "near_duplicate_pairs": 0,
+  "pairs": []
+}

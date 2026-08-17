@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "filter_label": [
+    "fraud_related_candidate",
+    "normal_or_irrelevant_candidate"
+  ],
+  "extraction_status": [
+    "incident_extracted",
+    "no_incident_found"
+  ],
+  "fraud": [true, false, null],
+  "intent_class": [
+    "fraud_intent",
+    "normal_financial_service",
+    "unknown"
+  ],
+  "interaction_context": [
+    "official_financial_customer_service",
+    "unverified_external_contact",
+    "unknown"
+  ],
+  "interaction_direction": [
+    "customer_to_financial_institution",
+    "external_actor_to_customer",
+    "unknown"
+  ],
+  "fraud_type": [
+    "institution_impersonation",
+    "loan_advance_fee",
+    "refund_advance_fee",
+    "family_or_acquaintance_impersonation",
+    "smishing",
+    "malicious_app",
+    "personal_information_phishing",
+    "investment_fraud",
+    "job_or_mission_fraud",
+    "other"
+  ],
+  "channel": [
+    "phone",
+    "sms",
+    "kakao",
+    "messenger",
+    "web",
+    "email",
+    "app",
+    "in_person",
+    "unknown"
+  ],
+  "impersonation": [
+    "prosecution",
+    "police",
+    "financial_supervisory_service",
+    "bank",
+    "government_agency",
+    "tax_office",
+    "delivery_company",
+    "family",
+    "acquaintance",
+    "company",
+    "none",
+    "unknown"
+  ],
+  "requested_action": [
+    "transfer",
+    "install_app",
+    "submit_personal_information",
+    "submit_id",
+    "share_otp",
+    "click_url",
+    "call_back",
+    "remote_control",
+    "keep_call",
+    "keep_secret",
+    "additional_payment",
+    "investment_deposit",
+    "unknown"
+  ],
+  "normal_financial_action": [
+    "transaction_or_balance_inquiry",
+    "erroneous_transfer_support",
+    "automatic_transfer_management",
+    "deposit_maturity_or_termination",
+    "transaction_limit_management",
+    "interest_or_overdue_payment",
+    "preferential_rate_management",
+    "loan_inquiry_or_management",
+    "currency_exchange",
+    "vehicle_insurance_management",
+    "accident_report",
+    "insurance_contract_management",
+    "insurance_inquiry",
+    "insurance_claim",
+    "trading_app_support",
+    "securities_account_management",
+    "credit_or_collateral_loan",
+    "funds_transfer_or_account_restriction",
+    "tax_advantaged_product",
+    "stock_order",
+    "securities_account_inquiry",
+    "overseas_order",
+    "general_financial_consultation"
+  ],
+  "risk_signals": [
+    "SAFE_ACCOUNT_TRANSFER",
+    "SECRECY_INSTRUCTION",
+    "PREPAY_CONTRADICTION",
+    "CREDENTIAL_REQUEST",
+    "CALL_IN_PROGRESS",
+    "AGENCY_IMPERSONATION",
+    "PERSONAL_ACCOUNT_FOR_AGENCY",
+    "URGENCY",
+    "EVASIVE",
+    "MALICIOUS_URL",
+    "SMS_LURE",
+    "PERSONAL_DATA_REQUEST",
+    "APP_INSTALLATION_REQUEST",
+    "ANSWER_CONTRADICTION",
+    "GUARANTEED_RETURN",
+    "ADDITIONAL_PAYMENT_REQUEST",
+    "CHANGED_FAMILY_CONTACT"
+  ],
+  "attack_stage": [
+    "approach",
+    "trust_building",
+    "information_theft",
+    "money_request",
+    "loss_completed",
+    "not_applicable",
+    "unknown"
+  ],
+  "review_status": [
+    "needs_review",
+    "approved",
+    "rejected"
+  ]
+}

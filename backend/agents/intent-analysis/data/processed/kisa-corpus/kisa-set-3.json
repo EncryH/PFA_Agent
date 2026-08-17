@@ -1,0 +1,3060 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_name": "과학기술정보통신부 스팸·해킹·피싱 전화상담 데이터셋 3종",
+  "project_name": "KISA 전화상담 합성데이터 통합 Corpus",
+  "source_format": ".synth plain text",
+  "source_period": "2023-06~2023-12",
+  "source_reference_date": "2025-09-23",
+  "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+  "synthetic": true,
+  "redaction_applied": true,
+  "record_count": 100,
+  "records": [
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-082ZQQxU",
+      "source_id": "082ZQQxU",
+      "source_set": 3,
+      "source_file": "082ZQQxU.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "3217 상담센터 김민지입니다.\r\n네, 안녕하세요.\r\n무슨 문의가 있으신가요?\r\n저희가 얼마 전에 5월 즈음에, 그… 기억력 감퇴 관련 문제가 발생했어요.\r\n한국인터넷진흥원 관련 기관에서 분석을 진행했는데,\r\n인젝션 공격을 시도해서 저희 회원들의 개인 정보가 유출된 것 같다는 확인을 받아서 신고를 하라는 안내를 받았습니다.\r\n그래서 제가 한 시간 전에 신고를 완료했어요.\r\n개인 정보 유출 신고 말씀하시는 거죠?\r\n사업자이신가요?\r\n네, 사업자입니다.\r\n학원 관련인데 신고를 진행했습니다.\r\n제가 궁금한 건, 저희가 현재 대처 방안을 마련하고 있는데, 개인 정보 유출이 학원이라는 특성상 초등학생들의 로그인 아이디와 비밀번호를 사용해서 저희 학습 프로그램을 이용하고 있습니다.\r\n그래서 비밀번호가 123이나, 원장님들이 설정해 주시는 경우가 있는데, 아이디가 abcD라면 비밀번호도 aBCD처럼 설정되어 있고, 학생 이름까지 유출된 것으로 간주되는 거죠.\r\n선생님, 혹시 저희 쪽 유출 사고 조사팀 연락처 1번 안내해 드릴까요?\r\n거기로 문의하시는 게 더 정확할 것 같습니다.\r\n번호 메모 가능하실까요?\r\n잠시만 기다려 주세요.\r\n네, 말씀해 주세요.\r\n아, 네. [PHONE]이요.\r\n1424번이요.\r\n네, 네.\r\n여기로 전화하시면 될까요?\r\n네, 이 번호로 문의해 보시겠어요?\r\n선생님?\r\n아, 네. 알겠습니다. 감사합니다.\r\n네.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "a4658295131b93534ea61a5ab22fce05d4bddf72500ffe0d7a5d0f13b2115281",
+        "normalized_content_hash_sha256": "6f3fb2e2243aa202c191e4dfa3651965e75c116d60648cb20d5f0f3cb659ffa0",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-1721Jdxt",
+      "source_id": "1721Jdxt",
+      "source_set": 3,
+      "source_file": "1721Jdxt.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "상담센터 [COUNSELOR]다.\r\n네, 안녕하세요.\r\n저번에 문자 한 통 받았는데요. 제 이름이랑 어떤 사건 관련 출석 요구가 담겨 있었어요. 문자를 받아서 들어가봤는데,\r\n저와는 관련 없는 내용 같아서 보이스피싱처럼 느껴지더라고요.\r\n문자 받으신 건 어디서 받으셨어요?\r\n네.\r\n들어가보니 이름이랑 주민등록번호를 입력하는 칸이 있더라고요.\r\n찾아보니 어떤 영장 같은 게 있었어요.\r\n주민등록번호를 입력하셨어요?\r\n이런 경우 어떻게 해야 할까요?\r\n정보가 노출될 위험이 있어서 피해를 막기 위한 조치와 안내를 드리고 있어요.\r\n연락을 받으시면 예방법 문자를 보내드렸는데, 참고하시면 도움이 될 거예요.\r\n최근 검찰이나 경찰, 사채 관련 보이스피싱 전화가 많아서, 관련 없는 내용에는 대응하지 않는 것이 안전합니다.\r\n아, 그럼 어떻게 해야 할까요?\r\n네, 일단은 대응하지 마시고, 예방법 문자 내용 참고하셔서 진행하시면 될 것 같아요.\r\n아, 네, 알겠습니다. 감사합니다.\r\n민원 담당 [COUNSELOR]었습니다.\r\n네.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "검찰",
+        "경찰",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a25e9281a3661b15d5e245acb33bc18805fca0c6ccc74b559d7c0bdb6f4f35cd",
+        "normalized_content_hash_sha256": "f606a35d3a3cba11fe6c1729e68593b96bd6b48b9ded3edb4486f7a7cd337108",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-49OuzIgB",
+      "source_id": "49OuzIgB",
+      "source_set": 3,
+      "source_file": "49OuzIgB.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "상담원입니다.\r\n아, 네, 안녕하세요.\r\n제가 다른 건 아니고, 제가 그 메가 클라우드에서 중고 물품 거래를 했는데, 지금 보니깐 피싱 사이트로 연결된 것 같아서 돈을 송금받은 것 같은데, 여기에 2451로 전화하라고 되어 있더라고요. 그래서 전화 드려봤거든요.\r\n어, 저희 쪽으로 전화하라고 어디에 안내가 되어 있었나요?\r\n네, 메가 클라우드 안내에 그렇게 되어 있더라고요.\r\n사기 거래가 의심되는 상황이면 여기에 전화하라고 되어 있어요.\r\n우선 이게 사기 거래이기 때문에 저희 쪽에서 분쟁 조정을 해 드리기는 어렵습니다. 왜냐하면 누군가가 범죄 목적으로 사기를 벌인 거거든요.\r\n그러기 때문에 우선은 사이버수사대에 사이버 범죄 신고 상담을 해 보셔야 될 것 같고요.\r\n국번 없이 2451번은 경찰청 민원센터입니다.\r\n이쪽으로 한번 전화를 해 보시고, 아니면 인터넷 검색창에 사이버수사대를 검색하시면 링크도 연결되실 겁니다.\r\n네.\r\n이거 한번 확인해 보시고, 우선은 중고 거래 관련해서 사기를 당한 상황이기 때문에 이쪽으로 먼저 문의를 해 보셔야 될 것 같아요.\r\n알겠습니다.\r\n수고하세요.",
+      "matched_keywords": [
+        "피싱",
+        "송금",
+        "경찰",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "3d2f993d429dffe9b52d6cd4fbcf45a662ecc35b5be7a5e5f8b7db8b5be6e549",
+        "normalized_content_hash_sha256": "f314bbb8816bba1b000afbce97772047f71e66668a32651c55d04828f1eb6c91",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-51tkeMUM",
+      "source_id": "51tkeMUM",
+      "source_set": 3,
+      "source_file": "51tkeMUM.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "3217 상담센터 김민지입니다.\r\n저 무슨 링크를 눌렀는데 이상한 페이지가 뜨더라고요.\r\n아, 그렇군요?\r\n혹시 어떤 링크를 보셨나요?\r\n혹시 '한진택배'에서 온 문자인데, 그 링크를 클릭하신 건가요?\r\n네, 맞아요.\r\n혹시 사용하시는 휴대폰은 어떤 모델인가요?\r\n아이폰이에요.\r\n아, 다행이네요. 아이폰은 다른 기기보다 감염될 가능성이 적거든요.\r\n아, 정말요?\r\n네, 100% 안전하다고 단언하기는 어렵지만요.\r\n아이폰용 스미싱 대처 방법을 담은 문자를 따로 보내드릴 수 있어요. 한번 확인해보시는 게 좋겠어요. 바로 문자 보내드릴까요?\r\n네, 그렇게 해주세요.\r\n네, 문자 내용 확인하시고 조치해보세요.\r\n네, 네.\r\n네, 문자 내용 잘 확인하세요.\r\n네, 감사합니다.\r\n아, 그리고 혹시 6월 말쯤에 저희가 고객 만족도 조사를 위해 전화드릴 수도 있는데, 그때 시간 괜찮으실까요?\r\n네, 네, 괜찮습니다.\r\n네, 네. 관련 내용은 문자로 보내드릴게요. 시간 괜찮으실 때 응답 부탁드립니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "cd1435415affd5c3a9f6296310b8debef76ad904ee0a3969eb6f12000e67c1cd",
+        "normalized_content_hash_sha256": "edfd11bb6011db0a047a4e41c0820413076b6076c8e27655dc03f45d6f2b60f6",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-54JispwW",
+      "source_id": "54JispwW",
+      "source_set": 3,
+      "source_file": "54JispwW.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n평화로운 상담소, 강선아입니다.\n네. 층간소음 관련해서 문의 주셨는데, 어떤 내용이신가요?\n편하게 말씀해 주세요.\n지금 바로 말씀드려도 될까요?\n다른 부서로 연결해도 될까요?\n네.\n저희는 우선 상담을 진행하고, 필요한 경우 관련 기관에 신고 방법을 안내해 드리고 있습니다.\n공인회계사 사무실에서 층간소음 문제로 신고를 고려하고 있는데, 혹시 신고 시 회계사님께서 신고 사실을 알 수 있나요?\n그건 알 수 없는 부분입니다.\n원칙적으로 신고자의 정보는 공개되지 않도록 되어 있습니다.\n어떤 부분인지 정확히는 모르겠지만, 혹시 회계사 사무실 규모가 크지 않다면 어느 정도 추측은 가능할 것 같습니다.\n아, 인터넷으로 신고하려고 보니 정보 제공에 동의해야 한다는 내용이 있더라고요. 그래서 여쭤보려고 했는데, 신고센터에서 회계사 사무실로 정보를 직접 제공하지 않는다는 말씀이시죠?\n정보가 제공될 경우, 담당자님께 연락이 갈 수 있습니다.\n조사 시 실질적인 도움이 될 수 있고, 회계사님 건이 아니더라도 일부 정보가 필요할 수 있습니다.\n하지만 모든 정보가 제공되는 것은 아니며, 특정 정보가 일부 제공될 경우 조사관이 연락하여 동의 여부를 확인하는 것으로 알고 있습니다.\n정보가 제공될 가능성이 있다면 따로 연락이 온다는 말씀이시죠?\n네, 그렇습니다.\n별도의 동의 절차가 있기 때문에 걱정하지 않으셔도 됩니다.\n개인적으로 치매 예방센터에 접수하시는 경우, 접수 후 조사팀으로 이관되면 조사관 연락처나 이름이 이메일로 발송됩니다.\n그때 조사관께 정보 제공 가능 여부에 대해 다시 문의해 보시는 것이 좋겠습니다. 지금 말씀드린 내용에 너무 신경 쓰지 마시고 일단 접수하는 것이 좋을 것 같습니다.\n그렇군요. 네, 알겠습니다.\n감사합니다.\n네.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "93407ec131bdc66d7480fba79278dd68212ed88c89e669fd24e8dfaf37ded575",
+        "normalized_content_hash_sha256": "c9a1f16c938d437433ed04d81aca04a9b5bf72351a7f1451cee8a69e491e64cd",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-55LrBidh",
+      "source_id": "55LrBidh",
+      "source_set": 3,
+      "source_file": "55LrBidh.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "희망가득 빌라 사무센터 박서준입니다.\r\n네, 안녕하세요.\r\n제가 개인 정보 관련해서 여기다가 상담을 해도 되는 건가요?\r\n네, 말씀하세요.\r\n네, 잠시만요.\r\n저, 다름이 아니라 중학교 교사입니다.\r\n근데 선생님, 죄송한데 소리가 좀 멀리 들려서 다시 한번 말씀해 주시겠어요?\r\n네, 제가 중학교에 근무를 하고 있는데요.\r\n그 강사에 관해서 정보공개 청구가 왔어요.\r\n강사요?\r\n네, 네.\r\n무슨 말씀이십니까?\r\n정보공개 청구가 와서 그걸 해셔야 되는데, 여기에 입학 계약을 체결한 사업자명, 주소, 대표자명이라고 요구를 하셨어요.\r\n네.\r\n근데 여기서 강사일 경우 해당 강사명이라고 적혀 있거든요.\r\n그래서 이제 저희는 사업자가 아니라 강사와 개인으로 계약을 체결했기 때문에 강사명을 적으려고 하는데 여기에 사업자 주소에도 개인 주소를 적어야 되나요?\r\n근데 선생님, 근데 전공일 청소는 물론 보호법이 개인 방법이기 때문에 말씀드리고 있잖아.\r\n정보 청구는 민원 관련한 법령이 또 따로 있으시거든요.\r\n민원 관련 법령에서 그 정보를 공개를 해도 된다라고 한다면 그 법을 먼저 우선해서 하면 되시고요.\r\n만약에 그런 법이 없음에도 불구하고 개인정보를 적어야 된다고 한다면 저희는 개인정보보호법상의 어떤 법령은 원칙은 동의를 받아라는 거예요.\r\n그러면 그 당사에게 이렇게 그 정보를 제공해도 되냐 동의를 받거나 이런 부분이 필요할 수가 있으시죠?\r\n그러면 그 광고 공개 창구 관련한 법령은 제가 어떤 기관에서 전화를 드려서 상담을 하면 될까요?\r\n잘 모르겠습니다.\r\n근데 저희가 관련한 민원이 교육청이 있을 수가 있고 그런 부분이 있기 때문에 개인정보는 다른 법령이 더 우선이 되고 있기 때문에 다른 법령에서 근거 규정이 있다라고 한다면 그 법을 먼저 따르게끔 되어 있고요.\r\n만약에 다른 법령이 없다라고 한다면 원칙은 정보 주체자에게 동의를 받아라는 부분인 거예요.\r\n네, 알겠습니다.\r\n감사합니다.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "5e0ac769572b67d40c88b5a46da9c5a5b05c78934264698886ba19bf56ea633e",
+        "normalized_content_hash_sha256": "d9bd5ecc6b562adefa823524fd962b72bead283f78a5ed123a5474b37e6fb2d0",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-55VjScOP",
+      "source_id": "55VjScOP",
+      "source_set": 3,
+      "source_file": "55VjScOP.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "건물 관리센터 박민지입니다.\r\n여보세요, 안녕하세요.\r\n네, 다름이 아니라 제가 어제 전화 한 통을 받았는데, 뭔가 사기 전화 같은 느낌이 들어서요. 웹사이트 주소를 받아서 들어가 봤더니 '안전하지 않은 사이트'라고 뜨더라고요. 이게 진짜 사이트인지 확인하려고 전화 드리는 게 맞을까요?\r\n음, 저희는 인터넷 안전 협회라서 직접적으로 확인한 건 아니지만요. 피싱 사이트라면 뉴스에서도 보시는 것처럼 서울중앙지검, 검찰청처럼 똑같이 위장한 사이트 형태가 많아요.\r\n그런 피싱 사이트라고 판단하시면 저희에게 신고해 주시면 최대한 접속을 차단하도록 노력하고 있습니다.\r\n하지만 지금 전화 주신 내용만으로는 정확히 판단하기는 어려울 것 같아요.\r\n선생님\r\n아, 그렇군요?\r\n지금 말씀하신 것처럼 출처가 불분명한 사이트라면 의심해 볼 필요가 있고, 만약 피싱 사이트라면 저희 이메일 주소로 신고해 주시면 됩니다.\r\n이메일 주소가 홈페이지에 따로 나와 있나요?\r\n아니요.\r\n현재 홈페이지를 통해서는 접수 받지 않고 있습니다. 제가 이메일 주소를 문자로 보내드렸으니 확인하시고 해당 이메일 주소나 IP 주소를 이용해 주세요.\r\n아까 보이스피싱 전화 받으셨다고 하셨는데, 1점, 7점 이런 식으로 웹사이트 주소를 말씀하셨나요?\r\n아니면 링크를 보셨나요?\r\n사기꾼들이 전화해서 URL을 알려줬고, 제가 적어놨거든요.\r\n그 URL 주소를 기재해서 접수해 주시면 됩니다.\r\n아, 네, 알겠습니다.\r\n네, 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "검찰",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "f89db7764740936342d57564135da7928da677f9ece92608e447e802ba915e73",
+        "normalized_content_hash_sha256": "9f8f6ed387e04825eaa34f45a5211fc57fd7ab10dcfd5ce30a6ee4afa17d2f4c",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-60UEke6N",
+      "source_id": "60UEke6N",
+      "source_set": 3,
+      "source_file": "60UEke6N.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2451 상담센터 김민지입니다.\r\n안녕하세요?\r\n네, 사실 제가 계속해서 문자 메시지를 받고 있는데, SKT에 문의했더니 특정 앱을 설치하라고 안내를 받았습니다.\r\n어떤 앱을 설치해야 하는 건가요?\r\n광고 차단 앱인가요?\r\n네, 선생님께서 원치 않는 광고성 메시지를 받으셨을 때 저희 기관에 스팸으로 신고하실 수 있습니다.\r\n총 4가지 신고 방법이 있는데, 제가 문자로 안내해 드릴 테니 편하신 방법으로 신고해 주시면 됩니다.\r\n혹시 계속해서 휴식을 취하라는 내용의 문자가 오는데, 그것도 신고하면 되는 건가요?\r\n네, 맞습니다.\r\n선생님께서 원치 않는 광고성 정보를 계속 받으신다면, 제가 보내드린 방법들을 참고하셔서 신고해 주시면 저희 기관에서 담당 조사관을 배정하여 조사를 진행하고, 법 위반 사실이 확인될 경우 처벌이 이루어집니다.\r\n하루에 12시쯤 계속 문자 메시지가 오는데, 계속 신고해도 되는 건가요?\r\n네, 다른 번호에서 스팸 문자를 받고 계시다면 해당 내용을 신고해 주시면 됩니다.\r\n아, 네, 감사합니다.\r\n혹시 간단한 부탁 하나 드려도 될까요?\r\n네.\r\n저희 2451 상담센터에서 6월 말에 고객 만족도 조사를 진행할 예정입니다.\r\n혹시 잠시 시간 괜찮으시다면 전화 설문에 응해주실 수 있으실까요?\r\n고객 만족도 조사 관련 문자를 다시 한번 남겨드리겠습니다.\r\n네, 감사합니다.\r\n네, 잘 들었습니다.\r\n다음 통화는 여기서 종료하겠습니다.",
+      "matched_keywords": [
+        "앱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "007b902afb924a5baaa783c551d98c9f408bbaadc9a5f54ff555494162bd8f27",
+        "normalized_content_hash_sha256": "093ad7632b28993a756048e654d989208abecc56c265512876f16747485a2d37",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-64OuI8h8",
+      "source_id": "64OuI8h8",
+      "source_set": 3,
+      "source_file": "64OuI8h8.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2451 상담센터입니다.\r\n네, 여보세요?\r\n네, 예, 저희는 금융기관입니다.\r\n네, 예, 금융기관 서비스 관련 데이터베이스가 해킹을 당해서 랜섬웨어 공격을 말씀하시는 건가요?\r\n랜섬웨어는 아니고요.\r\n랜섬웨어로 추정됩니다.\r\n지금 현재 파악 중입니다.\r\n랜섬웨어요?\r\n네.\r\n우선 랜섬웨어의 경우, 기업의 경우에는 반드시 신고 의무가 있습니다.\r\n그렇게 되면 침해사고 신고 의무에 따라 정보통신망 이용촉진 및 정보보호 등에 관한 법률에 의거하여 신고를 하셔야 하고요.\r\n신고를 혹시 안 하시면 제76조 과태료에 따라 1천만 원 이하의 과태료가 부과될 수 있으니 저희 인터넷 안전망 사이트로 접속하셔서 인터넷 안전망을 검색하시면 저희 엠큐에 운영하는 안전망 사이트가 뜹니다.\r\n거기에 기업 신고를 하시면 됩니다.\r\n주말에도 저희들이 지원이나 신고 사항이 될까요?\r\n우선 신고는 먼저 하시고 저희가 기업 지원 등에 대해 신고를 하시면 아마 다시 연락이 갈 것 같습니다.\r\n우선 복구 방법 같은 경우에는\r\n우선은 저희가 기본적으로 안내해 드리는 사이트들이 있습니다.\r\n우선 저희 안전망에서도 복구 및 대응 방법이 나와있고,\r\n그리고 저희가 주로 노모랜섬이라는 해외에서 운영하는 사이트를 알려드리고 있습니다.\r\n네, 여기에 복구 툴이 있는지 확인을 해보셔야 될 것 같습니다.\r\n현재는 지금 랜섬웨어인지 IDC 직원들과 파악 중에 있습니다.\r\n그러세요.\r\n우선은 혹시 모르니 신고는 하시고, 지금은 주말이기도 하고요.\r\n평일에 한번 다시 정확하게 판단이 되면 그때 다시 연락을 하시면 되실 것 같습니다.\r\n우선 제가 랜섬웨어 기준으로 안내드렸습니다.\r\n알겠습니다.\r\n민원도 접수해 주셨습니다.\r\n네.",
+      "matched_keywords": [
+        "금융",
+        "해킹"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "d9b800d3f5c24e1c05ef582d3290d9d508a1af538b8f3bcaf332530ef72dd711",
+        "normalized_content_hash_sha256": "ab40618d4ea43cd6c6bc392858c8f7a3e6e182ce28c09e1251a04c12e7710d27",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-65R9nL9f",
+      "source_id": "65R9nL9f",
+      "source_set": 3,
+      "source_file": "65R9nL9f.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n미소 상담센터 박입니다.\r\n아, 네.\r\n그 건축물 허가 신청서가 도착했는데요, 네.\r\n그, 금액이 얼마인지, 잠시만요.\r\n결제 완료되었다고 연락이 왔는데, 네.\r\n그 전화를 다시 걸었더니, 네.\r\n그 웹사이트 얘기를 하셔서 웹사이트에 접속했는데, 네.\r\n웹사이트가 그 URL, 웹사이트를 찾을 수 없다는 메시지가 나왔어요.\r\n고객님, 우선 URL을 입력하신 건가요?\r\n아니요.\r\nURL을 입력한 게 아니라, 이제 수사를 했는데, 그분이 뭐 어떤 웹사이트를 검색해 보라고 하더라고요.\r\n네.\r\n고객님, 그러면 이건 이제 고객님께 결제 완료되었다는 가짜 문자 메시지를 보내는 사칭 문자예요.\r\n통화 중에 주민등록번호를 말씀하셨다거나, 휴대폰에 프로그램을 설치하셨다거나 그런 부분이 있을 때 문제가 될 수 있는 부분인데요.\r\n혹시 그런 부분이 있으세요?\r\n그런 부분은 없어요.\r\n그런 부분이 아니라면 고객님 피해로 이어지는 건 아니니까 걱정하지 않으셔도 되고요.\r\n모르는 번호로 고객님께 전화나 문자가 또 올 수 있으니 이런 부분은 주의해 주시면 될 것 같습니다.\r\n아, 네, 네.\r\n감사합니다.\r\n크게 걱정하지 않으셔도 됩니다.\r\n고객님.\r\n그 웹사이트에 접속한 것만으로는 그게 아닌가요?\r\n혹시 걱정이 되시면은요.\r\n고객님께서 휴대폰에서 V3나 알약 같은 백신 프로그램으로 휴대폰 점검을 한번 해 주시면 될 것 같습니다.\r\n다른 다른 건 뭐 딱히 걸릴 게 없는 건가요?\r\n고객님께서 개인정보를 따로 말씀하신 부분은 없으시고, 휴대폰에 프로그램을 설치하신 부분은 아니신데, 이제 클릭하신 부분으로 좀 죄송합니다.\r\n클릭하신 부분으로 연결된다고 하시니까, 네.\r\n백신 프로그램으로 점검 한번 해 보시라고 말씀드리는 겁니다.\r\n아, 그러면은 V3라는 프로그램을 설치하는 건가요?\r\n네. V3나 알약으로 휴대폰 점검 한번 해 주시면 되겠습니다.\r\n아.\r\n아, 네, 네, 네, 네, 네.\r\n아, 네, 감사합니다.\r\n네, 고객님, 저희가 6월 말에 고객 만족도 조사를 하고 있는 부분이 있는데요.\r\n혹시 고객님 통화 괜찮으시면 그때 조사에 1번 참여해 주실 수 있으실까요?\r\n아, 네, 네, 네.\r\n알겠습니다.\r\n네, 관련 내용은 지금 전화 드린 번호로 제가 문자 메시지로 내용 안내해 드리겠습니다.\r\n아, 네, 알겠습니다.\r\n네, 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "64cf0a8d467cb77f9f8ed531f4d25b16d53d5ff7ecc4b6eca2757b5caed895a6",
+        "normalized_content_hash_sha256": "2028d52ed4fda4107f676259527297f307f7e0b267507427618e95def826a170",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-665bSuHR",
+      "source_id": "665bSuHR",
+      "source_set": 3,
+      "source_file": "665bSuHR.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까 상담센터입니다.\r\n네, 안녕하세요.\r\n전화를 한 번 받았는데 그래서 여기로 전화해서 신고를 한번 하라고 말씀하시더라고요.\r\n아, 그러셨어요?\r\n혹시 통화하시면서 개인 정보 말씀하신 거 없으셨어요?\r\n많아요.\r\n어떤 거 말씀하셨나요?\r\n운전면허증 사진을 찍어서 보내달라고 해서 지금 운전면허증 불신고하고 재발급도 해놨고요.\r\n아, 네.\r\n그러면 회사 이름 말씀하셨고요.\r\n다니는 회사 이름.\r\n네.\r\n그리고 계좌 두 개 말씀하셨고요.\r\n계좌번호 두 개 말씀해 주셨어요?\r\n그리고 신분증을 주셨으니까 당연히 주민번호도 다 노출됐고요.\r\n네, 네, 네.\r\n네, 선생님 지금 면허증 분실 신고하신 건 잘하셨고요.\r\n이제 그거랑 별개로 선생님 말씀하신 것처럼 주민등록번호가 노출이 되셨고 선생님 명의 도용으로 카드 발급이나 통장 개설, 뭐 대출 같은 거 발생시킬 수가 있어요.\r\n그래서 그거 조치하시는 방법을 제가 명의 도용 예방법이라고 해서 문자 하나 보내드렸거든요.\r\n그거 확인하시고 그대로 진행을 해주셔야 좀 피해가 발생하시더라도 줄이실 수 있습니다.\r\n선생님.\r\n명의 예방법?\r\n총 5가지 방법 안내가 되어 있으세요.\r\n예.\r\n그거 하나도 빼지 마시고 그대로 진행 한번 해주세요.\r\n아, 이거 다 진행을 해야 돼요?\r\n이거 인터넷으로 다 해야 되죠?\r\n집에 있는 PC로요?\r\n공인인증서도 아마 필요하실 수 있어요.\r\n그리고 맨 마지막에 5번 같은 경우는 선생님 비용이 발생하시니까 그거는 선생님께서 선택 사항으로 하시고 1번부터 4번까지는 꼭 진행해 주세요.\r\n그러면 이걸로 만약에 명의 도용되면 이걸 닿으면 명의 도용은 절대 안 되나요?\r\n이거 하시면은 이걸로 그나마 좀 피해를 드려보실 수가 있으세요.\r\n명의 도용을 막는 거니까요.\r\n죄송한데 제 신분증 갖고 받을 수 있나요?\r\n그럼요.\r\n받을 수 있어요.\r\n근데 이제 다만 지금 분실 신고해 놓으셨기 때문에 그거는 불가능하실 수 있는데 주민등록번호를 알고 있잖아요.\r\n그 사람들이 주민등록번호 뒷자리까지만 알아도 그거를 이용할 수 있는 우려가 있거든요.\r\n선생님 그래서 제가 문자 안내드린 거 전부 진행을 한번 해주세요.\r\n네, 알겠습니다.\r\n수고하세요.",
+      "matched_keywords": [
+        "계좌",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "7b0d39a80253b7976edb8a47f60dba0f20e073f57c71671d68935fe6a5c6d2cd",
+        "normalized_content_hash_sha256": "2bc6df29ef2266edbd2582a658d3509fd80c386bb0d285689e17ebdb42d151d8",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-66J6cpOh",
+      "source_id": "66J6cpOh",
+      "source_set": 3,
+      "source_file": "66J6cpOh.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네.\n수고하십니다.\n안녕하세요.\n제가 폰헙 문자를 잘못 눌렀는데요.\n금요일 오후에 눌렀는데 별일 없다고 생각하고 있다가 오늘 저녁에 좀 확인해보니\n이상한 점이 있을 것 같아서 전화 한번 드렸거든요.\n택배 관련한 내용일까요?\n네 네.\n현재 사용하시는 휴대폰에만 나타나세요?\n연락 주신 번호로 종합적인 대처 방법 5가지 문자를 보내드렸습니다.\n이 문자 내용 1번부터 5번 모두 따라해 주시면 됩니다.\n아, 그 정도만 하면 될까요?\n문자 내용대로 진행해 주시면 됩니다.\n다른 조치는 필요 없는 게\n이게 종합적인 대처 방법이에요.\n아, 그라믄요?\n다른 궁금한 점은 없으신가요?\n여보세요?\n아, 그래서 제가 그 내용을 다 확인하지 못했는데 저기 5가지 내용 중에 특별히 문제가 없는 건가요?\n아니요.\n그 내용을 모두 따라 하셔야 되는 거예요.\n잠시만요, 잠시만요 제가 한번 확인해볼 테니까 끊지 말고 기다려주세요.\n휴대폰에서 할 수 있는 건 그 내용뿐이에요?\n그렇습니다, 그게 폰헙 관련 종합 대처 방법이라 그 내용만 따라 하시면 됩니다.\n그럼 금융 정보나 신용카드, 금융기관에 연락할 필요는 없나요?\n공인인증서가 있다면 폐기하고 재발급 받으시면 됩니다.\n은행이나 다른 곳에 전화할 필요는 없어요.\n네, 안내해 드린 문자 내용대로 진행하시면 됩니다.\n네, 알겠습니다.\n네, 민원 담당은 아닙니다.\n네, 감사합니다.\n감사합니다.",
+      "matched_keywords": [
+        "금융",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "c389b49839d414db8f1b1f1b07fe29acc4e92fe3ce51cbaace9607ec962c33ec",
+        "normalized_content_hash_sha256": "4933851684ae3d953b992c49072013edd5a8efcaaf13ef5f7511c43a5cec677e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-73qQVTvM",
+      "source_id": "73qQVTvM",
+      "source_set": 3,
+      "source_file": "73qQVTvM.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 2451 상담센터 박서준입니다.\r\n네, 궁금한 점이 있어서 연락드렸습니다.\r\n피해자분들이 계속해서 문자 메시지를 보내오시는 이유가 궁금합니다.\r\n그것이 혹시 제 연락처를 어떻게 알게 된 건지 알고 싶습니다.\r\n그 부분은 직접 정보 수집 경로에 대해 문의해 보시는 것이 좋겠습니다.\r\n그것은 지역구 활동과 관련해서 문자 메시지로 전달되는 내용인 것으로 알고 있습니다.\r\n선거관리위원회에 문의해 보시는 것이 정확할 겁니다.\r\n아니, 제가 왜 그 지역에 사는 것을 알고 문자를 보내는지 이해가 안 되네요.\r\n그 번호는 누구나 임의로 사용할 수 있는 것 아닌가요?\r\n선생님, 개인 정보를 어떤 경로로 수집했는지 정보 출처에 대해서는 해당 국회의원 사무실에 직접 문의해 보시는 것이 좋습니다.\r\n그렇다면 거기서 명확한 답변을 얻지 못하면, 그것은 불법에 해당할 수 있나요?\r\n정보 수집 출처를 공개하지 않는다면, 그 내용에 대해서는 위법에 해당될 수 있으므로, 다시 한번 저희에게 신고 접수 내용에 대해 문의해 보실 수 있습니다.\r\n일반적으로 선거 운동이나 의정 활동 보고는 문자 메시지로 전달될 수 있도록 허용하고 있습니다.\r\n주말 선거 운동과 관련된 내용이므로, 해당 부서에 문의해 보시는 것이 좋겠습니다.\r\n이것은 선거 운동과 관련된 내용이 아니라 의정 활동에 관한 것입니다.\r\n선생님.\r\n의정 활동이라고요?\r\n사무소 개소식 등을 문자 메시지로 보내는 것도 의정 활동에 해당하나요?\r\n그 부분에 대한 판단은 제가 내릴 수 없으니, 선거관리위원회에 문의해 보시는 것이 좋습니다.\r\n네, 알겠습니다.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "04f83932ffbdf1bc0a5715b4614022718741de4808eb97686241dfbef29927a2",
+        "normalized_content_hash_sha256": "1c8ab8ae57353125b9f357beeb11ddef86b1356273f2d576124e356566455f71",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-766EsCTl",
+      "source_id": "766EsCTl",
+      "source_set": 3,
+      "source_file": "766EsCTl.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\n혹시 문의 드려도 될까요?\n어제 국민건강검진 결과 안내 문자를 받고 링크를 통해 전화번호, 생년월일, 이름을 입력했었거든요.\n안타깝게도 얼마 전 건강검진 결과와 관련해서 의심 없이 정보를 입력했는데, 경찰에 문의해보니 스팸 문자였더라고요.\n혹시 해당 링크를 클릭하셨다면 적절한 조치가 필요합니다.\n혹시 현재 사용하시는 휴대폰은 삼성 폰인가요?\n애플 폰인가요?\n삼성 폰을 사용하고 있습니다.\n지금 바로 전화 주시면 조치 방법을 문자 메시지로 보내드리겠습니다.\n문자 내용 참고하셔서 안내된 대로 신속하게 조치해 주시면 됩니다.\n혹시 혼자서 어려우시다면 주변 분들의 도움을 받아 진행해 주시면 됩니다.\n오늘 바로 처리해야 하나요?\n최대한 빨리 처리하시는 것이 좋습니다.\n네.\n감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "e42f0af411a20ecb8ba5479a67bec3f0e1f78dabf1bba801f9bcb62d223db9fa",
+        "normalized_content_hash_sha256": "42e023344ee47e20f067cd38b264da473d860e2e32f90a2c1dd1ac004f5fa592",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-78Wxe9ph",
+      "source_id": "78Wxe9ph",
+      "source_set": 3,
+      "source_file": "78Wxe9ph.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요?\n행복 상담센터 김재기입니다.\n안녕하세요.\n네, 안녕하세요.\n제가 방금 문자를 받았는데, 아, 네네.\n제가 그냥 들어갔거든요.\n아, 그러셨습니까?\n네.\n카카오톡 친구 추가로 쓰더라고요.\n아, 선생님 혹시 휴대폰이 안드로이드 휴대폰이세요?\n아이폰이세요?\n안드로이드요.\n안드로이드 고객님, 그 스미싱입니다.\n지금 빨리 대처하셔야 돼요.\n제가 지금 문자 하나 발송을 해드릴 건데요.\n저랑 전화 끊으시면 그 문자가 오고요.\n선생님 사용하고 계신 통신사에 있죠?\n거기다 제일 먼저 3번, 4번에 써있는 서비스부터 신청하시고 나머지 조치하십시오.\n문자가 대량 발송될 거예요.\n선생님 전화번호로.\n혹시 휴대폰 초기화도 해야 돼요?\n그거는 선택사항이시고요.\n휴대폰보다는 전화번호가 노출이 되시는 게 더 큰 거예요.\n번호가 노출이 되나요?\n그러니까 이게 광고 문자가 계속 날아오나요?\n아니요.\n선생님 전화번호로 다른 사람한테 그렇게 가요.\n이거 3분 4분이요?\n네?\n네, 맞아요.\n선생님 그거를 선생님 사용하기 통신사 있죠?\n거기다 먼저 빨리 전화하셔 가지고요.\n그거부터 하십시오.\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "6338596a88db4fa009890d8df634ba3e0d622491152f225be052eab3329d2e60",
+        "normalized_content_hash_sha256": "8b4d050de1ee700c1f5a77e8f10eb48fc2f9b3c0941d4ecaad7763bb90b7904c",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-83xGaISP",
+      "source_id": "83xGaISP",
+      "source_set": 3,
+      "source_file": "83xGaISP.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "128 상담센터 박서준입니다.\r\n안녕하세요.\r\n저는 방글라데시에서 온 외국인입니다.\r\n한국에 와서 살게 된 지 13년 정도 되었고, 결혼해서 아내와 함께 왔습니다.\r\n그런데 아내가 지금 경찰서에 가서 지난달 20일에 신고를 하고 경찰서에 있습니다.\r\n아내와 아직 연락이 안 되는데, 다른 사람에게 들으니 아내가 제가 예전에 만났던 여자친구와의 사진을 가지고 경찰에 신고한 것 같아요.\r\n그래서 그 사진이 다른 사람들에게 계속 공유되면서 소문이 많이 퍼지고 있습니다.\r\n선생님, 이건 저희 쪽 128에서 신고가 되는 게 아니고요.\r\n경찰 기관으로 신고가 되는지 확인해 보셔야 할 것 같습니다.\r\n사이바라, 사이바라 아니에요?\r\n네.\r\n저희는 사이버 수사대가 아닙니다.\r\n경찰 기관이 아닙니다.\r\n그런데 저희는…\r\n아, 그러면 사이바로 어디에 있나요?\r\n광고가 페이스북에 올라왔습니다.\r\n아, 네.\r\n그러니까 예전에 아내가 올린 사진이죠.\r\n선생님.\r\n아니, 아내가 아니라 다른 사람입니다.\r\n다른 사람이…\r\n예.\r\n이건 경찰 기관으로 문의해 보시는 게 좋을 것 같습니다.\r\n사이바 번호는 얼마인가요?\r\n242, 242, 242, 242. 알겠습니다.\r\n고맙습니다.",
+      "matched_keywords": [
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "453a3fd27ffa7a29202108f76ca427d9c6d44e2f018baecb075b6811eef3fdac",
+        "normalized_content_hash_sha256": "b6740da2d629d4c8d35b73914f88352414fcfb68f84de50e7c220a5960726c8e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-84kg71iT",
+      "source_id": "84kg71iT",
+      "source_set": 3,
+      "source_file": "84kg71iT.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담센터 박서준입니다.\n제 전화번호가 불법적으로 사용되어 여러 사람들에게 계속해서 문자가 전송되는 것 같아서요.\n최근에 인증번호를 누군가에게 공유했거나 건강검진, 택배 관련 문자를 받고 링크를 클릭한 적 있으신가요?\n아니요.\n그런 적은 없었습니다.\n그렇다면 휴대폰에 악성 프로그램이 감염되어 발생하는 스미싱 피해일 가능성도 있는데, 그럴 가능성은 없어 보이네요.\n누군가 선생님의 번호를 이용하여 웹사이트에서 문자를 보내는 것 같은데, 해당 웹사이트에서 문자 전송을 차단하는 방법은 가입하신 통신사에 전화하셔서 번호 도용 차단 서비스라는 무료 부가 서비스를 이용하시면 됩니다.\n저도 이용했는데, 2, 3일 정도 소요된다고 합니다.\n네, 그 시간 소요는 어떻게 해결할 수 있나요, 선생님?\n우리나라에는 웹사이트 문자 서비스를 제공하는 업체가 3천 명이 넘습니다.\n통신사에서 해당 업체들에 연락하여 선생님의 번호로 문자 전송을 중단해달라고 요청하는 데 시간이 걸리는 것입니다.\n따라서 시간 소요를 감안하셔야 합니다.\n선생님.\n사람들이 항의하는 연락이 오면, 저도 번호가 도용당했다고 말씀드리거나 그냥 무시하는 수밖에 없습니다.\n지금 수백 통의 문자 메시지와 전화가 계속 오고 있어서 이런 대응이 맞나요?\n네, 많습니다.\n저희는 스미싱 피해 관련 상담을 자주 받기 때문에 많은 편이라고 생각합니다.\n하지만 선생님이 스미싱 문자를 받고 링크를 클릭하지 않으셨으니 휴대폰 바이러스 감염과는 관련이 없고, 악의적인 사람이 웹상에서 문자를 보내는 사이트(예: 문자나라, 뿌리요 등)를 이용하는 것 같습니다.\n그것을 차단하는 것이 중요하므로 시간 소요를 감안하셔야 합니다.\n네.\n알겠습니다.\n감사합니다.\n감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "134efc919b9d9ae04bb78e9f24d2ab1cb8ea70fd430feb29b37bea158f541e08",
+        "normalized_content_hash_sha256": "8e6f5e8160a05ff4dbdefd0653d5dd8e6682cd79d151e4760cf003cb47450e23",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-84p9RJXJ",
+      "source_id": "84p9RJXJ",
+      "source_set": 3,
+      "source_file": "84p9RJXJ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n푸른 상담센터 박서준입니다.\n네, 안녕하세요.\n혹시 여쭤볼 게 있는데요.\n제 휴대폰 번호가 스팸 신고로 정지됐더라고요.\n네.\n그런데 제가 문자를 보낸 기억은 전혀 없는데.\n누군가 신고해서 그런 건지, 정확히 어떤 이유인지 알 수 있을까요?\n누가 신고했는지 그 정보는 저희가 알려드릴 수 없습니다.\n고객님.\n정말요?\n근데 제가 문자를 하나도 보내지 않았는데, 왜 이렇게 갑자기 서비스가 정지되는 건가요?\n음, 저희 쪽에서 정지하는 경우도 있고, 통신사에서 자체적으로 하는 경우도 있습니다.\n지금 고객님 010-****-**** 번호가 신고되었다는 건 맞나요?\n네, 확인해 보겠습니다.\n잠시만 기다려 주십시오.\n감사합니다.\n고객님, 현재 전산 조회가 지연되고 있어서, 조회가 완료되는 대로 다시 연락드리셔도 괜찮으실까요?\n네, 그렇게 해주시면 감사하겠습니다.\n얼마나 걸릴까요?\n한 20분 정도 더 기다려 주시면 될 것 같습니다.\n아, 네, 그렇게 부탁드리겠습니다.\n아니, 정말 황당해서요. 제가 문자를 하나도 보낸 적이 없는데.\n이번 달에 문자를 딱 두 통만 받았는데, 그것도 스팸 메일이었습니다.\n그래서 제가 바로 신고하고, 앞으로는 문자 보내지 말라고 요청했거든요. 한 번 보낸 게 전부인데.\n그런데 제가 스팸 신고를 당했다니, 너무 당황스럽습니다.\n통신사에는 이미 확인해보셨나요?\n네, 통신사 측에서도 인터넷 진흥원에서 신고가 들어와서 서비스가 정지되었다고 하더군요.\n저희는 스팸 신고를 받으면 통신사와 실시간으로 차단 목록을 공유하고 있습니다.\n그래서 정확한 내용은 제가 전산 조회를 해봐야겠지만, 통신사에서 자체적으로 차단하는 경우가 있습니다.\n근데 제가 통신사에서 확인해보니 문자를 두 통밖에 보내지 않았다는 내용이 딱 보이는데.\n네?\n왜냐하면 저희도 요금 청구 내역을 확인하면 문자가 발송된 기록이 나타나거든요.\n갑자기 서비스가 정지된 건데, 정말 황당합니다. 아침에 전화가 오는데 전화를 못 받을 정도예요.\n제가 두 개의 휴대폰을 사용하고 있는데, 한 개가 갑자기 정지되어 버렸습니다.\n정말 답답하죠.\n최근에 어떤 문자 메시지에 포함된 링크를 클릭하거나 하신 적 없으신가요?\n아니요, 그런 적은 없습니다.\n문자가 왔었는데, 어떤 주식 투자 관련 내용이었고, 스팸이라고 신고했었습니다.\n그 이후로 또 문자가 오더라고요.\n그래서 제가 다시 문자 보내지 말라고 신고하겠다고 경고했더니, 또 문자가 온 겁니다.\n문자 보내시면 신고하겠다고요.\n그 문자를 한 통 보냈는데, 그게 신고된 건가요?\n네, 고객님, 제가 지금 1번의 정산 조회를 진행하고, 최대한 빨리 다시 연락드리겠습니다.\n네, 부탁드립니다.\n네, 네.",
+      "matched_keywords": [
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "643369b975da50594443c433059d7fa08027a6d3ef1b7903765388d9853dce30",
+        "normalized_content_hash_sha256": "42343c496efc087cebf9a0f516ae4e056748f235cf47b9bb6296e28657924b1b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-85r9KSDE",
+      "source_id": "85r9KSDE",
+      "source_set": 3,
+      "source_file": "85r9KSDE.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n에이스 상담팀 박서준입니다.\n수고하십니다.\n문의 좀 드릴게요.\n제가 오늘 아침에 문자 메시지를 확인했는데 개인 문자인데, 휴대폰 문자인데 국민연금 지원 안내문이라고 그렇게 문자를 제가 받았습니다. 그게 아침에 제가 봤는데 새벽 3시에 그런 개인 휴대폰으로 문자가 와있어서 제가\n월요일에 그냥 링크를 일단 열었었거든요.\n링크를 열었다가 그냥 아차 싶어서 제가 번호를 삭제하고 오늘 국민연금공단에 문의를 넣어봤거든요.\n그랬더니 저한테 그런 문자를 보내는 게 없다고.\n그리고 국민연금 같은 경우는 매월 25일에 제가 지급을 받으면서 카톡으로 매일 지급하고 카톡으로 알림이 오거든요.\n그래서 받을 날짜도 아니긴 의아해 하면서도 제가 또 그거를 링크를 일단은 열었다가 아무것도 안 하고 바로 나와서 휴대폰 번호를 삭제해 버렸어요.\n최근에 이제 발생하고 있는 피싱 문자라고 하는 문자인 것 같고요.\n일단 이제 URL 주소를 클릭하셨다면 악성 코드에 감염될 우려가 있거든요.\n그래서 몇 가지 대처하실 수 있는 방법을 좀 보내드릴 건데요.\n선생님 휴대폰 기종이 아이폰입니까?\n갤럭시입니까?\n아이폰입니다.\n그럼 제가 아이폰용의 대처 방법을 지금 전화주신 번호로 문자 보내드렸으니까요.\n이 내용 보시고 조치해 두시면 되겠습니다.\n혹시 링크를 열었던 것만으로 제가 불이익을 당할 수도 있는 부분이 있을까요?\n그럴 수도 있죠.\n확답은 저희도 못 드리고 그런 우려가 있기 때문에 조치하시는 방법을 보내드리는 겁니다.\n그런데 제가 가능할지 모르겠네요.\n꼭 하셔야 돼요.\n그리고 설명을 읽어보시면 어렵지 않으니까 보시고 따라서 해주시면 됩니다.\n그걸 따라서 하면 불이익을 당할 거에 대한 대비가 중요하나요?\n네, 그럴 수 있습니다.\n더 안전하겠죠.\n아, 그런가요?\n만약에 불이익을 당할 수 있다면 어떤… 그러니까 예를 들면 선생님 번호가 도용되어 광고 정보로 이용이 된다라거나 그렇게 되면 휴대폰이 정지가 될 수도 있고요.\n또 수수료 결제와 같은 금전적인 피해도 발생할 수 있습니다.\n아, 네네.\n알겠습니다.\n감사합니다.\n김민지였습니다.",
+      "matched_keywords": [
+        "피싱",
+        "수수료",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "ddf99791917e8334a106b6b38832be4e70fe6d73ff942cab3d5c19a5180c5f05",
+        "normalized_content_hash_sha256": "6816d80fa738690ac581c459114f782ce3c0e8daa954a24c7a63cd88457eace7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-87iePafQ",
+      "source_id": "87iePafQ",
+      "source_set": 3,
+      "source_file": "87iePafQ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 어떤 점을 도와드릴까요?\r\n네, 제가 인터넷에서 물건을 구매했는데, 판매자가 계속 현금 거래를 제안해서 인터넷에 신고를 했습니다.\r\n웹사이트 주소를 알려줬는데, '희망가득 빌라'라고 표시되어 롯데온과 비슷하게 만들어졌지만 약간 달랐고, 롯데온 아이디와 비밀번호를 입력했는데 작동하지 않았습니다. 그래서 새로 가입을 했거든요.\r\n어쨌든 제 정보가 그곳에 저장된 상태라, 그 사이트를 여기 신고하는 것이 맞는지 궁금합니다. 그 웹사이트가 지금 피싱 사이트처럼 보이거든요.\r\n신문 기사를 찾아보니 롯데온을 모방한 피싱 사이트들이 많이 만들어져서 피싱을 유도한다는 내용이 있었고, 혹시 피싱 사이트로 신고를 원하시면 제가 정보 문자 메시지를 보내드릴 수 있습니다.\r\n사이트를 완전히 차단할 수는 없지만, 저희가 데이터베이스에 등록해두고 차단하는 부분이 있습니다.\r\n신고를 원하시면 신고 방법을 문자 메시지로 보내드릴게요.\r\n선생님.\r\n그리고 혹시 개인 정보 유출이 걱정되신다면, 저희가 5가지 명의도용 예방 방법을 담은 문자 메시지를 보내드립니다.\r\n저희가 국민건강보험공단에서 5가지 예방 방법을 담은 문자 메시지를 이미 보내드렸고요.\r\n혹시 그 사이트에 접속해서 불안하시면, 안드로이드 삼성폰을 사용하시나요?\r\n네, 안드로이드입니다.\r\n그럼 알약이나 V3 같은 무료 백신 검사 프로그램을 이용해서 바이러스 검사를 한번 해보시는 것이 좋겠습니다.\r\n아, 이걸 실행해봐야 하는 건가요?\r\n네, 그렇게 하는 것이 더 좋을 것 같습니다.\r\n아, 네.\r\n잘 알겠습니다. 감사합니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "피싱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "6049428feabe931046b62ba8a3665a8b22ed7fe742af84fe58c625d4e4b6cd9c",
+        "normalized_content_hash_sha256": "a22fe8eca834d1a0b3b51460a225013b43c567558b2eeaf9db855cf87305b747",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-94xHHOWc",
+      "source_id": "94xHHOWc",
+      "source_set": 3,
+      "source_file": "94xHHOWc.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n연락처 상담센터 박서준입니다.\r\n어 제가 그 스팸 문자를 받았는데요.\r\n이거 신고를 하려면 어떻게 해야 되는가 싶어가지고 뭐 내용이 뭐 층간소음 관련 내용은 아니셨죠?\r\n어 네 금액 네 어떤 그 돈이 빠져나간다고 뭐 해외 발신 오신 거예요 선생님?\r\n그 다음에 문자가?\r\n네네\r\n혹시 그 문자에 남아있는 번호로는 전화 안 하셨죠?\r\n선생님.\r\n전화해봤어요.\r\n하셔가지고 따로 개인정보 말씀하신 건 없으시고요?\r\n네네.\r\n일단은 저희 기관 같은 경우에는 사기라든지 대출 관련된 광고청 전부에서는 신고 가능한데 이런 해외 발신으로는 선생님 말씀하시는 흔히 말하는 피싱 스미싱이나 사칭 문자 같은 경우에는 원칙적으로 수사 권한이 필요하다 보니까 만약에 신고 방법이라든지 신고를 원하시면 문의를 먼저 해주셔야 되는데\r\n번호가 2451번 국번 없이 3217번이라고 있어요.\r\n그쪽으로 한번 신고 가능한지 문의를 해보시는 게 맞으실 것 같아요.\r\n죄송한데 번호 한 번만 다시 불러주시겠어요?\r\n국번 없이 2451번이요.\r\n2451요?\r\n네 2451번이요.\r\n아 네네 알겠습니다.\r\n감사합니다.\r\n네 감사합니다.",
+      "matched_keywords": [
+        "피싱",
+        "스미싱",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "b18986fd537c98a124ca2f33bb0eb6d8813bd2be99eb2301999836dbfc6e9bd9",
+        "normalized_content_hash_sha256": "01800789452964dc22c210f068c944258616cde9dfd374eeffd46be6d63e6c82",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A03grnjs",
+      "source_id": "A03grnjs",
+      "source_set": 3,
+      "source_file": "A03grnjs.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\n상담 전문가입니다.\n궁금한 점이 있으신가요?\n여기서 하는 게 맞는지 잘 모르겠는데, 주식 투자하라고 계속 전화가 오는데, 뭔가 정상적인 투자는 아닌 것 같아요.\n제가 전화하지 말라고 했는데 그냥 전화를 끊어버려서, 제가 스팸인 걸 알고 다시 전화를 걸었어요.\n전화하지 말라고 하니, 오히려 뭐라고 하면서 욕을 하고, 카톡도 갑자기 보내면서 제 이름을 언급하면서 카톡을 보내는 거예요.\n이런 걸 어디에 신고해야 하나요?\n안녕하세요. 저희 기관은 수사기관이 아니어서, 불편하신 상황에 대한 직접적인 신고는 어렵습니다. 다만, 저희 기관에서는 영리 목적의 광고성 정보에 대해 동의 없이 전화나 문자가 오는 경우, 스팸 신고 방법을 안내해 드리고 있습니다.\n네.\n그럼 어떻게 해야 할까요?\n혹시 사용하시는 기기가 삼성폰인가요?\n아니요, 아이폰입니다.\n아이폰의 경우, 저희 불법 스팸 대응 센터 홈페이지나 앱을 통해 신고가 가능합니다.\n신고 방법을 문자로 보내드릴게요.\n다만, 주식 투자 자체가 보이스피싱이나 사기일 가능성이 높습니다.\n그러니 최대한 응답하지 않는 것이 안전합니다.\n혹시 사기성에 대해 신고를 원하시면, 경찰에 직접 신고하는 것이 가장 확실합니다.\n경찰에 신고하는 방법이 없다고요?\n경찰만이 이를 수사하고 처벌할 수 있습니다.\n그래서 신고를 원하시면 경찰에 정식으로 신고 의뢰를 하셔야 합니다.\n전화로 신고가 되나요?\n242 경찰청 콜센터로 가능한지는 다시 한번 확인해 보셔야 할 것 같습니다.\n242번이요?\n네. 경찰청 콜센터입니다.\n아, 여기한테 물어봐야 하나요?\n관련해서 스팸이 아니라, 받으신 사기성에 대한 신고를 원하시면 경찰 업무 문의를 해보셔야 합니다.\n저희는 광고 전화나 문자 수신 시 스팸 신고 방법을 안내해 드리고 있습니다.\n아, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "경찰",
+        "앱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "fc766be89ad2ec4880ee4c3668a5e673174e008141256da04c57a249020960ed",
+        "normalized_content_hash_sha256": "c4a13e7ae5d773e7d01628210fed7a54aadf68fa82b40d98846a61e5b2da75f7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A0bvailN",
+      "source_id": "A0bvailN",
+      "source_set": 3,
+      "source_file": "A0bvailN.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n별빛 상담센터 은가온입니다.\r\n제가 온라인으로 휴대폰으로 국민은행 예금망 대출 관련 상담을 받으려고 했는데.\r\n아직 돈 입금은 안 됐고, 일단 정보는 다 입력된 상태입니다.\r\n아, 그러셨군요.\r\n고객님, 우선 정보가 입력되었다는 건 혹시 휴대폰에 어떤 앱을 설치하신 적 있으세요?\r\n네.\r\n어떤 앱을 누르셨나요?\r\n어떤 정보를 입력하셨나요?\r\n주민등록번호, 직장 정보 같은 것들요.\r\n음.\r\n네, 그러셨군요.\r\n혹시 신분증 사진도 전송하셨나요?\r\n네, 신분증 사진을 보냈습니다.\r\n네, 다 하셨네요.\r\n고객님,\r\n우선은 그 앱을 삭제하셨죠?\r\n네, 네요.\r\n삭제했습니다.\r\n잘 하셨습니다.\r\n고객님, 그 앱은 안드로이드 앱이거든요.\r\n아.\r\n그냥 이렇게 생각하시면 됩니다.\r\n내가 그 앱을 어제 설치했다면, 오늘이 6월 2일이니까요.\r\n어제 6월 1일에 설치한 앱은 모두 삭제하시면 됩니다.\r\n전화랑 문자도요?\r\n아니요.\r\n그게 아니라 앱 말입니다.\r\n앱이요?\r\n그렇게 생각하시면 됩니다.\r\n일단은 제가 지금 문자로 고객님께 급하게 연락 드리는 겁니다.\r\n오늘이 금요일이라 이번 주말에 업무를 안 하기 때문에 오늘 빨리 조치하셔야 합니다.\r\n제가 지금 문자를 하나 보내드릴게요.\r\n그 문자에는 다섯 가지 내용이 담겨 있습니다.\r\n1번부터 5번까지요.\r\n그런데 1번, 2번, 3번은 정말 반드시 빨리 처리하셔야 합니다.\r\n왜냐하면 불법 대출, 보이스피싱 등에 고객님의 정보가 악용될 수 있기 때문입니다.\r\n그것을 막는 방법이 1, 2, 3번입니다.\r\n그것들을 처리하신 후에 고객님께서 보내주신 신분증은 분실 신고를 하시고 재발급을 받으셔야 합니다.\r\n그리고 휴대폰에 저장된 사진 중에서 고객님께서 보내주신 신분증 외에 다른 신분증이 있다면 그것도 분실 신고를 하시고 재발급을 받으세요.\r\n혹시 카드나 계좌 정보를 찍어둔 분들도 많습니다.\r\n그런 것들도 모두 노출되었다고 보시면 됩니다.\r\n그 앱은 고객님의 정보를 빼내려고 하는 것입니다.\r\n다른 앱은 절대 사용하지 마세요.\r\n신분증을 분실 신고하신 후, 혹시 카드나 계좌 정보를 찍어둔 것이 있다면 신분증 분실 신고와 함께 재발급을 받으시고, 카드는 정지시키세요.\r\n그다음으로,\r\n계좌는 은행에 연락하셔서 보이스피싱으로 인해 계좌 정보가 노출되었다고 말씀드리고 어떻게 해야 하는지 반드시 문의하셔야 합니다.\r\n지금 보이스피싱이 맞나요?\r\n맞습니다.\r\n대출은 전화로 진행하지 않습니다.\r\n우선,\r\n그다음으로 앱을 설치하고 주민등록번호를 요구하는 것은 매우 의심스럽습니다.\r\n개인정보 동의는 항상 명확하게 받아야 합니다.\r\n정상적인 절차라면.\r\n고객님께서 말씀하신 내용은 보이스피싱에 당하시는 경우와 같습니다.\r\n우선은 신속하게 조치하는 것이 중요합니다.\r\n알겠습니다.\r\n감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "계좌",
+        "앱",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "ded39b9e53e6caa36bd3006af91ceed34f9cfaab36a608e37b1e73e48c73fa66",
+        "normalized_content_hash_sha256": "737012b50e8f91a04f54f8d9a7c8f0098bab22601d5958572b46a7a3e1a99a92",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A2gHn01T",
+      "source_id": "A2gHn01T",
+      "source_set": 3,
+      "source_file": "A2gHn01T.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n429 상담팀 박서준입니다.\n안녕하세요.\n저희가 회사인데.\n전에 연락드렸던 담당자입니다.\n다전에 말씀드린 해외로 보내는 건 있는데.\n네.\n그것은 시간 설정이 야간 광고가 안 된다고 하는데.\n해외마다 시간대가 다르니까요.\n한국 시간을 기준으로 보내면 될까요?\n이게 조금 헷갈리네요.\n잠시만요.\n이런 문의가 있었는지 확인해 보겠습니다.\n제가 전달했던 FAQ 자료를 보면 해외, 국내로 나누지는 않고 문의 내용 중에 발송 시간인지 수신 시간인지 묻는 내용이 있습니다.\n그래서 이것은 수신자가 받는 시간을 의미한다고 되어 있습니다.\n그러니까 해외라면 저희 쪽에서 보내는 시간을 피해야 하는 게 아니라, 받는 시간이 이 시간과 달아야 한다는 걸로 이해하시면 될 것 같습니다.\n그럼 해외는 거기 시간에 맞춰서 다 보내야 하나요?\n그렇게 하시는 게 맞을 것 같습니다.\n아…\n그리고 해외 고객들은 수신 동의를 받는 것도 문제이고 다른 회사들은 어떻게 하는지 궁금합니다.\n음…\n한 번 더 궁금한 점이 있으시면 불법 스팸 대응센터 고객지원 게시판에 문의해보시는 것도 좋겠습니다.\n알겠습니다.\n감사합니다.\n고객지원 담당 박서준이었습니다.\n감사합니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "3d3abb1bedcb57dfe65d058c52a5ab4968fa46cfc474098d683e36486999c546",
+        "normalized_content_hash_sha256": "79295a206b46114ec2ab7984cb1412beda6ee2a2b3b1effe00ae8dd175490f0b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A2IUy2Ka",
+      "source_id": "A2IUy2Ka",
+      "source_set": 3,
+      "source_file": "A2IUy2Ka.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n3217 상담센터 강민지입니다.\r\n네, 수고하셨습니다.\r\n제가 지금 개인정보 침해가 걱정되는데요.\r\n네, 네이버에 대해 말씀해주세요.\r\n네, 네이버 계정이 지금 계속 사용되고 있거든요.\r\n제 소유로 그곳에서 탈퇴하고 싶은데 어떻게 해야 될지, 아니면 선생님, 그건 네이버 쪽으로 문의하셔야 하는데요.\r\n네이버에서\r\n답변이 없더라고요.\r\n그래서 또 확인해보니 이 번호가 나와서 전화를 드린 겁니다.\r\n저희는 이미 발생한 피해 이후에 대처할 수 있는 기관은 아니고요.\r\n선생님께서 어제 저희에게 상담하셔서 이 개인정보 보호 서비스 안내받으셨는데 혹시 거기에서는 네이버에 회원가입된 사항 확인이 되시고 탈퇴 가능 등으로 확인되지는 않으세요?\r\n잘 모르겠어요.\r\n지금 노트북을 켜려 하니까 저기 해킹된 것 같아서 캡처도 못하고 휴대폰은 전화밖에 안 되고 인터넷이 되지 않는 상황에서는 저희가 따로 뭘 어떻게 안내를 해드리기는 어려운데요.\r\n네이버 고객센터 측으로 조치 방법 등을 문의해보셔야 할 것 같아요.\r\n부서 연결이 잘 안되고요.\r\n상황이 뭐 242 경찰청으로 안내를 시켜주더라고요.\r\n그러니까 자기네들은 하는 방법이 없다는 예방하는 쪽이라 그렇게 하시길래 얘기를 했더니 어떻게 어디다 해야 될까요?\r\n선생님 지금 현재 소유권이 도용된 거잖아요.\r\n도용 사실에 대한 신고는 수사기관이 맞고 그 네이버 아이디에 대한 자체적인 문제에 대해서는\r\n네이버 측으로 물어보시는 게 맞으실 것 같아요.\r\n저희가 따로 그런 업무를 하고 있지는 않기 때문에 저희가 도움드릴 수 있는 사항은 아니에요.\r\n아, 그래요?\r\n네.\r\n아, 네, 알겠습니다.\r\n감사합니다.\r\n네, 상담사 김지혜였습니다.",
+      "matched_keywords": [
+        "경찰",
+        "해킹",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "f65afd5f593531ede1c152b62d81b9de26ea67b4c5b98aecf0d4453f024d1559",
+        "normalized_content_hash_sha256": "bfb1edf02e3f826c6a2eb9234f7dbe020abd4f567ec1b5bc8a64d8ff7132b356",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-a2oWGIVJ",
+      "source_id": "a2oWGIVJ",
+      "source_set": 3,
+      "source_file": "a2oWGIVJ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "고객 상담센터 상담원입니다.\n어제 윈도우 악성코드 감염에 대한 자료를 찾아봤는데, 여기 자료실에 들어가면 복구 프로그램 '아반토'라는 프로그램이 있는데, 아반토는 악성코드 감염으로 인해 데이터가 손상되었을 때 복구하는 프로그램이라고 합니다.\n아마도 인터넷에서 이 모든 파일을 다운로드하면 데이터가 손상되어 다운로드되지 않거나 사용이 어려운 건가요? 저희 홈페이지에 들어가셨어요, 선생님?\n그래서 암호 복호화밖에 방법이 없으시네요.\n암호 복호화 절차를 진행하시는군요.\n네.\n제가 한번 들어가 볼게요.\n거기 자료실에 있는 자료가 전부인데 다운로드하시면 어떤 증상이 발생하는 건가요?\n예를 들어 지금 메뉴로 이렇게 하면 설문조사가 나오더라고요.\n제출하면 요청 정보가 표시됩니다.\n그렇게 보이세요?\n아니면 거기에 안 되면 노모랜섬웨어라는 정부에서 운영하는 사이트가 있는데, 노모랜섬웨어입니다.\n노모.\n랜섬웨어.\n아, 노모가 한글로 써도 되는 건가요?\n노모?\n아, NOMORE.\n그 다음에 랜섬웨어입니다.\n선생님.\n여기 들어가셔서 하는데, 요즘에는 악성코드 감염 후 파일 확장자가 변경되는 경우가 많아서, 복구 프로그램이 있더라도 복구가 안 되는 경우가 많다고 알고 있습니다.\n복구 파일에 변경된 파일이 없어야 복구가 가능합니다.\n그렇죠.\n그게 아니면 복구가 사실상 어렵습니다.\n갑자기 이렇게 발생하고,\n프로그램이 금전을 요구하는 프로그램이 있는데,\n인터넷에서 보니 저희가 사용하지 말라고 말씀드려도 소용이 없는데.\n그게 가장 중요한 판단인데,\n그렇게 해도 복구가 안 되는 경우가 꽤 많습니다.\n알겠습니다.\n감사합니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "e184ddb5d8c7e1e1565afffe29c9ceab134bb4a191cf2df75f18bdc104972f64",
+        "normalized_content_hash_sha256": "9dc136d15889d852088b789208e1e281140d9972e362350ece59538d65ec3db1",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A3bvodVM",
+      "source_id": "A3bvodVM",
+      "source_set": 3,
+      "source_file": "A3bvodVM.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n128 상담팀 박서준입니다.\n아니 그 저기 제 번호가 도용되어 계속 이상한 번호로 문자 메시지가 오고 있는데 제 번호가 스팸으로 등록되어 제한되었다고 말씀하시니요?\n스팸 등록되어 제한되었다는 말씀이신가요?\n아니, 그게 아니고요.\n제 번호를 이용해 스팸 차단을 해놨어요.\n진흥원에서요.\n차단된 번호가 고객님 몇 번이십니까?\n[PHONE]번입니다.\n저도 비슷한 피해를 당했는데 알고 보니 스팸 차단을 해놨네요. 무조건 차단해놨어요.\n제가 한번 확인해보고 안내해드릴 테니 잠시만 기다려주십시오.\n여보세요.\n고객님 확인해 보니 말씀하신 대로 고객님 번호로 다량의 스팸 문자가 전송된 것으로 확인됩니다.\n그래서 지금 다른 2차 피해를 예방하기 위해 실시간으로 차단한 것입니다.\n고객님 말씀처럼 번호 도용 피해자이시니 관련 자료를 제출하여 차단을 해제할 수 있도록 해당 통신사에 문의하셔야 합니다.\n만약 128 또는 진흥원으로 전화하라고 안내받으시면 잘못된 정보이므로 통신사 상급자나 스팸 담당 부서에 담당자를 연결해달라고 요청하여 자료 제출 방법을 다시 확인하시기 바랍니다.\n자료 제출은 어떻게 해야 하나요?\n통신사에 문의하시면 됩니다. 통신사마다 다르지만 고객님 이용하시는 통신사 114로 전화하셔서 소명 후 차단 해제를 위한 자료 제출 방법을 확인하시면 됩니다.\n지금 보니 고객님 번호로 웹상에서 문자 메시지가 다량으로 발송된 것 같습니다.\n짧은 시간 안에 수백 건이나 발송되었겠죠.\n그 문자를 받은 분들은 고객님께서 보낸 것이 아니므로 고객님께서 누구인지 알 수 없지만, 고객님 번호로 스팸 신고가 접수되어 실시간으로 차단된 것입니다.\n따라서 번호 도용 피해자라는 점을 강조하며 자료 제출에 대한 상담을 받으세요.\n그렇게 해도 다른 효과가 없나요?\n그 외에는 다른 안내를 드릴 내용이 없습니다.\n저희가 직접적으로 차단을 해제하는 것도, 해제하는 것도 불가능합니다.\n그럼 처음에 악의적으로 문자를 보낸 사람의 번호는 알 수 없잖아요.\n네, 맞습니다.\n그 사람도 번호를 숨기고 고객님 번호로 문자를 보내는 것이므로 실제 그 사람을 찾으려면 경찰에 수사를 의뢰해야 합니다.\n하지만 경찰에서도 현재 상황으로는 수사에 어려움이 있을 수 있으며, 인터넷이나 모바일에서 반복 경로를 확인하는 것 외에는 별다른 방법이 없을 수 있습니다.\n금전적인 피해가 있어야 경찰이 정식 수사를 진행할 수 있는데, 현재는 단순히 번호가 도용되어 고객님만 피해를 보고 있는 상황입니다.\n따라서 통신사에 번호 도용 차단 서비스 신청을 함께 하시는 것이 좋습니다.\n아셨어요?\n그러면 어떤 자료를 제출해야 하는지 다시 한번 문의해보세요.\n아, 고맙습니다.\n이런 식으로 계속 욕설 문자가 오는 경우가 있어서요.\n지금 버스 운행 중에도 계속 오거든요.\n당분간은 이런 욕설 문자가 계속 올 수 있으니 너무 마음 쓰지 마시고 무시하세요.\n고객님 친구라고 주장하는 사람도 무시하세요.\n무시하겠습니다.\n감사합니다.\n좋은 전화 감사합니다.\n네.\n민원 담당 [COUNSELOR]였습니다.",
+      "matched_keywords": [
+        "경찰",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "1c50c2776354edfa70c0b4c46eaac64997a52bf9587d85d15f7ff7a936890660",
+        "normalized_content_hash_sha256": "42598740d1af057fc0c349aa8f3a95ce8d2d94cff10607d303f3f39f617a10e6",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A3el0pdI",
+      "source_id": "A3el0pdI",
+      "source_set": 3,
+      "source_file": "A3el0pdI.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\r\n미래아파트 상업센터 김민지입니다.\r\n아 예 제가 어제도 전화드렸는데요.\r\n네 선생님.\r\n예 지금 그 그 지금 카카오톡 쇼핑이라고 해가지고 제가 그 어제 신고를 했어요.\r\n네.\r\n근데 또 카카오톡에서 또 이제 이게 왔네요.\r\n또 전화가.\r\n아 그러셨어요?\r\n예 그래가지고 카카오톡 그 얘기 많이 듣죠?\r\n아 네 그럼요.\r\n예 그\r\n그래가지고 전화가 불법으로 해서 지금 오고 있는데 최대한 오고 지금 방금 전에도 오고 전화번호 알려드릴까요?\r\n어떻게 해야 되나요?\r\n선생님 근데 이게 이미 접수가 되신 것 같으세요?\r\n또 추가로 또 온 거예요.\r\n전화번호가 바꿔가지고 아 그러세요 선생님?\r\n네 완전히 악성이더라고요.\r\n보니까 이거 신고 많이 됐죠?\r\n그거\r\n어 이제 선생님 상담원이시죠?\r\n맞아요.\r\n이게 불편하시는데 굉장히 불편해 하세요.\r\n이게 왜 그러죠?\r\n이게 누가 이렇게 장난을 할까요?\r\n스팸.\r\n그러니까 스팸은 진짜 알 수가 없어가지고.\r\n그래서 선생님 제일 간단한 거는요.\r\n핸드폰 안에 선생님 간단하게 스팸 신고를 하십시오.\r\n선생님.\r\n어떻게 하는 거예요?\r\n한번 알려주세요.\r\n선생님 꼭 눌러보세요.\r\n네?\r\n선생님 핸드폰이 삼성폰이세요?\r\n네네.\r\n그렇습니다.\r\n아 그러세요?\r\n선생님 그러면\r\n우선은 제가 한번 구두로 말씀드려볼 테니까 만약에 제가 문자로도 같이 보내드릴게요.\r\n근데 문자 보시면은 한번 꾹 눌러보시겠어요?\r\n그 문자로.\r\n어?\r\n눌러보셨어요?\r\n여기서 지금 또 카카오톡 쇼핑에서 음식 주문을 시킨 가게입니다라고 왔는데요?\r\n또.\r\n아 그 그래요?\r\n시키지도 않았는데.\r\n그러세요?\r\n장사가 안되니까 늘 배달업체들이 이런 식으로도 하네요.\r\n지금 보니까요.\r\n선생님 그러면 우선은 제가 좀 더 편하게 문자로 제가 어떻게 찾아낼 수 있는지 제가 안내를 드려볼게요.\r\n보내드렸습니다.\r\n선생님.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "fa3e691e5abd6597766d9b7ba9de507c859c39253ccd91c919c4fc9e2696f200",
+        "normalized_content_hash_sha256": "86965f797d1d1d742292a81335c58c6bf9c8bab36f00ce5e91ddc77fafa377e9",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-a3IZlQSU",
+      "source_id": "a3IZlQSU",
+      "source_set": 3,
+      "source_file": "a3IZlQSU.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n3217 상담센터 김민지입니다.\r\n네.\r\n아, 방금 제가 뭐 투자 상담하다가 이것저것 뭐 입력하면서 앱을 잘못 설치한 것 같아요.\r\n투자 진행 전화로 하셨던 거예요?\r\n예, 예.\r\n전화가 잘못 연결됐어요.\r\n그러면 선생님, 혹시 사기성 투자나 불법 금융 상품에 속은 적이 있으세요?\r\n혹시 개인 정보가 유출되셨어요?\r\n예.\r\n개인 정보를 입력해 버렸어요.\r\n사진을 찍어서 보낸 건 아니고요?\r\n아니요.\r\n그것은 아니고 그냥 앱으로 제 개인 정보를 입력했거든요.\r\n어플 설치까지 진행하셨고요?\r\n우선 선생님, 휴대폰은 삼성 폰이신가요?\r\n애플 폰이신가요?\r\n삼성 폰이에요.\r\n그렇다면 그 어플 또한 악성코드에 감염되었을 가능성이 있으니,\r\n휴대폰에서 백신 어플, 카카오보안 등으로 검사를 해보시는 것이 안전합니다.\r\n네, 다 검사는 했고요.\r\n아, 그러셨어요?\r\n네, 검사를 하고 전화를 걸었더니 그쪽 사기 업체로 연결이 되어 버렸어요.\r\n선생님, 어플을 삭제하고 검사 치료를 하셨는데도 그렇게 되셨나요?\r\n그러면 악성코드가 남아있을 수 있으니,\r\n그 부분에 대해서는 휴대폰 제조사 서비스 센터에 방문하셔서 초기화 등의 조치를 받으시는 것이 안전합니다.\r\n그리고 개인 정보 유출 사항에 대해서는 제가 피해 예방을 위한 방법을 문자 메시지로 보내드릴게요.\r\n내용을 확인해 보시고 필요하다고 생각되는 부분에 대해서 조치를 취해 보시길 바랍니다.\r\n네, 알겠습니다.\r\n네, 상담사 김민지였습니다.\r\n네.",
+      "matched_keywords": [
+        "금융",
+        "앱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "e77e3b2d59d0243e8342cb626a9e3dba36c5bf771fe88dc0a406d9aa662007d1",
+        "normalized_content_hash_sha256": "92dc3d70dc1a23c36793646082e0771b9493430d2cf5ada7bf9f320b49bc6b98",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A3YMqBlJ",
+      "source_id": "A3YMqBlJ",
+      "source_set": 3,
+      "source_file": "A3YMqBlJ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\n희망가득 빌라 상담원 박서준입니다.\n개인정보 보호 관련해서 궁금한 점이 있으신가요?\n네.\n어떤 내용이 궁금하신가요?\n빌라 관리사무소에서 입주민 개인정보 전화번호를 입주자 대표 회의에서 재건축을 논의하는데, 이 전화번호를 제공하는 것이 개인정보 보호법에 어긋나는지 문의드립니다.\n빌라 관리사무소에서 입주민 전화번호를 입주자 대표 회의에 제공하는 것이 법적으로 문제가 될 수 있는지 질문하시는 건가요?\n일반적으로 빌라 관리사무소와 입주자 대표 회의가 제3자 관계라면, 개인정보보호법상 개인정보를 제3자에게 제공할 때는 원칙적으로 동의가 필요하지만, 예외적으로 동의 없이도 제공이 가능한 경우가 있습니다.\n즉, 법적인 근거가 있다면 동의 없이도 제공이 가능하다는 말씀이신가요?\n네, 법적인 근거가 존재한다면 동의 없이도 제공이 가능합니다.\n그 법적인 근거는 무엇이며, 빌라와 관련된 법률, 예를 들어 국토교통부 관련 규정 등을 확인해 보셔야 할 것 같습니다.\n아, 그렇군요?\n국토교통부나 관련 기관에 추가적으로 문의해 보시는 것이 좋겠습니다.\n개인정보보호법상 동의가 원칙이지만, 법적 근거가 있다면 동의 없이 제공이 가능하다는 점을 다시 한번 확인해 드리겠습니다.\n알겠습니다.\n감사합니다.\n미래 설계 담당 박서준이었습니다.\n네.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "9d819941b1a02e9599e496e09278b3a736c8fe949153c5f27eea90ab557d9dd2",
+        "normalized_content_hash_sha256": "70d18f1cfd5cafd42ed8e78f43fce645c3eeef404e029f1d9b832c754bf1392b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A7WOfjXl",
+      "source_id": "A7WOfjXl",
+      "source_set": 3,
+      "source_file": "A7WOfjXl.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n3217 상담센터 박입니다.\n네, 안녕하세요.\n개인정보 침해로 인해 제가 예방하려고 연락드렸는데요.\n어떤 어려움이 있으신가요?\n네?\n어떤 어려움이 있으셔서 전화를 하신 건가요?\n개인 정보가 다른 사람에게 노출되었거든요.\n주민등록등본과 운전면허증과 모두 다른 사람이 알고 있습니다.\n전화번호까지요.\n그렇게 되신 게 다른 스미싱 전화를 받으셨을까요?\n사기를 당했는데 개인 정보를 전부 제공했었거든요.\n그래서 개인 정보로 다른 일을 할까 봐 연락드린 거예요.\n신분증 사진을 그들에게 제공하셨다는 말씀이세요?\n네.\n신분증과 면허증과 모두요.\n우선 고객님 신분증과 면허증을 제출해주시면 주민등록등본과 두 개 모두 제공해주시면, 분실 신고를 하시고 재발급을 받으셔야 합니다.\n주민등록번호가 변경되는 것은 아니지만 고객님의 발급일자가 변경되는 것이므로 그렇게 해주셔야 됩니다. 지금 고객님께서 전화하신 번호로 명의 도용 우려 피해 예방 방법을 문자 메시지로 보내드리겠습니다.\n문자 내용을 확인하시고, 문자 메시지에 기재된 내용대로 조치를 취해주시면 됩니다.\n그럼 이것만 하면 되는 건가요?\n네, 이 방법대로 해주시면 됩니다.\n네, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "31cbad5a323b98fb42923b794384fb04d6aa071e8a20a55ce853d15994a93f80",
+        "normalized_content_hash_sha256": "93459566dc51ae3d2d195469804effdcce56ae0f094564f97cbb60ed2dda0e9b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-a7xnLCIm",
+      "source_id": "a7xnLCIm",
+      "source_set": 3,
+      "source_file": "a7xnLCIm.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n아리아 상담센터 박서준입니다.\r\n네, 안녕하세요.\r\n네.\r\n저희 핵심 서버를 업그레이드하고 싶어서 연락드렸습니다.\r\n핵심 서버를요?\r\n네네.\r\n고객님... 혹시 개인 사업자이신가요?\r\n서버 업그레이드를 문의하시는데 저희에게 연락을 주시는군요?\r\n아... 썬스타...\r\n정보를 수정하고 싶으신 건가요?\r\n잠시만 기다려주십시오.\r\n혹시 고객님께서 등록하신 담당자를 통해 등록하신 건 아니신가요?\r\n등록 대행사요?\r\n알테오인데, 혹시 정보 수정이 필요하시면 등록 대행사를 통해 내용을 확인해 보시는 게 좋겠습니다.\r\n아, 그런데 알테오 측에서는 썬스타를 통해 등록이 완료되었다고 해서 연락을 주셨습니다.\r\n하지만 정보 수정은 등록 대행사를 통해 요청하셔야 하는 것으로 알고 있습니다.\r\n어\r\n네, 알겠습니다.\r\n네, 감사합니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "46b42eb365e983eb2b8ab63bd58cbbcf394ce2110ad88b8439653e18ef378303",
+        "normalized_content_hash_sha256": "f62c6e1f445f1bf9056485c59c7c1849a57ae79b1de0b9495da4eaa1e16126ab",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A8f8eKCz",
+      "source_id": "A8f8eKCz",
+      "source_set": 3,
+      "source_file": "A8f8eKCz.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "감사합니다.\r\n디지털 마케팅 전문가입니다.\r\n네, 안녕하세요.\r\n저희 에이스 상담팀 김민지라고 합니다.\r\n혹시 박서준 팀장님이실까요?\r\n팀장님입니다.\r\n팀장님이시죠.\r\n죄송합니다.\r\n팀장님.\r\n저희가요.\r\n방금 강동철님과 통화를 했는데요.\r\n온라인 쇼핑몰 플랫폼 서비스 제공하는 업체인데 오늘 오전 11시 30분부터 40분 정도\r\n그 한국인터넷진흥원에서 어떤 그 자체 보유한 9000개의 도메인을 그 분석한 기록이 조금 확인된다고 말씀을 하시더라고요.\r\n그래서 한번 그 접속했던 IP를 좀 확인해봤더니 그 175.224.\r\n잠시만요.\r\n말씀해주세요.\r\n175.\r\n224.\r\n10.\r\n155번이고요.\r\n너무 많은데 대표적으로 하나만 주신 거예요.\r\n지금 그쪽에서 우리\r\n우리 회사 거긴 한데 어디서 했는지 모르겠네요.\r\n제가 좀 확인을 한번 해볼게요.\r\n전화번호가 어떻게 되시죠?\r\n이게 아마 다른 부서에서 사용하고 있을 거예요.\r\n보안 솔루션 쪽에서 탐지 이런 거 하는 데가 있거든요.\r\n거기서 우리 진흥원...\r\nIP 주소로 된 걸 사용하고 있을 수가 있었고 제가 지금 통화가 바로 안 되는데 5분 뒤에 다시 연락을 드려도 괜찮을까요?\r\n네, 그리고 아마 일단 제가 한번 찾아볼 텐데 5분 뒤에 전화 한번 주세요 다시 네, 알겠습니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "b2e6743b4c0b6dc14a44d7bc20205ca267bf8c98f7ee82ca99c05abd0d362780",
+        "normalized_content_hash_sha256": "345a9c22cbd5c8b4ba77d7d1185d7d169818b7d9f2658df75a615cc703acd7f5",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-A8gGu2vm",
+      "source_id": "A8gGu2vm",
+      "source_set": 3,
+      "source_file": "A8gGu2vm.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "회사 상담센터입니다.\n아, 네, 수고 많으십니다.\n네, 감사합니다.\n예, 아는 지인이 그 제 구글 주소로 해킹이 돼서 전화가 자꾸 오더래요.\n근데 이제 끝 번호가 제 전화번호 뒷번호다 보니 혹시나 싶어서 얘가 언니 이거 언니 주소예요 하고 왔더라고요.\n보니깐 제 구글 메일이에요.\n근데 이 번호로 5번이나 전화가 왔었고요.\n이게 아무래도 해킹 같아서 제가 어떻게 대처를 해야 되는가 싶어서요.\n구글 메일로 전화가 갔다고요.\n선생님.\n구글 메일로 전화가 왔다는데 이게 무슨 말인지 저도 잘 모르겠어요.\n구글 메일 주소로.\n구글의 계정이 혹시 도용이 된 게 아닌가 싶은데요.\n그러니깐 비밀번호를 한번 변경을 하셔야 될 것 같고 2차 보안 인증 설정할 수 있으면 설정을 해서 한번 이용을 해보셔야 될 것 같고요.\n2차 보안 설정이 무슨 말인가요?\n비밀번호.\n아, 비밀번호.\n2차 보안 인증 설정이 아마 있을 거예요.\n아, 그런 게 있나요?\n그러면 구글에 들어가서 비밀번호 변경을 일단은 서치를 해서 하면 되나요?\n네.\n비밀번호 변경.\n그럼 메일 주소는 바꾸지 않아도 비밀번호만 바꾸면 되네요?\n네, 네.\n변경.\n메일 비번 변경.\n이렇게만 제가 할 수 있는 조치가 단가에 어떻게 하면 되나요?\n그렇게 해 주시면 될 것 같고요.\n변경 요령에 대한 어떤 피해 신고를 원하신다면 상사기관으로 한번 신고 문의를 해 보실 수가 있기 때문에 1번 없이 242번 경제 민원센터를 통해서 신고를 한번 해 보실 수가 있겠습니다.\n알겠습니다.\n그럼 여기는 일단은\n메일 비번을 변경하라고 지금 말씀해 주시는 거죠?\n아, 예, 알겠습니다.\n그리고 만약에 피해가 있을 때는 242로 네, 네, 맞아요.\n이 피해가 뭐 어떤 거를 예견할 수 있나요?\n이럴 때는 메일 번호로 메일 번호가 만약에 도청 됐다고 해야 되나요?\n도용됐다고 해야 되나요?\n그렇죠.\n아이디 비밀번호가 도용이 되었다라고 신고를하시면 될 것 같습니다.\n이럴 때 뭐 저희가 뭐를 확인해 봐야 되나요?\n계정?\n아니, 아니, 지금 피해가 어떤 사례 같을까요?\n말씀하셨던 내용이요.\n소액결제 이런 게 있을 수도 있다는 건지 피해는 저희가 알 수가 없어서요.\n사회기관으로 문의를 한번 해 보시는 게 맞을 것 같고요.\n저희는 이제 피해가 발생하기 전에 예방법을 안내드리는 거기 때문에 그러면 피해가 있는지 확인은\n본인이 해야 되는 거야?\n아니면 242에다가 터치가 가능한가요?\n어쨌든 선생님 지금 구글 아이디 비밀번호가 도용이 된 거잖아요.\n그런데 제가 242에 방금 전화를 했는데 여기서는 또 피해 신고를 하는 곳이라고 3217로 아, 그래.\n아, 112였나?\n아, 예.\n242로 해볼게요.\n감사합니다.\n아까 112요?",
+      "matched_keywords": [
+        "해킹"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "0c4bcae4852f4490813d6997f1924f57e2517ca79d3e31e03b88a42b2e9c68b3",
+        "normalized_content_hash_sha256": "7ba9419c45766586f1db664f546d843aacef4c77258a550c67e0e674a4b680fb",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aB7cOSRK",
+      "source_id": "aB7cOSRK",
+      "source_set": 3,
+      "source_file": "aB7cOSRK.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네.\r\n상담센터 [COUNSELOR]다.\r\n예.\r\n얼마 전에 그 경찰청에 연락드려서 스미싱 관련해서 연락을 받으셨다고 하셨는데요, 여기로 전화 주셔서 말씀해 주셨어요.\r\n스미싱 어떤 내용으로 통화하셨어요?\r\n잠시만요.\r\n뭐, 김민수 님, 해외 직구 상품 대금 미납 안내를 받으셨어요.\r\n78만원.\r\n78만 3456원.\r\n그래서 해당 번호로 전화해서 010-****-**** 번호로 전화가 왔어요.\r\n혹시 문자 받으시고 통화하셨을까요?\r\n아니요.\r\n받지 않으셨고요.\r\n선생님, 저희가 번호를 신고는 받지 않고요.\r\n어떤 분의 통화 중에 선생님의 개인 정보가 노출되었다면 피해를 예방하기 위한 조치 방법을 안내해 드리고 있어요.\r\n그래서 이 문자가 최근에 많이 보내시는 사기 문자예요.\r\n전화를 유도해서 정보를 빼내기 위한 목적이거든요.\r\n별도로 대응하지 않으셨다면 바로 차단이나 삭제를 해주셔야 될 것 같아요.\r\n선생님.\r\n아, 문자를 보낼 필요는 없다는 말씀이시죠?\r\n알겠습니다.\r\n그럼 제 휴대폰에 그냥 스팸 신고만 해놓을게요.\r\n그렇게 한번 해주세요.\r\n감사합니다.\r\n고객 상담원 진희였습니다.\r\n네.",
+      "matched_keywords": [
+        "스미싱",
+        "경찰",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "ca20b27b5b1d75fd0278cd85953295f3eae977e865124d6932873cf64674eb23",
+        "normalized_content_hash_sha256": "a923643bd05a94644afc3a8412eed4209f0dc8a0f6ef400434dcc927432db8ec",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aBObip3i",
+      "source_id": "aBObip3i",
+      "source_set": 3,
+      "source_file": "aBObip3i.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 128 상담센터 박서준입니다.\r\n네, 안녕하세요.\r\n저는 요양원에서 근무하는 CGTV 담당자인데요.\r\n혹시 CGTV 모니터링을 담당하시는 분이신가요?\r\n혹시 개인정보 보호 포털에서 교육을 받아야 할 내용이 있으신가요?\r\n개인정보 포털에 보시면 개인정보 보호 교육 자료가 준비되어 있습니다.\r\n아, 저는 공공기관에 근무하는데요.\r\n어떤 교육을 받아야 할지 궁금해서요.\r\n어, 특별히 정해진 것은 없습니다.\r\n잠시만요.\r\n확인해 보겠습니다.\r\n어떤 내용의 교육이 적절할지 잘 모르시겠다는 말씀이신가요?\r\n네, 네, 네.\r\n일단은 어떤 교육을 받아야 하는지에 대한 명확한 지침은 없으시고요.\r\n이번에 장기 요양 기간 연장과 함께 5월 24일에 관련 가이드라인이 내려왔습니다.\r\n요양원 관련 CCTV 교육을 받아야 한다고 안내받아 연락드렸습니다.\r\n그 교육과 함께 지금 개인정보 보호법 관련 교육이 있는데,\r\n28차례에 걸쳐 연 1회 이상 개인정보 보호 교육을 실시해야 한다는 내용이 포함되어 있습니다.\r\n교육 수강 의무가 명시되어 있어서 연락드렸습니다.\r\nCCTV 관련 교육은 따로 없다고 하셨는데요.\r\n그렇다면 담당자가 수강하면 좋을 만한 교육은 따로 있나요?\r\n제가 관련 내용을 좀 더 자세히 확인해 보겠습니다.\r\n네.\r\n개인정보 보호법 이해하기 교육은 어떠신가요?\r\n그럼 가장 위에 있는 내용이 사업자 대상 교육인가요?\r\n그것도 괜찮으시고, 안전성 확보 조치 관련 교육도 CCTV 관련 안전 조치에 대한 내용이 포함되어 있어 개인정보 유출을 방지하는 데 도움이 될 수 있습니다.\r\n개인정보 보호법령 일반 예방 교육도 좋은 선택이 될 것 같습니다.\r\n모두 사업자 대상 교육에 해당하나요?\r\n일반 국민도 수강해도 괜찮습니다.\r\n제가 현재 직원으로서 받는 교육인데,\r\n사업자 대상 교육인지 일반 대상 교육인지 궁금했습니다.\r\n교육 의무가 명확하게 정해져 있지 않기 때문에 사업자 대상 교육을 수강하시는 것이 좋을 것 같습니다.\r\n그렇죠.\r\n특별히 추천하는 과목은 없고, 제가 방금 전에 말씀드린 개인정보 보호법 이해하기, 개인정보 보호법 파헤치기, 보호법령 입안 예방 교육 세 가지 중 하나를 선택하시면 될 것 같습니다.\r\n친절한 설명 감사드립니다.\r\n네, 수고하세요.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "96429d96fe58826fdf2d8c76285125e52774059fd73e59c6a5aff47a51327af1",
+        "normalized_content_hash_sha256": "ae81ca91d5148d1d8ff9d03185927890f8f4c08cbd24736c8398dcbad7bf3ecb",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AbpQOrt3",
+      "source_id": "AbpQOrt3",
+      "source_set": 3,
+      "source_file": "AbpQOrt3.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요. 24 상담센터, 민지입니다.\r\n네, 안녕하세요.\r\n네, 방금 문자 메시지 하나 받았는데, '새롬'이라는 발신자가 보내온 내용과 관련해서 출석 통지서 처리와 관련된 내용이 담겨 있더라고요. 관련 사이트 링크와 연락처도 함께 기재되어 있었습니다.\r\n네, 네.\r\n제가 전화는 걸지 않았는데, 문자 메시지를 확인하고 링크를 클릭했더니 잘못된 페이지로 연결되었어요.\r\n네.\r\n그럼 어떻게 해야 하는 건가요?\r\n우선 출처가 불분명한 문자 메시지의 링크를 클릭하면 악성코드 감염 위험이 있으니, 혹시 사용하시는 휴대폰이 안드로이드 폰인가요?\r\n네?\r\n아이폰입니다.\r\n아, 아이폰이시군요.\r\n저희가 대응 방법을 안내해 드릴 테니, 참고하셔서 조치해 보시는 게 좋겠습니다.\r\n폰을 교체하라는 말씀이세요?\r\n무엇을 해달라는 건가요?\r\n여보세요?\r\n선생님, 잘 안 들려요. 지금 학원 수업 중이라.\r\n문자 메시지 내용을 따라 해 주세요.\r\n감사합니다.\r\n네.",
+      "matched_keywords": [
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "2384b00e2f8c63c80a09da5e589e9deb161f85bb4097dd2795828fd8bddad38e",
+        "normalized_content_hash_sha256": "df9c7694481154dea87eef579613522e7e26dd465dc7efbf4e6faf9f018b506f",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AbyfPXLs",
+      "source_id": "AbyfPXLs",
+      "source_set": 3,
+      "source_file": "AbyfPXLs.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요, 고객님. 일반 상담 센터 박선영입니다.\r\n네, 안녕하세요.\r\n네.\r\n네, 혹시 무슨 일로 연락 주셨나요?\r\n제가 이번에 동생이 있는데, 그 얘가 이 휴대폰을 사용하고 있어요.\r\n친척인데.\r\n네?\r\n이 휴대폰 번호의 주인이 동생인데, 제가 동생이 말을 잘 못해서 대신 전화를 받았습니다.\r\n그 얘가 그 대출 사이트, 뭐 대출나라 같은 데서 대출을 알아보고, 그 대부 업체에 연락을 취한 것 같아요.\r\n그래서 그 대부업체에서 개인 정보를 좀 알려달라고 해서 알려줬는데, 그 도움 없이 제 3자에게 알려주고, 그 제 3자가 그 통신사에서 조회를 했더라고요.\r\n제가 그 사람한테만 뭐 조회를 한다고 하길래 대충 조회한 그 양식만 보내줬는데, 동생이 그 통신사 조회는 얘기가 없었잖아요.\r\n그렇다면 선생님 지금,\r\n혹시 보이스피싱이신가요?\r\n아니면 선생님의 개인 정보를 동의 없이 제3자에게 제공한 건가요?\r\n제3자에게 제공해서 제3자가 제 휴대폰, 동생 휴대폰 개인 정보를 확인했더라고요.\r\n통신사 개통 여부 같은 정보요.\r\n선생님, 제3자에게 제공해서 그 내용으로 신고 접수를 하려고 하시는 건가요?\r\n네, 네, 네.\r\n그렇다면 동의 없는 개인 정보 제3자 제공은 개인 정보 보호법 제24조에 해당될 수 있으며,\r\n이건 형사 처벌 대상이 될 수 있으니 수사 기관에 신고 접수 문의를 해보셔야 합니다.\r\n이걸 고소장 접수하면 되나요?\r\n경찰서에 가서?\r\n수사 기관에 문의해 보셔야 합니다.\r\n수사 기관이면 어디에 문의해야 하나요?\r\n경찰을 말씀하시는 건가요?\r\n112번?\r\n242번 경찰서 민원 콜센터나 가까운 경찰서에 방문해 보시길 바랍니다.\r\n아, 네.\r\n그러면 절차가 어떻게 되나요?\r\n경찰에 문의해 보시는 게 좋을 것 같습니다.\r\n알겠습니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "b1d67dc4359605e18d4b6e3041293514c65464523053ca5cd5a1c72b7238ca93",
+        "normalized_content_hash_sha256": "06a950b98cba8a352f44ee6649f0e4988b4b16759d127fa1599b07f2d39e4191",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AdGrXnHs",
+      "source_id": "AdGrXnHs",
+      "source_set": 3,
+      "source_file": "AdGrXnHs.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n3217 상담센터 박서준입니다.\r\n네.\r\n안녕하세요.\r\n저 네이버페이 결제를 하고 있는데 네.\r\n그 상담센터 보내주신 링크로 들어갔거든요.\r\n같은 네이버페이인 줄 알고 입금을 하고 그 사람이 등록을 해서 하기로 했는데 수수료 1000원을 더 입금 지금 말씀하시는 건요.\r\n금전적인 피해가 발생하셨다는 말씀이실까요?\r\n이걸 확인을 어떻게 해야 될까요?\r\n제가 피해를 입은 건지 안 입은 건지를.\r\n근데 별도로 보내줬으면은 이게 문제가 생긴 건 맞는 것 같거든요.\r\n이거에 대해서는 선생님 우선 네이버 측으로도 확인해 보시고요.\r\n경찰에 신고를 해 주셔야 될 것 같습니다.\r\n선생님.\r\n저희가 뭔가 별도로 확인할 수 있는 방법이 있는 건 아니에요.\r\n아.\r\n그럼 여기는 뭐예요?\r\n여기로 신고해 달라고 써져 있길래 네이버에서는.\r\n전자거래를 하셨을 때 분쟁이 생기신다거나 이런 부분이 있을 때는 저희가 별도로 담당하는 부서가 있는데 이건 분쟁이 아니라 별도로 그렇게 하는 경우에는 피해가 입혀지는 그런 부분으로 보이거든요.\r\n그래요?\r\n사기 거래가 의심되는 상황이면 여기로 하라고 되어 있어서 네이버에서 네이버에서 연결이 계속 안 돼가지고 우선 이건 경찰로 한번 문의를 해주셔야 될 것 같아요.\r\n저희가 사기일 때 하는 부분은 없어요.\r\n네 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "수수료",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "471799c200dbf8300f52c6eb25effd65596e74a52e5c0f78006f3008e36d8ee6",
+        "normalized_content_hash_sha256": "639df33e16a54cf8220934f2c6ea41595eb432bd158aa78bf88cf6794273b460",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aETUikoB",
+      "source_id": "aETUikoB",
+      "source_set": 3,
+      "source_file": "aETUikoB.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n3217 상담센터 박서준입니다.\n나중에 신분증을 요청했는데 제가 신분증을 전달하지 않았습니다.\n네.\n그래서 혹시 해당 통화 문자 번호가 제 휴대폰에 어떤 문제가 있는지 124에 문의했더니 소액 결제 관련은 없다고 차단해 놨거든요.\n아 네.\n그런데 혹시 다른 문제가 있을까 봐 신고하려고 전화를 드린 겁니다.\n일단 선생님, 원격 제어 프로그램이 설치되었을 가능성이 있습니다.\n그러면 실제 신분증을 선생님이 직접 그들에게 제공하지 않아도 휴대폰에 저장되어 있다면 그런 정보들이 탈취될 수 있습니다. 만약 사진첩 등에 신분증 사진을 저장해 두셨다면 신분증을 재발급받는 것이 안전할 수 있습니다.\n추가로 개인정보 유출에 대한 대처 방법을 문자로 보내드렸으니 이 내용 확인하시고 조치해 놓으시는 것이 좋겠습니다.\n아 그래요?\n그리고 제가 바로 순도증을 요구하길래 제가 그 프로그램을 삭제했거든요.\n그래도 문제가 되나요?\n그래도 그 사람들이 어떻게 할 수 있나요?\n삭제한 이후에는 당연히 원격 제어가 안 되죠.\n그런데 이제 설치해서 원격 제어가 승인되어 버리면 단 몇 초 만에 선생님의 휴대폰에 저장된 정보들이 모두 유출될 수 있습니다.\n지금은 은행 계좌 같은 데는 문제가 없는 것 같은데.\n그쪽 번호를 제가 알려드려도 될까요?\n저희는 번호 신고 기반은 아니고요.\n의심스러운 번호를 접수하고 싶으시면 금융감독원 홈페이지에 제보하시면 됩니다.\n제가 신고할 수 있는 홈페이지 경로를 다시 한번 문자로 보내드릴게요.\n그래요.\n알겠습니다.\n담당자는 김민지였습니다.\n네.",
+      "matched_keywords": [
+        "계좌",
+        "금융",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a52726063971d3fe4790ef3ed9ad9d2b0517083f46dc00522f3a5b3c6cf6d835",
+        "normalized_content_hash_sha256": "515fbdabca9b515ce2cf13777fb57f3fa7c0f055acd982216b056e5ea5637d21",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AHPh251z",
+      "source_id": "AHPh251z",
+      "source_set": 3,
+      "source_file": "AHPh251z.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\r\n네, 담당자님, 아까 통화했던 2451 상담센터 박서준입니다. 지금 통화 괜찮으실까요?\r\n네, 그럼요.\r\n지금 담당자님 전화번호를 아까 알려주셨는데, 제가 제대로 확인하지 못한 것 같아서 다시 한번 확인을 부탁드려도 될까요?\r\n010-****-****입니다.\r\n아, 네.\r\n네, 현재 해당 번호는 통신사의 자율 규제 요청에 따라 내용이 확인되고 있습니다.\r\n네.\r\n010-****-****이라고 하셨죠?\r\n네, 맞습니다.\r\n네, 해당 번호는 통신사 약관에 따른 제재 조치가 이루어지고 있습니다.\r\n그리고 아까 말씀하신 010-****-****번은 실시간 스팸 차단 리스트에도 등록되어 있습니다.\r\n두 건의 신고가 접수된 내용이 있습니다.\r\n네, 아닙니다.\r\n신고하신 전화번호가 아닙니다.\r\n다른 번호입니다.\r\n그리고 신고자분의 정보는 전혀 알 수 없으며,\r\n신고자분이 일부러 문제를 일으키시는 것 같습니다.\r\n그리고 불법적인 문자 발송과 관련해서 문의하신 내용이신가요?\r\n저희 측에서 해당 시스템을 통해 해결해 드리는 것은 아닙니다.\r\n그것은 자유롭게 요청하신 내용이므로, SK나 LG 등 통신사에서 해제 처리했다면 그들의 내부 절차에 따라 처리된 것으로 이해하시면 됩니다.\r\n네, 알겠습니다.\r\n확인해 주셔서 감사합니다.\r\n수고하세요.\r\n감사합니다.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "85ca5870bbae6a9e2d36fd7a526a5bce84c2f5beb009511ac085ceda530262ef",
+        "normalized_content_hash_sha256": "312c22bca2e1c08e2bec1b04f5060236bbdf81f3559f40171b9bc939376a74c7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AHri7a7V",
+      "source_id": "AHri7a7V",
+      "source_set": 3,
+      "source_file": "AHri7a7V.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n래퍼 상담센터입니다.\r\n네, 수고 많으십니다.\r\n네, 감사합니다.\r\n뭐 하나만 여쭤보려고 전화드렸는데요.\r\n그 어 통신사에 그 상품을 가입을 할 때 신청서를 작성을 하잖아요.\r\n그 신청서를 그 타인한테 그 보여주려면 보여주거나 등기를 보내주거나 문자를 보내주려면 그\r\n신청자 본인한테 동의를 받아야 되는 게 맞죠?\r\n신청서를 누구한테 보내줬는데요?\r\n자녀한테요.\r\n자녀요.\r\n그러니까 신청자가 신청자가 아버지고요.\r\n그리고 제가 이제 신청서를 받았어요.\r\n근데 그 해당 업체에서는 그 신청자한테 동의를 받지 않고 저한테\r\n뭐 신분 확인도 안 하고 보내준 거거든요?\r\n그니까 신청자에게 신청서를 받았는데 그 신청서를 그 신청자의 자녀에게 또 보냈다고요?\r\n아, 그니까 그 상품 개발 아 상품 가입을 위해서 신청서를 작성을 한 거를 제가 열람을 요청을 했어요.\r\n자녀분이 열람 요청했다고요?\r\n근데 그 해당 그\r\n서비스 센터에서는 신청자 본인한테 동의를 받은 다음에 보내준다고 했고 그다음에 보내준 업체는 해당 대리점인데 대리점에서는 신청자한테 동의를 받지 않고 저한테 보내준 거거든요.\r\n잠시만요.\r\n확인해 볼게요.\r\n네.\r\n네, 선생님 기다려주셔서 감사합니다.\r\n지금 저희가 개인정보라고 보면 개인정보 열람할 때는 개인정보 처리자 즉 그 통신사겠죠.\r\n그 개인정보 처리자가 마련한 방법과 절차에 따라 요구한다라고 했거든요.\r\n근데 지금 선생님께서는 그 절차 내에서 본인 확인 절차가 없었다라고 문제 제기를 하시는 것 같거든요.\r\n네, 맞아요.\r\n이거는 열람 절차는 개인정보 처리자가 정하는 거라서\r\n따로 법에서는 뭐 위반됐다라고 뭐 찾아볼 수가 없기 때문에 만약에 이제 통신사에 대한 민원 제기시라면 그 상위 기관이나 이런 곳으로 이제 문의를 더 해보셔야 될 것 같아요.\r\n근데 그 신청서에는 그 신청자의 그 뭐 주민번호까지 다 나와 있는 건데 이거를 함부로 유포를 그 전달을 한다는 거는 잘못된 거 있지 않나요?\r\n주민등록번호는 저희 개인정보 보호법에서는 아예 처리 제한이라고 안 되고 관련 법령에 따라 수집을 하는데요.\r\n통신사에서 아마 관련 법령에 따라 수집을 한 것 같아요.\r\n그 부분 또한 관련 법령을 보셔야 될 것 같고요.\r\n그러면 개인정보에 관련된 법이라는 게 적용이 안 되는 거네요?\r\n그렇죠.\r\n모든 상황에 적용이 되진 않고 더군다나 개인정보보호법은 일반법이기 때문에 다른 법들보다는 아래에 있어요.\r\n그럼 개인정보보호법을 왜 만들었어요?\r\n나의 정보를 누가 해당 업체는 이 정보를 다른 사람들한테 다 유포해도 되는 거잖아요.\r\n유포해도 된다고 말씀드린 건 아니고요.\r\n열람에 대해서는\r\n개인정보 처리자가 마련한 방법과 절차에 따라 요구를 한다라고 나와 있거든요.\r\n그래서 통신사에서 관련 법령에 따라서 진행한 것 같고 만약에 그게 아니라 뭐 그런 법도 없고 아무 규정도 없었는데 그냥 대상자 제공했다면 빨리 경찰 신고를 하셔야 될 것 같고요.\r\n이해가 안 돼요.\r\n그러면은 통신사에서는\r\n근데 통신사에다가 얘기를 해야 되는 건데 근데 만약 그 통신사에서 그렇게 정해져 있다고 하지만 법적으로는 이게 타인한테는 요구하면 안 되는 거지 않나요?\r\n그러니까 무슨 법에 요구하느냐가 다르죠.\r\n만약에 통신사에서 관련 법이 있어서 선생님 자녀분에게 열람 요청을 승인해서 보여줬다면 그게 위법됐다고 보기는 어렵지만\r\n그런 법이 없었는데도 그냥 대상자 제공했다면 경찰 신고를 하시라는 거예요.\r\n근데 만약에 이거를 신청자가 타인이었어요.\r\n만약 자녀가 아니고 그런데 그래도 요거는 문제가 되는 거 있지 않나요?\r\n통신사에서는 어떤 답변을 받으셨어요?\r\n신청자 본인한테 동의를 받은 다음에 그다음에 보내주겠다 이렇게 전달을 받았거든요.\r\n그런데 신청자 본인은 본인 전화 온 게 없어요.\r\n그럼 동의 안 하고 그냥 제삼자 제공하면 형사 벌이니까 경찰 신고하세요.\r\n형제님.\r\n경찰에 경찰에 신고하면 되는 거예요?\r\n그리고 이것 또한 제가 자녀인데도 자녀인 거를 확인도 안 하고 보내준 거니까 이런는 거는 문제가 되는 거가 맞는 거죠.\r\n이런 것도 다 경찰에 신고하면 되는 거죠.\r\n그러니까 첫 번째로 선생님이 열람에 대해서 물어보셨어요.\r\n그런데 열람은 개인정보 처리자가 정한 방법과 절차에 따라 요구를 하는 거예요.\r\n근데 선생님 여기에서 보면 본인의 개인 정보에 대해 열람하는 건 이렇게 진행을 하는데 아마도 선생님이 법정 대리인이나 이런 부분이 있었던 것 같아요.\r\n그래서 통신사에서 아마도 관련 법에 따라 열람을 하신 것 같은데 그게 아니라 아무 법적 근거도 없었는데 아무 확인도 없이 그냥 대삼자 제공했다면 그거는 위반이라고요.\r\n알겠습니다.\r\n어쨌든 그러면 경찰에 신고만 하면 되는 거네요.\r\n신고 문의를 해보셔야 될 것 같아요.\r\n음 알겠습니다.\r\n한번 문의해 볼게요.\r\n감사합니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "214cd40296b5fba78774ec40383b8bcd93abc9674e68ee1b1a1c254a41cea79e",
+        "normalized_content_hash_sha256": "02c8f06d19978901dc9aa168e75921b5f05d97046d53879b11e1b297dc7ffac6",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AJCfQBrh",
+      "source_id": "AJCfQBrh",
+      "source_set": 3,
+      "source_file": "AJCfQBrh.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n3217 상담센터 김민지입니다.\n혹시 제 전화번호 말고 다른 사람이 제 번호를 흉내내서 사용하는지 확인하는 방법이 있을까요?\n아, 고객님, 그건 죄송하지만 어렵습니다.\n지금 누군가 고객님의 전화번호를 빌려 사용하고 있다는 말씀이신가요?\n사용하는 것은 아니고 정보를 계속해서 알아내는 것 같아요.\n정보를요?\n네, 고객님. 저희 쪽에서는 그 부분을 확인하기는 어렵습니다.\n혹시라도 고객님의 전화번호나 개인정보를 다른 사람이 수집하거나 도용하려 한다면 저희가 취할 수 있는 조치 방법은 안내해 드릴 수 있습니다. 네, 제가 문자 한 통을 보내드릴게요.\n고객님, 혹시 전화번호 하나 메모해 주실 수 있나요? 전화번호를 알려주시겠어요?\n문자 발송해 드릴게요.\n잠깐만 기다려 주세요.\n이게 잠깐만 기다려 달라는 말씀이시죠?\n네.\n그런데 고객님, 제가 문자를 통해 안내해 드릴 방법이 다섯 가지 정도 있습니다.\n구두로 자세히 말씀드리기는 어렵고요.\n네, 고객님. 그럼 이 번호를 010 잠깐만요. 010-****-****, 3015 맞으신가요?\n네, 맞습니다.\n고객님, 여기 저희가 다섯 가지 조치 방법을 기재해 놓았습니다.\n우선 이 조치를 취해 놓으시고, 나중에 혹시라도 피해가 발생하면 안 되겠지만, 혹시라도 피해가 발생했을 때 개인적으로 다른 사람이 제 번호를 사용하고 있다는 증거가 있다면 242번에 신고해 주셔야 합니다.\n네, 242번, 242번 기억해 두시고, 제가 문자 발송해 드릴 테니 확인해 보십시오.\n242번은 어디인가요?\n경찰청 통합 콜센터입니다.\n네, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "9d03cc9c14c385f505e303e55f50364f203c6a407957ac0bc19dea27abb04a39",
+        "normalized_content_hash_sha256": "c358983d5d85a44073b61c0e55c701c3615b495965ae0102bf4c8e923cbccb9d",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aKaBJyfB",
+      "source_id": "aKaBJyfB",
+      "source_set": 3,
+      "source_file": "aKaBJyfB.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "128 상담센터 김민지입니다.\n안녕하세요.\n최근 계속 부산 지역 번호로 전화가 오고, 하루에 여러 번 전화를 받는데 이게 스팸인지 아닌지 정확히 모르겠어서 일단 받지 않고 있습니다.\n혹시 개인 정보가 유출된 건지 상담을 받아보려고 전화드렸습니다.\n개인 정보 유출 여부는 확인하기 어렵고,\n선생님께서 부산 지역에서 계속 연락을 받으신다고 하셨는데, 그게 스팸인지 아닌지 알 수 없는 것은 스팸은 상대방의 동의 없이 발송되는 문자나 전화 등을 의미하기 때문입니다.\n따라서 말씀하신 내용이 단순한 보이스피싱일 수도 있고, 스팸일 수도 있지만, 그것만으로는 판단하기 어렵습니다.\n저희가 안내해 드릴 수 있는 것은,\n보이스피싱의 경우 통화 중에 주민 번호를 직접 노출하신 적이 있으신가요?\n주민 번호가 노출되면 명의 도용 피해가 발생할 수 있으므로 피해 보상을 받을 수 있는 방법을 안내해 드리고 있습니다.\n받으신 내용이 스팸이었다면 불법 스팸 대응 센터에 신고하시면 되는데, 지금 받으신 번호는 국제 번호이시죠?\n국제 번호는 신고가 다소 어려울 수 있습니다.\n해외에서 발생한 번호라서 조사에 어려움이 있을 수 있기 때문에 불편이 있을 수 있습니다.\n그냥 무시하는 것이 가장 좋은 방법입니다.\n개인적으로.\n받지 않은.\n네, 그렇게 알고 있겠습니다.\n그리고 혹시 계속해서 외국에서 걸려오는 국제 발신 번호가 있다면,\n통신사에 연락하셔서 해당 지역 차단을 요청해 보시는 것도 좋은 방법입니다.\n네, 그렇게 한번 시도해 보시길 바랍니다.\n네, 알겠습니다.\n네, 감사합니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a647c117033cb5e62c22fd17d3b61006126f3088cb35fe4ac359289e017f7573",
+        "normalized_content_hash_sha256": "64e9e1f0d4b9c1f1302ce8ae5553166388aa28b8b36f0bdeeceddf4eff0caa0e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-alb3khiL",
+      "source_id": "alb3khiL",
+      "source_set": 3,
+      "source_file": "alb3khiL.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "상담원 박선영입니다.\r\n네, 안녕하세요.\r\n혹시 제가 좀 여쭤볼 게 있는데, 제 차량이 주차장에 주차되어 있는데, 그 상대방 차량과 상대방 운전자 정보가 있는데요.\r\n제가 그 분을 상대로 소송을 진행하려고 하는데, 그 상대방 차량 번호판이나 운전자 얼굴을 가려야 하는 건가요?\r\n고객님의 정보 외에 다른 정보에 대해 열람을 원하시는 건가요?\r\n네, 고객님의 정보는 잘못되었습니다.\r\n고객님께서 CCTV와 관련해서요.\r\n저희 개인정보보호법에서는 열람에 대한 규정이 있습니다.\r\n개인정보 열람은 정보주체 본인의 정보에 한해서만 가능하며, CCTV 영상은 다른 사람의 개인정보가 포함될 수 있습니다.\r\n만약 다른 사람의 정보가 포함되어 있다면 모두 마스킹 처리 후 고객님의 정보에 대해서만 연락이 가능합니다.\r\n아니면 소송을 진행할 때, 상대방 차량과 운전자 사진을 가려야 하는 건가요?\r\n아니, 소송에 필요한 정보는 개인정보보호법에 명시되어 있지 않습니다.\r\n개인정보보호법은 정보 주체 본인의 개인정보 열람 권한만 보장합니다.\r\n아, 그럼 소송을 하면 어떻게 해야 하나요?\r\n가해자와 상대방 차량 사진을 가려야 하나요?\r\n아니, 소송과 관련된 내용은 변호사나 대한법률구조공단에 문의하시는 것이 정확합니다.\r\n개인정보보호법은 다른 사람의 정보 접근을 제한합니다.\r\n아, 네, 알고 있습니다.\r\n그런데 그 정보를 가리고 처리하지 않고, 고객님께서 그 정보를 확인하려면 다른 사람의 정보는 모두 가려져야 할 텐데, 지금도 그대로 받아도 되는 건가요?\r\n소송과 관련된 내용은 저희가 말씀드리기가 어렵습니다.\r\n아, 그렇군요?\r\n네.\r\n그렇다면 변호사나 법률구조공단에 문의해야 하는 건가요?\r\n개인정보보호법상으로는 허용되지 않습니다.\r\n아, 네, 알겠습니다.\r\n네.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "d1715b08b9e312e373577874babad4e13aebce1c7a7f0cf297b9ea1aa8f67e43",
+        "normalized_content_hash_sha256": "eacd8b76acc5ac34e3d86088b589bead8b9c1551b722282f620926be103cf626",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-ALSkehLP",
+      "source_id": "ALSkehLP",
+      "source_set": 3,
+      "source_file": "ALSkehLP.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담센터 박서준입니다.\n네.\n저 아들 핸드폰이 무단 발송이 동시에 발생해서 알아봤더니 악성코드 감염으로 신고가 되어 있다고 하더라고요.\n자녀분 번호가 어떻게 되실까요?\n010-****-**** 번이세요?\n잠시만 기다려주세요.\n네, 고객님 기다려주셔서 감사합니다.\n지금 자녀분의 휴대폰에서 불법 온라인 도박 광고 이미지 전송이 되셔서요.\n그거 관련해서 악성코드 신고가 돼서 지금 현재 서비스 이용이 제한되신 것으로 보입니다.\n형사 처벌 대상이 될 수 있습니다.\n원래는 그런데 미성년자이기 때문에 조사하지 않는 대신에 보통 30일 정도 기간을 정해서 서비스 이용을 제한하고 있습니다.\n아 혹시 어떤 내용인지 제가 좀 확인할 수는 없을까요?\n아 네, 저희 쪽에서는 그 이미지가 확인되지 않아서요.\n고객님.\n아 도박 광고 뭐 어떤 거라고요?\n네, 온라인 도박 광고라고 합니다. 불법 도박 광고 스팸 이미지가 전송이 됐어요.\n그래서 이용 제한 기간 동안은 휴대폰 사용이 어려우실 것 같습니다.\n그게 아이 핸드폰에서 전송이 된 건가요?\n네, 네.\n아니면 상담원이 그러는데 전화번호를 빌려주거나 이렇게 해서 가능하다고 그러더라고요.\n일단은 자녀분 휴대폰에서 직접 보내주신 것으로 보입니다.\n만약에 타인이 자녀분의 번호를 도용해서 한 사안이라면 이 부분은 경찰서에 신고를 해주셔야 됩니다.\n아...\n아 네, 네, 알겠습니다.\n네, 감사합니다.\n네.",
+      "matched_keywords": [
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "aa04f00ac6fe3b9db55af953d74e7bf8d2203f0a53e1769a4ebeb68cc55a1c8e",
+        "normalized_content_hash_sha256": "998b180343d369e2156d57dfeaf578aedddec78762002cb83872c1193028d05c",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AM2Odsov",
+      "source_id": "AM2Odsov",
+      "source_set": 3,
+      "source_file": "AM2Odsov.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\nL28 상담센터 박입니다.\r\n안녕하세요.\r\n여기 희망가득 빌라인데요.\r\n어디시라고요?\r\n빌라요.\r\n제가 공정거래위원회에 메일 오는 거를 클릭을 해서 어떻게 해야 할지 싶어서 전화를 드렸습니다.\r\n혹시 선생님 확장자명이 변경이 되셨다거나 이런 부분은 아니세요?\r\n네?\r\n확장자명이 변경이 되셨다거나 이런 부분은 없으세요?\r\n확장자명이요?\r\n네네.\r\n확장자명은 어떤 거예요?\r\n아 그 파일 선생님께서 이제 보관하고 있으신 파일명의 확장자명이 변경이 되셨다거나 이런 부분 없으세요?\r\n아니요.\r\n그냥 이걸 했을 때 그 한글 파일이더라고요.\r\n네.\r\n그래서 소명자료 요청서 해가지고 HWP로 돼있어가지고 네.\r\n그걸 클릭을 하고 이제 찾아보니까 신고를 하라고 하더라고요.\r\n랜섬웨어의 감염이 되신 부분이라면 신고를 하시는 부분이 맞는데 랜섬웨어의 감염이 되신 걸까요?\r\n그런 건 아닌 것 같아요.\r\nRG 파일이 아니어서 파일들이 확장 감염으로 변경이 되셔서 파일이 열리지 않는다거나 암호화 되어서 그런 것 같으세요?\r\n그런 건 따로 지금까지 발견된 건 없어요.\r\n우선은 선생님이 이제 감염경로에 대해서 만약에 랜섬웨어에 반대되신 부분이라면 신고를 하시는 건 맞거든요.\r\n우선은 그 부분에 대해서 선생님께서 신고를 원하시는 부분이신 거예요?\r\n어떻게 해야 되나 싶어서 신고를 해야 되나 어떻게 해야 되나 싶어서요.\r\n저는 지금 확장 성형이 변경이 된 부분이 아니라면 이게 암호화 되지 않았다면 랜섬웨어에 감염된 걸로 보기는 어려울 것 같거든요.\r\n아 그래요?\r\n그럼 이게 무슨 문서 같은 거 클릭하면 다 암호화가 걸려져 있나요?\r\n네 랜섬웨어에 감염이 되면 그쪽에서 이제 금전적인 랜섬이라는 게 몸값을 의미해요.\r\n그래서 이게 이제 몸값을 요구하는 돈을 요구를 해요.\r\n금전적인 거를 요구를 하고 금전적인 부분에 대한 보상을 요구를 하고 이걸 풀어주겠다 해가지고 풀어주는 경우도 있고 풀어주지 않는 경우도 있어요.\r\n그런데 그런 게 아니라면 지금 암호화되지 않았다면 랜섬에 감염된 건 아닌 걸로 보이고요.\r\n선생님 그 V3나 알약 같은 그런 백신으로 컴퓨터 점검 한번 전체적으로 해주시고요.\r\n컴퓨터 뭔가 이상한 부분이 있다거나 하는 경우에는 컴퓨터 포맷을 해주셔야 될 것 같고요.\r\n그리고 만약에 추후에라도 뭔가 이상한 부분이 있고 암호화되었다거나 그런 부분이 있을 경우에는 감염경로 신고를 해주셔야 될 것 같습니다.\r\n네 알겠습니다.\r\n다시 한번 확인해주세요 선생님.\r\n다시 한번 확인해주시라고요.\r\n아 네 알겠습니다.\r\n감사합니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "048cb255c97c743d5f1857acb6c904042ace85c9f745ef5d4cdd468375a553d3",
+        "normalized_content_hash_sha256": "15ffac89d572c2ae5c3cf4b1523681728891c5d26d6c4855221b86a9254ccb50",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-ANbOPQvR",
+      "source_id": "ANbOPQvR",
+      "source_set": 3,
+      "source_file": "ANbOPQvR.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n3217 상담센터 박서준입니다.\n아, 네, 안녕하세요.\n제가 이제 업무용 휴대폰으로 스팸 번호로부터 전화를 받은 것 같아서, 혹시 다른 분들에게 피해가 있을까 봐 일단 전화를 드려봤거든요.\n네, 고객님께서 피해라고 말씀하신 것 같아서 여쭤보는 건데요.\n이것이 어떤 단순한 피해를 입히려는 피싱이나 그와 같은 내용의 전화인가요?\n제가 받은 전화 내용이 어떤 건데요, 그분께서 고객님의 보험 창구 접수를 하셨는데 못 받으셨다고 전화 주셨거든요.\n그런데 제가 이 휴대폰이 업무용이라고 말씀드리자마자 바로 전화를 끊으셨어요.\n그분께서.\n저희가 이 부분에 대해서는 별도로 피싱 관련 신고를 받은 건 아니고요.\n개인 정보가 노출된 부분이 있다거나 하는 경우에는 피해 예방을 위한 안내를 해드리고 있는 부분이 있습니다.\n그런데 지금 고객님은 그런 부분은 아니시고, 현재 저희가 안내드리고 있는 주민등록번호나 다른 개인 정보가 노출된 경우 피해를 예방할 수 있는 5가지 방법을 안내해 드리는 내용이 있는데,\n그중에 피싱 관련해서 뭔가 제보하고 싶다는 내용이 담긴 문자 메시지가 있습니다.\n그 문자 메시지 내용을 일부 발췌해서 피싱 전화번호에 대한 제보를 원하시는 경우 해당 경로를 통해 문의해 드릴게요.\n그 문자 메시지 내용을 한번 참고하셔서 고객님께서 원하시는 경우 해당 신고 경로를 통해 문의해 보시는 것이 좋겠습니다.\n네, 알겠습니다.\n네, 지금 고객님께 전화 걸었던 번호로 문자 메시지를 발송해 드렸습니다.\n네, 감사합니다.\n네.\n네.",
+      "matched_keywords": [
+        "피싱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "06f198c9440586b6fdad21e448116e9dbdffc5585edb35e6e9d58d298402467d",
+        "normalized_content_hash_sha256": "c24bfd0cb7675170c7404759f8d12eaecd2ea85a0e3d9dd624fbe9720bf7f7e7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aoG2cL8M",
+      "source_id": "aoG2cL8M",
+      "source_set": 3,
+      "source_file": "aoG2cL8M.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담팀 박서준입니다.\n네.\n고생 많으십니다.\n제가.\n텔레그램 계정이 해킹당한 것 같아서요.\n그 특별한 경제적 기회는 없는데.\n제 이름으로 아는 사람들에게 이상한 메시지가 계속 전달되는 것 같아요.\n최근에 수상한 문자 메시지의 링크를 클릭하신 건가요?\n그렇습니다.\n클릭했어요.\n저도 친한 지인이 제 이름으로 텔레그램 메시지를 보내는 걸 보고 보안을 강화해야겠다 싶어서 메시지를 클릭하고 제 전화번호를 입력했더니.\n아, 일단 그 링크를 클릭한 것 때문에 그런 것 같네요. 감염되면 바이러스가 자동으로 문자를 발송하는 경우가 발생하니,\n연락 주신 번호로 치료 방법을 문자 메시지로 보내드릴게요.\n그 내용대로 치료하시면 해결될 겁니다.\n그리고 혹시 텔레그램 아이디도 탈취당하신 거라면 모든 기기에서 로그아웃한 후 아이디 비밀번호와 2단계 인증 설정을 하시면 해결됩니다. 다만, 저는 텔레그램을 자주 사용하지 않고 특별한 메시지가 있을 때만 받아서 휴대폰에서 앱을 삭제해뒀거든요.\n그렇다면 상관없는데, 혹시 아이디도 탈취당하신 거라면 해당 아이디의 비밀번호 변경이나 2단계 인증 설정을 하셔야 하고, 문자 발송 문제는 보내드린 문자 내용을 취소하시면 해결됩니다.\n네, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "앱",
+        "해킹",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "3e23fe9ea05d78362019edecd89c80705361dddbb3d041ba7410dd95b3486ab7",
+        "normalized_content_hash_sha256": "a045f0af73aa872d447f0ba4a88d0eb2412e053cd08e7d38b1dd1705b6024e0c",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-apBMhkFz",
+      "source_id": "apBMhkFz",
+      "source_set": 3,
+      "source_file": "apBMhkFz.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 수고 많으십니다.\n다름이 아니라요.\n제가 아는 분인데 휴대폰이 해킹당한 것 같아요.\n그러니까 이제 휴대폰이 본인이 입력한 것도 아닌데 문자도 오고 카카오톡도 오고 막 그래요.\n근데 이게 잘못 누르고 가면 필터랑 이게 지역이 틀릴 수 있는데 정확한 단어로 해서 이렇게 간대요.\n그래 가지고\n저한테 전화가 왔거든요.\n그래서 혹시 이거 어떻게 해야 되나요?\n지금 그러니까 그분이 뭐 스미싱 같은 피해를 입으신 상황이라면 거기에 대한 대처 방법을 저희가 이제 보내드릴 수가 있는데 저한테 피해를 입은 게 아니라 그분이 지금 휴대폰을 갖고 있는 게 해킹을 당해서 그거를 지금 어떻게 해야 되는지 몰라가지고 저한테 이제 문의를 준 거예요.\n그래서 제가 알아본다고 하고 지금 연락드린 거거든요.\n그래서 제가 말씀드리는 거잖아요.\n피해를 입은 부위의 휴대폰에 바이러스에 감염될 만한 뭔가 원인이 있었는지를 알고 계시는지 여쭤본 거예요.\n모르겠어요.\n근데 최근에 제가 이제 휴대폰 대리점을 하는데 그 유심칩을 바꿔서 통신사를 바꿨어요.\n원래는 SK였는데 KT 알트폰으로 변경했거든요.\n그러면서 이제 그런 문제가 생겼다고 이분 생각을 하시는 것 같아요.\n그래서 저는 그런 경우를 1번도 보지 못했는데 그런 경우가 있다고 하니까 좀 저도 의아했고 그래서 지금 알아보는 거거든요.\n저희가 그런 원인을 알아봐 드리는 기관이 아니고 스미싱으로 인해서 이제 피해를 입으셨다면 그 스미싱 대처 방법을 이제 저희는 알려드리는 기관이군요.\n네, 네 그 대처 방법을 좀 알려주시면 좋겠어요.\n제가 번호를 알려주면 통화를 1번 해보시겠어요?\n그분한테 전화를 그럼 주시라고 하세요.\n저희가 통화를 드리는 게 아니라\n아, 네 알겠습니다.\n그러면 이 번호로 전화 드리면 되는 거죠?\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "해킹",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "107641f86a306eaaeb8d1e6116e859335a9d94d6e6c84b07705ff232bfdab905",
+        "normalized_content_hash_sha256": "7fa7f3cc875f98ab568e23b61403b4a7b58a429a28b62be1ef24e7ac3529ea72",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-Aprhs9kC",
+      "source_id": "Aprhs9kC",
+      "source_set": 3,
+      "source_file": "Aprhs9kC.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n3217 상담센터 박서준입니다.\n개인 정보 관련해서 문의 드리고 싶은 부분이 있습니다.\n혹시 저희 아파트 내 동대표가 제 개인 연락처를 수집하는 것이 적절한 절차인지 궁금합니다.\n동대표는 연락처를 가지고 있는 것으로 알고 있는데, 동대표가 개인정보를 열람할 수 있는 권한이 어느 정도인지 알고 싶습니다.\n관리소장에게 문의했더니 성함 확인만 가능하다고 하는데, 동대표는 민원 처리 때문에 개인정보를 열람할 수 있다고 하더군요.\n저는 개인정보 제공에 동의한 적이 없는데, 어떻게 제 연락처를 알고 전화할 수 있는 건가요?\n우선 입주자 대표 회의에서 적법한 근거를 통해 개인정보 수집이 결정되었다면, 최소한의 정보 제공은 가능할 수 있습니다.\n공동주택 관리법에 관련 규정이 있을 수도 있습니다.\n선생님께서 문의하신 내용과 유사한 사례가 개인정보보호위원회 상담 사례집에 있습니다.\n차량 등록 현황 외에도 이름과 연락처가 오픈되는 사례에 대한 Q&A가 있습니다.\n동대표가 업무 처리 과정에서 연락처를 수집하고 확인하는 것은 합리적인 부분이라고 생각됩니다.\n공동주택관리법에서 관련 내용을 확인할 수 있을 것입니다.\n상담 사례집에서는 동대표에게 개인정보를 제공하려면 정보 제공 동의 등 법적 근거가 필요하다고 명시되어 있습니다.\n법적 근거가 없다면 개인정보를 다른 목적으로 사용하는 것은 문제가 될 수 있습니다.\n동대표에게 개인정보 제공 동의를 받아야 할 것으로 보입니다.\n법적 근거가 없는 경우에는 개인정보를 제공해서는 안 됩니다.\n공동주택관리법에 근거하여 개인정보를 활용할 수 있다면 활용할 수 있습니다.\n법적 근거가 없다면 개인정보보호법 24조 2항 위반 문제가 발생할 수 있습니다.\n와이프가 아파트 게시판에 문의한 내용인데, 그 내용이 저에게 전화로 연결된 것은 상관없는 일입니다.\n업무 목적 외 개인정보 수집 및 이용은 형사 처벌 대상이 될 수 있습니다.\n실질적인 처벌은 어려울 수 있지만, 경찰에 신고하는 것을 고려해 보셔야 할 것 같습니다.\n네, 알겠습니다. 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "2d2bea4d84865b862f6d95cee425634b785d155a7ae031cc3be9a6f3aa13a703",
+        "normalized_content_hash_sha256": "4fec60d60c48ca402964a98670cf189c85df4fbfa4c1652caf5b20b96106c17d",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aQA25HaX",
+      "source_id": "aQA25HaX",
+      "source_set": 3,
+      "source_file": "aQA25HaX.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "의료 상담센터 상담원 김민지입니다.\n네.\n여보세요.\n저번에 겪었던 층간소음 문제 때문에 다시 연락드렸어요.\n혹시 제가 앞으로 어떻게 대처해야 할지, 그리고 혹시 다른 방법은 없을까요?\n저희가 안내해드리는 내용은, 층간소음은 여러 가지 원인이 있을 수 있지만, 가장 흔한 경우는 생활 소음 때문이에요.\n네네.\n그렇군요.\n예전에 상담하실 때 층간소음으로 상담받아보신 적이 있으신 것 같아요.\n아 제가요?\n아 제가 이번에는 처음 연락드려요.\n혹시 끝 번호가 선생님 어떻게 되세요?\n010-****-****입니다.\n혹시 최근에 층간소음 관련 문자 메시지를 받으시고 링크를 클릭하신 적 있으세요?\n선생님?\n저희가 층간소음 해결 방법을 안내해 드릴까요?\n문자 링크를 클릭하신 스마트폰이 안드로이드폰이신가요?\n네?\n안드로이드폰이신가요?\n아이폰이신가요?\n안드로이드폰입니다.\n혹시 인증번호를 받으셨나요?\n인증번호요.\n본인 확인을 위한 전화번호 숫자 말고요.\n네, 그런 번호가 있으세요?\n그렇다면 제가 층간소음 해결 방법 문자 메시지를 보내드릴 테니, 내용을 모두 확인하시고 안내에 따라 진행해 주세요.\n해결 방법 조치요.\n선생님.\n조치.\n아 네 네 네.\n조치 방법을 안내해 드리는 거니까, 문자 메시지에 나와 있는 내용을 모두 보시고 그대로 따라 해주시면 됩니다.\n아 네 네.\n알겠습니다.\n감사합니다.\n네.",
+      "matched_keywords": [
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "3870aed28685ed398ab2a4f267d5416cd3d7db6b8c69c108f545813732123960",
+        "normalized_content_hash_sha256": "7f13a361b7999b998c57764321f98107aa4c42d54228f4a06bf72947a93fbac7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AqcwFOzq",
+      "source_id": "AqcwFOzq",
+      "source_set": 3,
+      "source_file": "AqcwFOzq.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n42 부산 센터 박입니다.\r\n네.\r\n저희 할아버지께서 택배 예약 문자를 받으셨는데 네.\r\n그 친척인 줄 알고 주민등록번호랑 카드번호랑 비밀번호랑 이런 것을 다 알려줬다고 하거든요.\r\n혹시 카드 정지하셨어요?\r\n아니요.\r\n아직이요.\r\n비밀번호 알려주셨으면 결제될 수 있잖아요.\r\n카드에 있는 돈은 결제를 해주시는 게 좋으실 것 같고 카드는 이제 사용하시는 카드사로 업무 이래 내일 전화하셔가지고 조치방법 문의를 해주세요.\r\n카드는 다른 용도로 쓸 수도 있으니까요.\r\n그리고 선생님 할아버지께서 컴퓨터에 뭐 설치하신 부분이 있으실까요?\r\n네 원격 접속 프로그램을 해 가지고 하셨다고 해 가지고 저희가 알고 일단은 컴퓨터를 껐거든요.\r\n그러시면은요.\r\n백신 프로그램으로 컴퓨터 점검 한번 해주시고요.\r\n악성코드나 이런 거 확인되는 거 있으시면 그거 삭제해 주시면 돼요.\r\n그리고 혹시 주민등록증 사진을 보내지는 않으셨어요?\r\n할인도 보내셨어요.\r\n그러면은요.\r\n주민등록증은 내일 그\r\n보안서류 센터 방문하셔가지고 분실 신고하시고 재발급 받으시고요.\r\n그리고 지금 선생님께서 전화하신 번호로 제가 조치 방법 문자로 한번 발송을 해드릴게요.\r\n문자로 참고하셔서 주민등록번호 노출하셨으니까 방법대로 조치를 해주시고 주민등록증 분실 신고하시고 재발급 받으시고 내일 사용하시는 카드사로 문의하셔가지고 사용 정지를 한다든지 카드에 대해서 조치를 해주시고 컴퓨터에서는 백신 프로그램 실행하셔서\r\n컴퓨터에서 악성코드 확인되는지 점검해주시고 그리고 문자 발송해드린 거 내용 확인하시고 조치해주시면 됩니다.\r\n아 네 알겠습니다.\r\n그리고 저희가 주말에는 해킹 바이러스 상담만 가능하니까요.\r\n추후에 더 문의사항 있으시면 업무시간에 다시 전화하십시오.\r\n선생님.\r\n네 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "해킹",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "519abafd95aaa51a1f50ee0a780b62989329616dae0a9551bdc256c4b62154ba",
+        "normalized_content_hash_sha256": "53699bb496c8fa3fe00a5e69983023c5f915eece1118a63d4facdabcf7aabfb6",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AR8V832g",
+      "source_id": "AR8V832g",
+      "source_set": 3,
+      "source_file": "AR8V832g.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요, 희망가득 빌라 상담원 박서준입니다.\n아, 네, 고객님. 수고 많으셨습니다.\n아, 네, 며칠 전에 문자를 받으셨다고요.\n어떤 내용의 문자 받으셨는데요?\n페이지 모빌에서 문자를 받으셨는데 요금이 13만 원 정도 미납되었다고 하더라고요.\n네, 제가 따뜻해서 오늘도 문자가 또 왔어요.\n네, 제가 전화를 하니 전화가 왔어요.\n네, 고객님, 이 글이 대체 어떻게 된 겁니까?\n네, 제가요, 2010년도에\n이메일을 도용해서 빌려줬대요.\n제 이메일을.\n네, 그리고 뭐 이 전화 요금이 미납됐다 이거예요.\n네, 고객님.\n고객님, 그런 적도 없고 2013년, 2016년도에 얘기하는데 이제 와서 13년이 된 거 같은데 이 전화 요금 미납돼? 이게 무슨 말이냐고.\n네, 그래서 지금 어떻게 된 건지 싶어서 여기다 전화를 드리는 겁니다.\n그런데 선생님, 저희는 진위 여부를 확인해 드린 건 아니고요.\n다만 해당 전화가 보이스 피싱 전화라고 가정한다면\n고객님께서 보이스 피싱 조직에 신분증을 보냈거나 계좌번호나 비밀번호를 알려주셨거나 이런 경우가 있으시잖아요.\n그래서 고객님의 개인정보가 노출됐었을 때에 대한 예방 방법을 알려드리려고 하는 거거든요.\n그런데 지금 말씀은 고객님, KB모빌에서 고객님 핸드폰 요금이 결제가 되었다는 말씀이신 거잖아요.\n결제된 게 아니라 돈은 미납이 됐다고요?\n그것은 저희 기관도 알 수가 없어요.\n고객님.\n정확한 건 한번 통신사로 문의를 해보셔야 될 것 같습니다.\n네, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "피싱",
+        "계좌",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "2eb3b5d3ea90f2d2fc7569541472690e7a3777b1a3315ec8807dd39cf3563880",
+        "normalized_content_hash_sha256": "dd05cf6ba0f261fb9e2eff8321d17b0728ae755303a0c002e79031b26748c1af",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aRougX1i",
+      "source_id": "aRougX1i",
+      "source_set": 3,
+      "source_file": "aRougX1i.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n3217 상담센터 김민지입니다.\n아, 네, 사실 그, 다름이 아니고 보이스 피싱 관련해서요. 지금 좀 전에 통화했던 그 보이스 피싱 상담원하고 전화했는데 바로 6번 상담으로 연결이 됐고, 저 같은 경우는 한 일주일 전에 개인 정보가 유출되어 명의 도용까지 당했거든요.\n그래서 여러 기관에 계속 문의하면서 조치를 취해놨는데, 문제는 사업자 등록을 계속 시도하고 있는 것 같아요.\n강남 세무서 쪽에서 계속 전화가 와서 어떤 이름으로 사업자 등록을 하려고 하는데, 사실이 맞는지 확인해봤더니 아니라고 했는데, 그쪽 상담원 말로는 강남에서 사실을 알고 있어도 계속 거부할 수 있지만 다른 세무서에서는 모르기 때문에 제가 모르게 개인 사업자가 등록되어 악용될 수 있고 피해를 받을 수 있다고 하더라고요.\n조치를 좀 받아보라고 하는데, 이게 어느 기관에 문의해야 하는지 잘 몰라서 홈택스 상담원하고 통화를했더니 3217 번호를 알려주더라고요.\n혹시 이쪽에 도움을 받을 수 있는지 한번 전화해봤어요.\n일단 고객님, 저희 기관에서는 고객님의 주민등록번호가 노출되셨다고 하셨잖아요.\n저희는 고객님의 명의 도용 예방을 위해 문자 메시지로 명의 도용 예방법을 보내드리고 있습니다.\n고객님께서 말씀해주신 것처럼 다른 세무서에서 등록이 되지 않도록 할 수 있는 방법은 저희 기관에서는 제공하지 않습니다.\n혹시 그런 부분에 대해 연결되는 부분이 있는지 알고 계시거나, 경찰에 상담을 받아보셨는지요?\n지금 최후의 수단으로 경찰에 전화해서 안 되면 그쪽으로 한번 전화를 해보려고 합니다.\n고객님, 각각의 조치를 다 하셨다고 하셨는데, 저희가 보내드린 명의 도용 예방법 내용을 다시 한번 확인해보시는 것도 좋겠습니다.\n그리고 고객님의 신분증은 분실 신고 후 재발급 받으셨나요?\n네, 바로 받았습니다.\n네, 그렇다면 신분증 재발급을 받으셨고, 혹시 경찰서나 242번으로 추가 문의를 해보시면 될 것 같습니다.\n242번은 경찰청 민원센터입니다.\n대부분 162번은 출동 번호이기 때문에 242번으로 문의해주시면 됩니다.\n아, 네, 알겠습니다.\n상담해주셔서 감사합니다.\n바로 전화해 보겠습니다.\n네, 감사합니다.\n수고하셨습니다.",
+      "matched_keywords": [
+        "피싱",
+        "경찰",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "97aa9d0c1cbb1261472fac14a2e747967937f8d5bc9be86b503487663180a652",
+        "normalized_content_hash_sha256": "590d343d95c0604290ae780b165d1e294061ae05a6362902fdb1fbb77ec5d60e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-ARUXoxQs",
+      "source_id": "ARUXoxQs",
+      "source_set": 3,
+      "source_file": "ARUXoxQs.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "지갑에서 운전면허증을 챙겨 나오지 못했습니다.\r\n그런데 운전면허증을 재발급받으면 주민등록번호가 함께 표시되어서 개인 정보 유출이 우려돼서 연락드렸습니다.\r\n어떻게 해야 할까요?\r\n그럼, 휴대폰 사용을 제한하는 서비스와 금융 거래 제한을 설정하시는 것이 좋겠습니다.\r\n제가 방법을 문자 메시지로 보냈는데 확인해 보시겠어요?\r\n문자요?\r\n저에게 문자 보내셨나요?\r\n네.\r\n알겠습니다.\r\n제 번호로 보내주신 건 맞죠?\r\n명의 도용 피해 예방 방법을 담은 문자였는데요.\r\n문자 내용을 확인하시고 2번, 1번, 3번 순서대로 빠르게 진행하시면 됩니다.\r\n운전면허증은 분실 신고 후 재발급받는 것이 가장 좋습니다.\r\n네, 지금 재발급 받으러 가고 있습니다.\r\n아, 결제하러 가시는군요.\r\n그렇게 하시면 주민등록번호가 악용되지 않도록 막을 수 있습니다.\r\n신청하기…\r\n만약 누군가 습득해서 악의적으로 사용하려 할 가능성은 낮으니, 최대한 빨리 조치하시는 것이 좋겠습니다.\r\n네, 알겠습니다.\r\n고맙습니다.\r\n네, 혹시라도 그 사이에 피해가 발생하면 즉시 경찰에 신고하셔야 합니다.\r\n네, 감사합니다.\r\n감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "금융",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "c7ed67cbd25f340112b7e42fbedf4c0b931d7952c6930c5ff0bd2a84f31687c6",
+        "normalized_content_hash_sha256": "e083e40d65787fd8034490fed31a930ca7f0bf625c8568ab03f933aa0eb3908f",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-Ask7KG8y",
+      "source_id": "Ask7KG8y",
+      "source_set": 3,
+      "source_file": "Ask7KG8y.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n2451 상담원 박서준입니다.\n여보세요?\n네, 다름이 아니라 제가 얼마 전에 상품을 구매했는데, 무통장 입금으로 결제했거든요. 그런데 상대방은 입금이 제대로 안 되었다고 주장하는 거예요.\n네, 제가 어떻게 확인해야 할까요?\n고객님, 혹시 고객님께서 저희에게 입금하신 건가요?\n인터넷 진흥원 쪽으로요?\n아니, 그런 건 아니세요?\n네, 네. 그런데 어떤 걸 확인하신다는 말씀이세요?\n제가 입금을 했는지 안 했는지 확인하신다는 말씀이세요?\n네, 네. 상품을 구매했는데 입금을 했다고 하시면, 고객님 계좌 내역을 확인하실 수 있을 텐데요. 은행에 직접 확인해보시는 게 좋을 것 같습니다.\n고객님, 은행에요?\n네, 고객님께서 계좌로 입금하신 건가요?\n아니면 결제를 하셨다는 말씀이신가요?\n네.\n결제를 하셨어요.\n무통장 입금으로요.\n무통장으로 입금했다는 건 돈을 직접 고객님 계좌로 입금하신 거군요.\n그렇다면 고객님께서 입금 내역이나 상대방 계좌에 입금 내역이 있을 거잖아요.\n그것은 은행에 확인해보셔야 될 것 같고요.\n고객님.\n그런데 혹시 사기일 가능성이 있다고 생각되시면, 고객님은 더 이상 대응하지 않으시는 게 안전하실 것 같습니다.\n만약에 상대방이 \"입금 안 돼, 다시 입금해 줘\" 혹은 \"수수료가 부족해서 입금이 안 돼\" 와 같은 식으로 계속 요구한다면, 요즘 사기가 많이 발생하거든요.\n그러면 그런 경우에는 경찰에 신고하시는 게 좋고요.\n그러니까 우선 은행에 전화해서 정상적으로 입금 내역이 정리되어 있는지 확인해보세요.\n만약에 사기 계좌라고 의심된다면, 예를 들어 그 사람이 돈을 인출하기 전에 지급 정지를 요청할 수도 있거든요.\n보이스피싱 계좌 같은 경우에는요.\n그런 계좌인지 은행에 한번 문의해보시는 게 좋고요.\n그럼에도 불구하고 상대방이나 업체 측에서 \"확인이 안 돼, 다시 돈을 입금해 줘\" 와 같이 계속 유도한다면 사기일 가능성이 높으니 주의하셔야 합니다.\n알겠습니다.\n감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "계좌",
+        "경찰",
+        "수수료"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "d3d1e3db615d3bb5ba49f4afa862a56befb483041cceef820b54333ac3a0aa29",
+        "normalized_content_hash_sha256": "a9ba9921d17b2be57d49ef231a2547d70d54c2898560669c89cf50b171c84cbd",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-atbWVoVr",
+      "source_id": "atbWVoVr",
+      "source_set": 3,
+      "source_file": "atbWVoVr.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n3217 상담센터 김민지입니다.\n네.\n고생 많으십니다.\n혹시 제가 해외에서 제3국에서 지금 돈을 요구받고 있거든요.\n혹시 그게 문자 메시지에 기재되어 있어서 비트코인을 요구하는 메시지를 받으신 거예요?\n아니요.\n그게 지금 그냥 메신저인데\n거기서 이용을 했다가 카카오톡이라는 앱을 이용을 했는데 거기서 그 사람이 저랑 영상 통화를 했는데 상담원님 더 이상 말씀 안 해주셔도 알 것 같아요.\n이게 몸캠 피싱이라고 하는 심각한 범죄인데요.\n일단은 상담원님께서 뭔가 그 사람 시킨 대로 하셨기 때문에 상담원님 개인 정보가 탈취되는 피싱 범죄를 당하신 거예요.\n일단은 그 사람이 상담원님께 어떻게든 협박해서 돈을 갈취하려는 목적이 있기 때문에 처음에 50만원을 요구해서 50만원을 낸다고 해서 끝나는 게 아니라 그다음에 100만원, 150만원, 200만원 점점 금액이 커져가면서 끊임없이 협박을 하는 형태예요.\n그래서 이런 경우에는 아예 처음부터 응대를 하지 마셔야 되고요.\n그리고 가까운 가족이나 지인분들께는 상담원님 휴대폰이 해킹돼서 합성 사진, 영상 등이 유포될 수도 있는데\n절대로 그거 열어보거나 클릭하지 말고 삭제하고 연락와도 대응하지 마라 이런 식으로 알려주시는 게 좋고요.\n그리고 만약에 금전 피해 등으로 연결됐을 때는 직접 가까운 경찰에다 신고하시는 게 좋으세요.\n그게 인스타그램 그 친구 거기서 인스타그램 지인들한테도 이제\n뭐 보낸다 뭐 이런 식으로 뭐 얘기를 했거든요.\n그러니까 설령 상담원님 보내지더라도 어쩔 수가 없어요.\n그 사람이 이제 그걸 퍼트리는 행위 자체를 막을 수 있는 방법은 없고요.\n간혹 이런 걸 뭐 사설 업체에 들고 돈을 주면 된다고 하는데 그런 걸 이용해봐서 되느냐라고 물어보시는 분들이 있는데 그런 사설 업체도 사기의 가능성이 굉장히 많아요.\n그러니까 사실상 이거는\n이런 걸 뭔가 삭제하고 유포하는 행위를 막을 수 있는 방법이 있다라고 하면 저희 같은 공공기관이라든지 이런 데서 무료로 도움을 줄 수 있는 방법을 마련했겠죠.\n상담원님.\n경찰이나 저희가요.\n그런데 그런 방법이 저희가 없다는 거는 사실상 거의 하기가 어렵다는 걸로 봐야 돼요.\n그래서 그냥 좀 약간 망신스러움을 감수하고라도 차라리 지인들께 빨리 알려서 상담원님께서 협박을 받아들이지 않으면\n상담원님 가까운 가족한테도 협박에 갈 수 있기 때문에 차라리 밝히고 휴대폰이 내가 해킹해서 이렇게 됐어 라고 상황 말씀하시고 그냥 끝내시는 게 좋으세요.\n아 그래요?\n알겠습니다.\n감사합니다.\n정민원 담당자였습니다.\n그리고 휴대폰은 꼭 악성코드 검사 한번 진행하셔야 되죠.\n어떤 거요?\n휴대폰 백신 프로그램을 설치해서 점검 진행하시고요.\n그리고 조금 더 마음이 놓이지 않는다라고 하면 공장 초기화 등의 조치도 고려해보셔야 되시고요.\n네, 알겠습니다.\n네, 감사합니다.\n전 민원담당 김순이였습니다.",
+      "matched_keywords": [
+        "피싱",
+        "경찰",
+        "앱",
+        "해킹",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "fca6420d7f2e2ed3a0950e5f6704afaae24d19ec57969926199799192b189859",
+        "normalized_content_hash_sha256": "b609bd29f12bb6a1b53058941f83d9fa7f3fcc5118c1e26e3601f33ec721e191",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-ATE4mDbF",
+      "source_id": "ATE4mDbF",
+      "source_set": 3,
+      "source_file": "ATE4mDbF.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\r\n저희 지인이 보이스피싱 피해를 입고 경찰서에서 안내받은 인터넷 보호나라 페이지에서 피싱 스미싱 사고 관련 링크를 클릭하라고 하는데, 현재 해당 폰이 없어서 어디로 접속해야 할지 모르시는 상황입니다.\r\n저희는 현재 보이스피싱 신고를 접수하고 있지는 않습니다.\r\n네, 맞습니다. 해당 내용 자체가 잘못된 정보입니다. 저희는 보이스피싱 신고를 받는 기관이 아니며, 현재 사고 클릭과 관련된 기능은 해당 사이트에 없습니다. 사이트가 리뉴얼되었지만, 저희는 보이스피싱 신고 메뉴조차 없어서 안내해 드릴 내용이 없습니다.\r\n아, 그렇군요. 그럼 여기서 할 수 있는 방법이 전혀 없는 건가요?\r\n네, 이곳은 주민등록번호가 유출된 분들을 위한 대처 방법을 안내하는 기관입니다.\r\n그렇다면 관련 방법을 알려주세요.\r\n현재 주민등록번호가 유출되어 개인 정보가 모두 노출된 상황입니다.\r\n알겠습니다. 연락 주신 번호로 대처 방법을 이미 보내드렸으니, 내용을 확인하시고 조치해 보시기 바랍니다.\r\n네, 감사합니다.\r\n감사합니다.\r\n김민지였습니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "스미싱",
+        "경찰",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "045ee3fa4fc2f8f582f62b079efc4155c80d2d38eecc03ddd7a1c5c455d66de9",
+        "normalized_content_hash_sha256": "b70e632c1b7df97ace1cbcc04feb708fe036e4ff8b71ffdfaab9c4cff3b9486e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AUrpnqrd",
+      "source_id": "AUrpnqrd",
+      "source_set": 3,
+      "source_file": "AUrpnqrd.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n친절 상담 전문가 김민준입니다.\r\n네.\r\n안녕하세요.\r\n여기 서지은 중학교 선생님입니다.\r\n어디 학교이신가요?\r\n서지은 중학교 선생님입니다.\r\n저희 학교에 공지사항이 내려왔는데, 초중고 대상 개인정보 보호 교육을 실시하라는 내용이었어요.\r\n그런데 선착순이라 대면이 아닌 온라인으로 진행될 예정이라고 합니다. 네.\r\n영상 콘텐츠 공동 활용 신청은 이미 절차대로 완료했고, 영상 길이를 확인하고 싶은데 가능할까요?\r\n영상 길이는 아직 정확하게 확인되지 않아서, 강의명은 확인되는데 영상 길이까지는 확인이 안 되고 있습니다.\r\n지금 신청을 하셨으니, 앞으로 절차가 어떻게 진행되나요?\r\n네?\r\n그럼요?\r\n포털에서 승인이 되면 영상을 다운로드 받을 수 있는 링크를 이메일로 보내주는 걸로 알고 있습니다.\r\n선생님.\r\n아.\r\n이건 승인 절차가 필요한 걸로 알고 있습니다.\r\n승인요.\r\n어.\r\n그럼, 문의는 어디로 해야 할까요?\r\n잠시만요.\r\n혹시 언제 신청하셨나요?\r\n오늘 아침에 방금 신청했습니다.\r\n방금 하셨어요?\r\n바로 승인이 되지는 않겠지만, 잠시만 기다려주세요.\r\n저희가 확인해보니, 온라인 교육 문의는 이메일로 문의하는 것이 가능합니다.\r\n이메일 주소를 알려드릴까요?\r\n선생님?\r\n아, 다른 학교들은 어떻게 진행하는지 알 수 있나요?\r\n다른 학교는 저희 팀에서는 정확히 알지 못합니다.\r\n개인적으로 교육을 자체적으로 진행하는 분들도 있고, 사업자에게서 개인정보 이해 관련 강의를 신청하는 분들도 있어서 학교마다 진행 방식이 다릅니다.\r\n학교에서 어떻게 진행하는지는 학교마다 다르기 때문에, 정확한 시간을 알려면 잠시만 시간을 내야 합니다.\r\n대략 10분 내외 정도 소요될 것으로 예상됩니다.\r\n아니면, 약 40분 정도 걸릴 수도 있나요?\r\n대략적인 시간도 모르시나요?\r\n제가 지금 확인해볼게요.\r\n잠시만 기다려주세요.\r\n아, 그런데 제가 사업자가 아니어서 신청이 안 되는 것 같습니다.\r\n그래서 강의 시간이 몇 시간인지 정확히는 모르겠습니다.\r\n네, 알겠습니다.\r\n그럼 승인될 때까지 기다려야 되네요.\r\n네, 승인 절차가 필요하고, 그렇게 오래 걸리지는 않을 것으로 예상됩니다.\r\n알겠습니다.\r\n네, 잘 들었습니다.",
+      "matched_keywords": [
+        "개인정보",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a6d9c8c320b0d79d4d5140deb821e2271af6fc5a5f8c571e9b0f3690afd66471",
+        "normalized_content_hash_sha256": "6cf4af958f240667214a1fdf7e16229ef389b51e24fdd69716cdca505f4b480f",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AvC1IGUK",
+      "source_id": "AvC1IGUK",
+      "source_set": 3,
+      "source_file": "AvC1IGUK.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네.\n안녕하세요.\n제가 지금 네이버, 당근마켓 등 여러 곳에서 결제 관련 인증번호를 계속 받는데, 제가 사용하지도 않는 것들입니다. 네이버 비밀번호를 변경하려고 했는데, 비밀번호가 변경되어 있었습니다. 누가 변경한 건지 모르겠지만요. 혹시 최근에 택배 주소지 확인을 위해 링크를 클릭한 적 있으세요?\n아까 모바일 초청장을 클릭한 적이요?\n네, 그 링크 때문에 이런 문제가 발생할 수 있습니다.\n저희 기관에서는 더 이상 피해가 발생하지 않도록 선생님께서 직접 할 수 있는 몇 가지 방법을 안내해 드리고 있습니다.\n선생님.\n아, 네, 네.\n혹시 사용하시는 기기가 아이폰인가요? 아니면 갤럭시 삼성폰인가요?\n삼성폰입니다.\n전화번호로 문자를 보냈는데요. 이게 스미싱일 수도 있고, 링크를 클릭하면 악성코드가 실행되어 개인 정보가 유출될 수 있습니다. 갑자기 인증번호가 오는 경우도 있을 수 있습니다.\n핸드폰에 악성코드가 있는지 확인해야 합니다. V3나 알약으로 검사하고 치료하는 방법과 그 내용을 포함한 총 5가지 방법이 순서대로 적혀 있습니다. 다시 한번 꼼꼼히 읽어보시고, 그 방법대로 빨리 조치하시면 피해를 최소화할 수 있을 겁니다.\n네, 알겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "6db9b33758912c3e1d3e573243e5560b89716dc1ee4499321563ec640d56773d",
+        "normalized_content_hash_sha256": "a8d7ee2ade6aab0c4f210a745e12932e665e66b8d0df1e6787f9e5fefeb25e3a",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-awnV8Yed",
+      "source_id": "awnV8Yed",
+      "source_set": 3,
+      "source_file": "awnV8Yed.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "128 상담센터 박서준입니다.\r\n네, 수고하셨습니다.\r\n네, 감사합니다.\r\n저는요.\r\n여기 전라북도 전주에서 전화를 드렸는데요.\r\n전라북도 전주시 완산구에 있는 행복한 주택 단지에 노인회장인데요.\r\n아파트 게시판에 노인회장 홍길동이라고 명시를 해서\r\n입주자 대표 회의에서 결과 발표에 공개했는데 이것이 개인정보보호법 위반이 되는지 묻고 싶어서요.\r\n우선은 선생님 공동주택관리법이라든지 아파트 관리를 위해서 이렇게 따로 발표를 해야 된다라는 내용이 명시가 되어 있으면은 선생님 그 법이 그게 없습니다.\r\n네.\r\n그러니까 그 법을 먼저 따르는데요.\r\n만약에 선생님 동의 없이 그것을 따로 올리면 안 되는데 올렸을 때 따로 이제 그 선생님의 어떤 사생활 침해라든지 이런 부분에 대해서 유출이 되었다라고 하면은요.\r\n그 선생님 동의 없이 제3자에게 제공이라든지 유출은 따로 선생님 형사 처벌 사안이거든요.\r\n그래서 그런 공동주택법이라든지 이런 부분에 관련이 가지 않고 그런 법이 명시해야 된다는 게 없다라고 하면은요.\r\n이게 위반에 해당이 되는지는 제3자에게 제공이나 유출은 경찰 기관으로 문의를 해보셔야 될 것 같아요.\r\n신고할 수 있는 부분인지는요.\r\n경찰 기관이요.\r\n경찰 기관에다가 뭘 물으라고요?\r\n그러니까 제3자에게 제공이나 유출은 형사 처분 사안으로 들어가거든요.\r\n그리고 개인정보보호법 일반이라고 하더라도 저희는 이제 과태료 사항으로 조사 진행을 하는 게 있고요.\r\n그러니까요.\r\n과태료를 부과해줬으면 싶어서 이게 되는가 안 되는가 그것 때문에 그러세요.\r\n과태료를 부과해달라고 해서 되는 게 아니고요.\r\n선생님께서는 선생님의 성함을 다른 사람 다 볼 수 있도록 게시판에 공개를 했다라는 거잖아요.\r\n그러니까 제 이름을 다른 사람한테 제공하고 유출했다라는 거잖아요.\r\n네, 그러면은 그 부분은 선생님 형사 처벌 사안이기 때문에 제3자에게 제공이나 유출은 형사 처벌 사안이기 때문에 이 부분은 경찰 기관으로 가능한지 문의해보셔야 될 것 같습니다.\r\n아, 네, 알았습니다.\r\n그러면 이거 명의해선도 되는 거죠?\r\n그건 모르겠어요.\r\n경찰에 문의해보셔야 할 것 같아요.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "72964491cfb7e1272675489eb9470a9194632db6893ee905fe7f70b26e41043d",
+        "normalized_content_hash_sha256": "6b2aa6d1ebf2aeb1e03c37f36364e03b07ca9ec3ccae132374187d462156084b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AwxQ4nkP",
+      "source_id": "AwxQ4nkP",
+      "source_set": 3,
+      "source_file": "AwxQ4nkP.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2451 상담센터 김민지입니다.\r\n궁금한 점이 있어서 연락드렸어요.\r\n제가 '소카' 서비스를 이용했는데, 제 와이프와 저 모두 각자 스마트폰으로 가입했어요.\r\n여행을 계획하면서 와이프가 스마트폰으로 예약하고 이용했는데, 제 카드 정보가 계속 결제되는 거예요.\r\n저도 제 스마트폰으로 예약하고 이용했는데, 제 카드 정보가 결제되는 걸 보니 신용카드 결제가 계속 제 것으로 처리됐어요.\r\n나중에 소카 측에 문의했더니, 처음에는 중복 가입 관련해서 엉터리 같은 답변만 반복했어요.\r\n한 달 동안 계속해서 저희 잘못이 아니라고 주장했죠.\r\n결국 저희가 계속 따지니, 시스템 오류가 있었다는 답변을 받았어요.\r\n제 개인 정보가 와이프 정보인데, 와이프 스마트폰으로 연동돼서 사용된 케이스예요.\r\n소카 운영 시스템 자체에 문제가 있는 것 같은데, 이 문제를 어디에 신고하는 게 맞나요?\r\n운영 시스템에 직접 신고하기보다는 개인정보 침해 신고를 하는 게 좋을 것 같아요.\r\n제가 개인정보를 제공할 때 개인정보 동의서에 목적이 명시되어 있다고 말씀하셨잖아요.\r\n그런데 지금 와이프의 정보가 목적 외로 사용된 것일 수도 있어요.\r\n와이프는 정보 주체가 아니니까, 제3자 제공이나 목적 외 이용에 해당될 수 있고요.\r\n저희는 일반 공공기관이라 과태료 문제는 조사할 수 있지만, 선생님께서 말씀하신 부분은 개인정보 침해에 대한 처벌 사안이에요.\r\n신고를 원하시면, 경찰청 민원센터나 개인정보 분쟁 조정위원회에 문의해보시는 게 좋겠습니다.\r\n아니요, 처음 듣는 기관인데요.\r\n개인정보 침해로 피해를 입은 경우, 보상이나 분쟁 해결을 도와주는 곳이라고 하셨죠?\r\n네, 맞아요.\r\n이 건으로 제가 금전적인 피해를 입은 것은 사실이에요. 이용을 했으니까 결제는 당연히 해야 하잖아요.\r\n하지만 피해를 주장하기에는 좀 애매한 부분이 있어요. 이용을 했으니까 이용한 건 맞지만, 와이프 카드 결제로 되어야 했는데 그게 불가능한 케이스인가요?\r\n제가 해당 기관에 소속은 아니어서 정확히는 모르겠지만, 개인정보 분쟁 조정위원회 홈페이지를 검색해보시면 비슷한 사례들을 많이 찾으실 수 있을 거예요.\r\n네.\r\n그렇다면 이 문제는 시간이 오래 걸릴 수도 있겠지만, 비용이 들지 않고 일단 신청을 해보고 결과를 기다려보는 게 좋겠어요.\r\n네, 네, 알겠습니다.\r\n개인정보분쟁조정위원회요?\r\n네, 맞습니다.\r\n지금 바로 검색해 보겠습니다.\r\n네, 감사합니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "cd99a49586c1aea324f0c8ee5574d175f6983c54b5f5267a5d066c3c0ba33e65",
+        "normalized_content_hash_sha256": "ab52122ad76e6cc4fe7b4d1b3011682257c257409a1a8f218422cfdf3adbcd6e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-aXcvDzxB",
+      "source_id": "aXcvDzxB",
+      "source_set": 3,
+      "source_file": "aXcvDzxB.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요, 고객님.\r\n네, 3217 상담센터 박서준입니다.\r\n통화 괜찮으실까요?\r\n네.\r\n고객님, 담당 부서를 통해 내용을 확인해 본 결과, 현재 고객님께서 접수하시기에는 다소 어려움이 있을 수 있다는 판단이 듭니다.\r\n그 이유는 개인정보보호법 39조 6항 1항에 따라 정보통신 서비스 제공자는 1년 이상 이용하지 않은 이용자의 개인정보를 보호하기 위해 필요한 조치를 취해야 합니다.\r\n따라서 고객님께서 해당 사이트에 가입하셨다면, 파기 조치를 해야 하는 부분인데, 실제로 고객님께서 해당 사이트에 가입하셨는지 여부를 확인하기 어렵습니다.\r\n고객님께서 가입하셨는데도 파기 조치가 이루어지지 않았다면 문제가 될 수 있습니다.\r\n만약 휴면 계정으로 전환되었다거나, 장기간 접속하지 않는 경우, 사이트에 접속하려 해도 존재하지 않는 정보라고 나타나는 경우가 있습니다.\r\n고객님께서 해당 사이트에 회원가입한 적 자체가 없는 경우, 광고성 정보를 전송한 측에서 부당한 행위일 수 있습니다.\r\n그러므로 해당 광고성 정보를 고객님께 전송한 업체에 대해 스팸 신고를 하시는 것이 더 적절할 수 있습니다.\r\n네, 고객님.\r\n네, 만약 고객님께서 회원가입을 하지 않으셨고, 다른 경로로 고객님의 정보를 취득하여 광고성 정보를 전송한 경우, 그럴 가능성이 더 높아 보입니다.\r\n휴면 계정일 경우에는 휴면 해제 안내가 뜨는데, 그런 안내 없이 아이디 찾기를 해도 존재하지 않는 정보라고 나타나는 경우가 있습니다.\r\n아예 가입이 안 되어 있는 경우에 그런 가능성이 높습니다.\r\n고객님.\r\n그러면 제가 지금 할 수 있는 것은 해당 업체에 불법 광고 신고를 하는 것밖에 없고요. 고객님께서 해당 업체에 가입 여부 등을 확인해 드리는 것은 어렵습니다.\r\n만약 휴면 계정으로 전환되었다면, 제가 앞서 말씀드린 것처럼 확인 가능한 부분이 있을 것입니다.\r\n고객님께서 확인을 원하신다면, 해당 업체가 어떤 부청이나 시청에 등록되어 있는지 확인해 볼 수 있습니다.\r\n문의할 수 있는 이메일 주소나 다른 연락 수단은 현재까지 확인되지 않았습니다.\r\n전화번호로 연락을 시도했지만, 응대가 되지 않는 상황입니다.\r\n네, 알겠습니다.\r\n구청이나 관련 기관에 문의해 봐야겠네요.\r\n만약 스팸 신고 방법이 필요하시면, 문자로 안내해 드리겠습니다.\r\n아, 네, 알겠습니다.\r\n네, 지금 전화하신 번호로 스팸 신고 방법 문자를 전송해 드렸습니다.\r\n내용 참고하셔서 편하신 방법으로 조치해 주시면 됩니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a60de5b839120409a2140567c046619831c8b21d0e404ac0c6735a936e484af2",
+        "normalized_content_hash_sha256": "d14cdf600245dbc9863df8c1c1268f1bdbec3693b640667af545c7022a8d44d2",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-AXTbZlYQ",
+      "source_id": "AXTbZlYQ",
+      "source_set": 3,
+      "source_file": "AXTbZlYQ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n지혜 통장팀 박서준입니다.\r\n아 예.\r\n수고 많으십니다.\r\n네.\r\n안녕하세요.\r\n다른 건 아니고, 혹시 스마트폰에 악성 앱이 설치되어 있다고 하셨는데요.\r\n혹시 그 악성 앱을 설치하신 후, 앱을 삭제하셨나요?\r\n예. 네.\r\n혹시 알약이나 보안 프로그램으로 검사를 진행하셨습니까?\r\n예. V3로 검사했는데, 완전히 삭제가 안 되네요.\r\n그 앱이 삭제가 안 되나요?\r\n예.\r\n제가 은행에 전화해봤더니, 앱이 계속해서 정보를 가로채더라고요.\r\n계속.\r\n아, 그럼 지금 앱이 삭제되지 않으면 휴대폰 전원을 잠시 꺼두시고, 혹시 삼성 폰이신가요?\r\n네, 삼성입니다.\r\n삼성 폰이시면 삼성 서비스 센터에 방문하셔서 점검을 받으시는 게 좋겠습니다.\r\n그런데 서비스 센터에서 전화번호를 알려주셨다고요?\r\n맞아요.\r\n고객님, 기본적으로 백신 검사를 통해 앱을 삭제할 수 있는데, 지금 그런 조치가 안 되는 상황이시군요.\r\n그래서 휴대폰 전원을 끄시고 가까운 서비스 센터에 방문하셔서 기기 초기화나 점검을 받으시는 게 좋겠습니다.\r\n혹시 신분증이나 주민등록번호 뒷자리가 노출된 적은 없으셨나요?\r\n아니요.\r\n이름과 주민등록번호만 노출됐어요.\r\n뒷자리는 노출되지 않았어요?\r\n네, 그럼 서비스 센터에서 기기 점검을 받으신 후에 저희에게 다시 전화 주시겠어요?\r\n저희가 조치 방법을 문자 메시지로 보내드려야 하거든요.\r\n기기 점검을 받으시고, 문자를 보내드리려면 본인 인증이 어려우니, 2451번으로 다시 전화 주시면 감사하겠습니다.\r\n네, 알겠습니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "앱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "52c55093696ebce951bde4b8246e9210851c17618694f09b663c9e8bfa992d05",
+        "normalized_content_hash_sha256": "0d64cb9be6d4126851d9c8b2ae3407b0a9dacefb9246e61e1e535bc79b9a24e7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-axvA87IM",
+      "source_id": "axvA87IM",
+      "source_set": 3,
+      "source_file": "axvA87IM.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n미래 상담센터 박서준입니다.\n여보세요?\n네.\n혹시 제 아들의 휴대폰으로요.\n그거 스팸 문자가 계속 오고 있어서 지금 휴대폰 요금이 폭주하고 있는데.\n그거 어떤 내용의 문자였는지 혹시 아시나요?\n잠시만 기다려주세요.\n선생님.\n아이가 혹시 미성년자인가요?\n네, 맞습니다.\n음.\n문자 내용 번호 1번 말씀해주시겠어요?\n[PHONE]\n[PHONE] 번호로요.\n[PHONE] 선생님, 지금 스포츠 토토 관련해서 토토 도박을 유도하는 내용이 담긴 메시지가 있어요.\n스포츠 토토를 이렇게 당첨된 것처럼 보여주면서, 그 아래에 카카오톡 주소나 다른 연락처를 남겨서 연락을 달라고 유도하는 이미지 메시지가 있는데, 아마 그 때문에 정지된 것 같아요.\n제가 그런 건 전혀 모르는 데 어떻게 그런 문자를 받을 수 있죠?\n이런 경우는 보통 미성년자들 사이에서 문자 알바나 용돈 알바를 하는 사기꾼들이 SNS나 게임을 통해 접근합니다.\n몇 건의 메시지를 보내면 3만 원, 5만 원을 주겠다거나 알바를 해달라는 식으로 유도하죠.\n그러면 아이들이 그걸 모르는 사이에 자신의 연락처 번호를 알려주게 됩니다.\n그 번호를 가지고 이런 이미지 메시지를 보내면 몇 건을 보내라, 그런 몇 건을 보내면 용돈을 얼마나 줄지 알려준다면서 유도하는 거예요.\n지금 아이의 번호로 직접 문자가 온 걸 보니 아마 그런 것 같아요.\n직접 보냈다고요?\n네, MMS로 보냈다는 건 휴대폰 문자 메시지로 직접 보냈다는 뜻입니다.\n아마 그렇게 했을 거예요.\n또는 아이들이 잘 몰라서 자신의 번호나 연락처를 누구에게 알려줄 수도 있는 거죠.\n이런 식으로요.\n예.\n그럴 수도 있고.\n그런데 이게 지금 네이버 뉴스나 메스카라 등에서 자주 나오는 사례예요.\n그래서 그런 부분도 참고해주시면 될 것 같습니다.\n네, 알겠습니다.\n감사합니다.\n네.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "cf902abb4dee6921792cef2e24e1194fa20cd0d5ddf5e80728c9e82db95f5254",
+        "normalized_content_hash_sha256": "baccb10fc473f078253c6227d9eb5296676391dd061a230041aa934c23918168",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-b0AKqhX1",
+      "source_id": "b0AKqhX1",
+      "source_set": 3,
+      "source_file": "b0AKqhX1.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "128 상담센터입니다. 무엇을 도와드릴까요?\r\n네, 안녕하세요.\r\n네.\r\n죄송합니다.\r\n제가 질문 드려도 될까요?\r\n111에 신고했는데, 이 전화번호를 줄여서요. 네.\r\n네, 말씀하세요.\r\n잠시만요.\r\n전화번호가요?\r\n010, 어떤 것이 궁금하신가요?\r\n아, 네. 제가 취업을 위해 전화를 받았는데, 제 개인 정보를 다 줬거든요.\r\n어떤 개인 정보를 주셨는데요?\r\n어디로요?\r\n네, 제 이름, 그리고 인증번호 전체요?\r\n휴대폰 번호요?\r\n휴대폰 주민번호 전체를 노출한 것이 걱정되신다는 말씀이신가요?\r\n아니요, 아니요 아니에요.\r\n괜찮은 건 아니었고, 그냥 생년월일만 줬고, 휴대폰 통신사를 계속 물어보더라고요.\r\n그래서 의심스러워서 지금 말씀하시는 건 이름, 생년월일, 휴대폰 번호만 노출하셨다는 말씀이세요?\r\n요 세 개만 노출하셨다는 말씀이시죠?\r\n주소도요.\r\n이렇게 네 가지를 노출하신 것이 맞으시고요?\r\n우선 말씀하신 정보만으로는 범죄가 이루어지기는 조금 어려워 보이세요.\r\n그렇기 때문에요.\r\n그런데, 또 다른 사람으로 전화가 와서 이렇게 또 전화가 와서 하더라고요.\r\n아니, 이제는 그래, 이렇게 하면 다른 모르는 사람들은 더 보이스피싱을 당할 수도 있고, 그래서 신고를 한 겁니다.\r\n번호 신고를 하고 싶으신 거예요?\r\n저희가 정말 죄송한데 보이스피싱 신고 접수를 받는 기간이 아니에요.\r\n그럼 또 어디로 가야 할까요?\r\n한번 물어봅시다.\r\n네, 이거는 경찰서에서 받으시는 건데 저희 쪽으로 넘기신 것 같거든요.\r\n그러니깐요.\r\n자꾸 돌리니까 그래요. 저는…\r\n한번 잠깐 돌려보이세요.\r\n그 다음에 어디에 전화해 볼까요?\r\n네, 경찰서로 전화하셔야 되시고, 국번 없이 242번은 경찰청 민원센터예요.\r\n이쪽으로 한번 더 문의를 해보시는 게 좋으실 것 같습니다.\r\n지금 제가 여기 전화한 데는 몇 번이죠?\r\n여기 있는 2451번입니다.\r\n한국인터넷진흥원이에요.\r\n뭐라고 해요?\r\n112에 전화했는데 연락을 보내주대요.\r\n저희는 인터넷진흥원이고요.\r\n보이스피싱 신고 접수는 저희가 도와드릴 수 없습니다.\r\n네, 242번에 이렇게 경찰청 민원센터로 1번 해보시면 좋으실 것 같습니다.\r\n고맙습니다.\r\n네, 민원을 드렸습니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "818ad2b38c3a611821c3b31379902b1a2e44b535cb6a6a6ec1e0c4dcd68901e9",
+        "normalized_content_hash_sha256": "4b764570bf36a7a621bbaa4f13cc2eef5868a603daa83f37c2b0284b78d5719a",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-B0XcLtxy",
+      "source_id": "B0XcLtxy",
+      "source_set": 3,
+      "source_file": "B0XcLtxy.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 먼저 여쭤보겠습니다.\r\n저희가 연락처를 무단으로 사용해 불법 스팸 문자를 보낸 사실이 어젯밤 확인되어 상담을 받으려고 연락드렸습니다.\r\n선생님, 그럼 휴대폰 정지 등의 문제는 없으시고요?\r\n아니요.\r\n저희는 회사입니다.\r\n개인이 아니에요.\r\n아 그러시군요?\r\n잠시만요.\r\n선생님.\r\n그러면 지금 번호가 도용되어 선생님의 번호를 사칭하여 어떤 기간 동안 사기를 치거나 그런 건가요?\r\n네, 저희 번호로 문자가 발송되었는데, 이제 도박 웹사이트인 '즐거운 주말대'나 이런 사이트에 접속하도록 링크가 되어 있더라고요.\r\n그래서 약 70만 건 정도 발송되었고요.\r\n아, 네, 네.\r\n그런데 이제 저희 회원 데이터베이스는 아니고요. 계속 저희가 크레인 전화를 받았는데, 저희도 모르는 사이트들이에요.\r\n저희와 관련 없는 번호를 저희 시스템을 도용해서 문자가 그렇게 발송된 것 같습니다.\r\n네, 선생님. 관련 부서의 연락처를 안내해 드리겠습니다.\r\n메모 괜찮으실까요?\r\n네, 가능합니다.\r\n[PHONE]번입니다.\r\n5678요?\r\n네, 이쪽으로 문의하시면 됩니다.\r\n여기 어디인가요? 부서는?\r\n네, 보이스피싱 대응팀입니다.\r\n그 번호 도용 차단에 대해 문의해 보실 수 있습니다.\r\n네.\r\n감사합니다.\r\n네.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "6ef942673b17b42b7900bf646ea4fe2f8392b54917034bcf6441a77f6580b14e",
+        "normalized_content_hash_sha256": "37d662cde4f06dfcd9bff376b973d996644732fb3c896bacbcef4f0f007a394e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-b2b8Gf5N",
+      "source_id": "b2b8Gf5N",
+      "source_set": 3,
+      "source_file": "b2b8Gf5N.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n24 상담센터 박서준입니다.\r\n네, 저 개인정보보호법 관련해서 좀 문의 한번 드릴 게 있어서 전화드렸는데요.\r\n저희가 이제 그 대기업 그 그룹 산하 회사거든요.\r\n예, 그 모기업이 있고 그 모기업에 계열사인데, 그 모기업에서 어떤 행사나 기부금 행사를 위해 안내문 홍보를 하기 위해서 계열사 직원들의 연락처 같은 개인정보를 공유하는 것이 문제가 없는 건지, 원칙상 선생님 업무 목적으로 개인정보 수집을 하신다라고 말씀하시면요.\r\n이제 모 회사에서는 당연히 업무상 연락처가 다 수집이 되어 있겠지만 계열사 같은 경우에는 그렇지 않은 경우가 많기 때문에, 원칙적으로는 개인정보 수집에 대한 동의를 받고 수집을 하시는 게 맞습니다. 혹시 그 계열사라는 개념이 사업자 번호도 다 완전히 같은 개념이신 건가요?\r\n아니요.\r\n다릅니다.\r\n다 각각의 완전히 다른 사업자인데 그냥 계열사일 뿐이에요?\r\n예, 네.\r\n저희 저희 대주주인 거죠.\r\n이제 모 회사에.\r\n그러면 각각이 다른 어쨌든 엄연한 사업체이기 때문에요.\r\n선생님.\r\n각 직원들에게 말씀하셨던 그 수집 목적으로 해서 회원들에게 연락처를 수집한다는 동의서 1장씩 써가지고 수집을 하시는 게 나중에 어떤 수집 동의를 안 받았다라는 것에 대해서 또 추후에 어떤 논란의 여지가 있을 수 있기 때문에 동의서를 1장씩 쓰시는 게 좋을 것 같아요.\r\n동의서라는 게 저희 쪽에 저희 회사에서 이러이러한 그쪽에 그 보호 회사 쪽에다가 이런 개인 정보를 제공한다는 걸 일일이 다 받아야 된다는 말씀이신 거죠?\r\n저희가.\r\n네.\r\n원칙적으로는 그렇게 하시는 게 맞습니다.\r\n원칙은 그렇다.\r\n원칙은 이제 그러한데 예외적으로 예를 들어 제가 아까 사업자 번호를 물어봤던 거는 사업자 번호가 같은 회사인데 지점이 나눠져 있는 경우라고 하면 그런 경우라고 하면 같은 회사 직원들이니까 예외적으로 그게 꼭 동의를 받지 않아도 사업상 필요하다라면 이런 경우가 있기는 합니다만 선생님의 지금 사안처럼 아예 각각의 완전히 다른 사업장인데 그게 어떤 지주의 개념이 있어서 계열로 묶인 개념이라고 하면\r\n어쨌든 이제 그 연락처를 제공되는 형태가 다른 사업자라서 원칙적으로는 수집 이용 동의서를 받고 제공을 하시는 게 좋을 것 같아요.\r\n사업자 번호가 다르고 하니깐 별도의 회사로 봐서 동의를 받아야 한다는 말씀이시죠?\r\n예, 그렇습니다.\r\n네, 알겠습니다.\r\n네, 감사합니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "664738ccf57ac96966063d2b63468b2f2817033ad2e2c3128d6844a3244bf5e3",
+        "normalized_content_hash_sha256": "33c8a73924ff92e15a7faf5bef3412dffcb704160b02f46951cf71e0d91b424d",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-b2Ox9x4d",
+      "source_id": "b2Ox9x4d",
+      "source_set": 3,
+      "source_file": "b2Ox9x4d.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "3217 상담센터 박서준입니다.\r\n네, 안녕하세요.\r\n층간소음 관련하여 신고하려고 연락드렸습니다.\r\n네, 고객님, 어떤 내용이신가요?\r\n층간소음으로 인해 저를 욕설하는 내용이 담긴 문자 메시지를 받았습니다.\r\n네, 고객님.\r\n문자 내용이 어떤 내용인지 자세히 말씀해주시겠어요?\r\n그 문자 메시지를 받자마자, 층간소음 때문에 화가 나서 저한테 욕설을 퍼붓더라고요.\r\n알겠습니다.\r\n저희가 신고 절차를 도와드리겠습니다.\r\n총 네 가지 방법이 있는데, 가장 간단한 방법부터 안내해 드릴까요?\r\n네, 부탁드립니다.\r\n저희에서 특별히 층간소음 신고를 위해 앱을 개발했습니다.\r\n해당 앱을 다운로드 받는 방법을 문자 메시지로 보내드리겠습니다. 이렇게 신고해주시면 감사하겠습니다.\r\n아, 네, 알겠습니다.\r\n네, 감사합니다.\r\n혹시 인터넷으로도 신고할 수 있나요?\r\n한국소비자원 홈페이지?\r\n아, 고객님, 그럼 신고 방법 4가지 모두 문자 메시지로 보내드리겠습니다.\r\n아, 네, 네, 알겠습니다.\r\n아까 AIS로 신고하려고 했는데, 휴대폰에서 백그라운드로 실행되지가 않아서 진행이 안 되더라고요.\r\n네, 해당 부분은 정책팀에 즉시 전달하여 수정하도록 하겠습니다.\r\n네, 네, 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "앱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "b70850dc9aabd6ae7c0bae972dd967bd5bd0a67633db16e4540bec48353bc31f",
+        "normalized_content_hash_sha256": "85b7d6fdaaa5252bbac59bd7e3f571cc6204485decc7180c5ca857f81b51191b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-b3m4mkDC",
+      "source_id": "b3m4mkDC",
+      "source_set": 3,
+      "source_file": "b3m4mkDC.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n미래안심 상담센터 최유진입니다.\n네.\n힘드셨겠네요.\n감사합니다.\n무슨 일로 전화 주셨는지 여쭤봐도 될까요?\n혹시 제가 가지고 있는 자격증 번호를 어떤 사람에게 실수로 알려준 적이 있는데, 그게 명의 도용에 악용될 수 있나요?\n자격증 번호 말씀하시는 거죠?\n자격증 번호요.\n다른 정보는 전혀 없고요.\n생년월일이나 주민등록번호 같은 정보는 전혀 언급하지 않았습니다.\n주민등록번호가 없으면 자격증 번호만으로는 명의 도용이 안 되나요?\n네, 맞습니다.\n자격증 번호 자체만으로는 특정 개인을 식별하기 어렵고, 명의 도용 피해로 이어지려면 주민등록번호 같은 정보가 함께 노출되어야 합니다.\n제가 겪은 상황은 이런 것이었습니다. 어떤 사업을 하려는 사람이 저에게 자격증 번호를 물어보더니, 자격증 사본까지 요구하는 거예요.\n자격증 사본을 보내드렸나요?\n아니요.\n그때 제가 생각 없이 자격증 번호만 알려줬는데, 사본을 요구하니까 뭔가 이상하다고 느껴져서 그날 바로 만나기를 거절했어요.\n거절한 후 자격증 번호가 이미 노출됐다는 생각에 불안해서 경찰에도 연락하고, 지금 여기에도 전화 드리는 겁니다.\n혹시 어떤 자격증을 가지고 계세요?\n사회복지사 자격증을 가지고 있습니다.\n아, 사회복지사시군요.\n잠시만 기다려 주시면 제가 확인해 보겠습니다.\n네, 네. 기다려 주셔서 감사합니다.\n제가 보기에는 자격증 번호만으로는 회원님의 명의를 도용하기는 어려울 것 같습니다.\n저는 사회복지사 1급 자격증을 가지고 있어서, 1급 자격증을 통해 기관을 설립할 수 있습니다.\n한국사회복지사협회에서 회원님과 같은 분들이 활동할 수 있도록 지원하고 있습니다.\n혹시 자격증 번호를 타인에게 알려주신 것에 대해 문제가 없을지 확인해 보시는 것이 좋겠습니다.\n연락처를 알려드리겠습니다.\n혹시 메모할 수 있으신가요?\n협회 홈페이지에 모든 정보가 나와 있습니다.\n일단 회원님께서는 자격증 번호만으로는 아무런 문제가 없을 것이라고 판단하시는 거죠?\n하지만 저희 쪽에서는 주민등록번호나 신분증, 생년월일 등 개인 정보가 노출된 경우에 대해 조치 방법을 안내해 드리고 있는데, 회원님의 경우에는 자격증 번호만 노출된 상황이라 조금 답변 드리기가 어렵습니다.\n혹시 한국사회복지사협회에 문의하셔서 자격증 번호만으로도 문제가 발생할 수 있는지 확인해 보시는 것이 좋겠습니다.\n네, 알겠습니다.\n도와주셔서 감사합니다.\n네, 감사합니다.\n수고하세요.\n네.",
+      "matched_keywords": [
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "5e4677fa44bc2d5a08100974086dc897bffb387ddaccea2f6169e81ce8ed323a",
+        "normalized_content_hash_sha256": "b8c35c1a4084bad29492cf3fc87a14c92fec9faee377107614a8ca37655fb699",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-B5022NbQ",
+      "source_id": "B5022NbQ",
+      "source_set": 3,
+      "source_file": "B5022NbQ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n소중한 마음 상담 전문가입니다.\n안녕하세요.\n네.\n여보세요.\n방금 전에 연락을 드렸었는데, 연락처로 수상한 링크가 와서 늘리셨다고 해서 대처 방법을 문자 드렸었습니다.\n그거 하니까\n뭐 휴대폰을 완전히 초기화해야 하는 건가요?\n초기화는 문제가 계속될 때만 하라고 저희가 문자 내용에 함께 안내를 드렸습니다.\n일반적으로 스미싱의 경우 해당 파일이 확인되지 않는 경우가 많습니다.\n하지만 저희 절차상 충분히 예방이 가능하고, 문자 번호 차단 서비스를 통해 차단 조치를 취했는데도 계속 문자가 오거나 피해가 발생할 수 있습니다.\n그럴 때는 초기화를 권장하고 있습니다.\n초기화가 가장 확실한 방법이긴 합니다.\n현재 악성 파일을 제거할 수 있는 방법은 바이러스 백신과 초기화밖에 없기 때문에 그렇게 말씀드리는 건데요.\n초기화는 저희가 무료 이용권을 제공할 수 있는 상황이 아니므로 참고하실 수 있도록 문자로 보내드렸습니다.\nV3로 검사를 해봤는데, 악성 코드가 발견되었더라고요.\n삭제는 완료했고 파일도 삭제했는데, 우선적으로 취할 수 있는 조치는 그게 맞나요?\n저희가 문자를 총 5통 보냈는데, 그 조치들을 모두 해주셔야 합니다.\n네, 알겠습니다.\n감사합니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "5a7ae77e96b3cd3659ba0ea8e9bcf044336494a90566339790fc5cf17fac60d0",
+        "normalized_content_hash_sha256": "9bc1ed51896000b1fc79183cf447971e947c6e751a558aa904c1ab1a2306e979",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-B5rNK95f",
+      "source_id": "B5rNK95f",
+      "source_set": 3,
+      "source_file": "B5rNK95f.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n굿모닝 상담센터 박서준입니다.\r\n네.\r\n여보세요.\r\n제가 6월 4일 어젯밤에 주요 정보가 해킹에 당한 건지 아니면 휴대폰을 그래서 휴대폰 소액 결제가 이루어져서 저에게 동의 없이요.\r\n경찰에 사이버 수사대에 일단 오늘 경찰서 가서 신고하고 접수한 상태거든요.\r\n주변에 물어보니까 휴대폰 자체가 혹시 이게 저도 모르게 해킹이 돼서 개인 정보가 이미 나쁜 사람들 손에 들어가 있을 수도 있다.\r\n그래서 휴대폰을 한번 체크를 해봐야 되지 않느냐.\r\n안 보이는 해킹 앱이나 이런 것들이 깔려 있는지.\r\n제가 금융권 관련하면 요즘에 다 휴대폰을 하니까 예 신용카드는 물론이고 그래서 좀 그거 어떻게 해야 되는지 좀 알고 싶어서 전화드렸어요.\r\n네 선생님 제가 하나 여쭤볼게요.\r\n혹시 최근에 어떤 링크 있는 문자 받으시고 링크 누르신 적 있을까요?\r\n예 그래서 그걸로 인해서 아마 그 지금 이런 사건이 발생하거든요.\r\n대화통신이라는 데서 그냥 저는 사실은 대화통신을 잘 이용하기 때문에 전혀 의심 없이 그냥 눌렀거든요.\r\n선생님 그게 이제 링크 누르게끔 유도해서 소액결제나 번호 도용 같은 피해가 발생하시거든요.\r\n거기 문자예요.\r\n그래서 제가 조치하시는 방법 문자로 발송을 해드렸거든요.\r\n중지하는 거예요?\r\n거기?\r\n예.\r\n사용하시는 핸드폰이 삼성이나 LG 핸드폰이실까요?\r\n삼성이요.\r\n제가 문자 하나 발송해드렸습니다.\r\n나와 있는 대로 선생님 쭉 한번 해주시면 되실 것 같습니다.\r\n아 그렇게 해서요.\r\n그러면 여기 검사해서 여기서 없으면 해킹 얘기한 건 아니고 단순히 개인 정보 도용 네 제가 안내드린 대로 한번 점검해보시고 이상이 없다고 생각\r\n이상이 없다라고 된다면 그렇게 큰 걱정 안 하셔도 되실 것 같으세요.\r\n네.",
+      "matched_keywords": [
+        "경찰",
+        "금융",
+        "앱",
+        "해킹",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "6d1dfb94d10e0e557de2e0cf4629813f0f25d6b910b27278b393f90a29fb7a07",
+        "normalized_content_hash_sha256": "1246263a802b1a5625aad79ca59c8a580e3403cf7a31fc982fd1ec6cf7ba4d2e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-B7UbFZiv",
+      "source_id": "B7UbFZiv",
+      "source_set": 3,
+      "source_file": "B7UbFZiv.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n2451 상담센터 김민지입니다.\n아 네, 수고하십니다.\n문의 좀 드리려고 그러는데요.\n네.\n어젯밤에 문자 메시지를 잘못 열어보게 되었어요.\n악성코드에 감염되었고, 그 시티 뭐였죠?\n그거 코난을 설치하고, 네.\n시리즌 코난을 설치하고 다 삭제하고 네.\n최대한 V3 백신을 받고 다 확인을 했어요.\n근데 이게 발송은 다 이미 다른 사람들에게 막 발송이 되었더라고요.\n중요한 건 이게 자꾸 뭐가 있는지 제 남편이고요.\n남편한테 그 문자 메시지를 받아 본인이 열어보다가 그게 다 다른 데로 전송이 되었고 최대한 그 일이 벌어진 후에 다 막았는데 결론은 자꾸 보호무사에 가입 상담 이력이 있다고 자꾸 와서 신랑 명의로 계속 무언가를 하는 것 같아요.\n어 근데 핸드폰에 연락처를 보면 핸드폰에 그럼 해킹 된 건가요?\n모든 정보를 다 빼간 걸까요?\n일단 그 여부에 대해서는 제가 알 수는 없고요.\n다만 지금 실질적으로 지금 다른 타인이 그 지금 배우자분의 전화번호를 도용을 하고 있다라고 한다면은요.\n그 도용에 대한 신고는 242번으로 한번 신고 접수를 한번 해보시는 게 좋을 것 같습니다.\n금융 정보를 잃었고 뭔가\n만약에 대출을 수비할 수도 있는 거고 핸드폰을 개통할 수도 있는 거고 명의도용 서비스는 해놨는데 핸드폰에는 어제 그것도 방금 보험 같은 거 이건 242번에 전화해서 물어봐야 되나요?\n일단은 물어보는 건 아니고요.\n다만 지금 누군가 지금 배우자분의 전화번호를 도용을 해서 뭐 지금 뭐 보험 상담이라던지 그런 내용을 지금 확인을 하고 있다라고 한다면 이거는 범죄이기 때문에 242번으로 신고 접수가 되는지 문의를 한번 해주시고요.\n그리고 또 추가적으로 혹시라도 뭐 지금 대출이나 이런 내용 문의를 하셨는데 그에 따른 이제 그 혹시 명의 도용 예방법이 별도로 있어요.\n그 내용도 한번 문자 남겨드릴 테니 선생님께서 했던 방법이 하신 게 있다라고 한다면 건너뛰시고 하지 않은 내용이 있다라고 한다면 이 내용도 좀 참고를 해주시는 게 좋을 것 같습니다.\n그거 말고 금융 혹시 피해를 볼 수 있는 내용들은 어떻게 대처를 해야 되나요?\n일단 선생님 피해는 솔직히 어떻게 발생될지 아무도 예측할 수 없는 거잖아요.\n그렇기 때문에 좀 우려가 되시는 뭐 예를 들어서 뭐 지금 통장 뭐 비밀번호라든지 이런 게 우려가 되신다라고 한다면은 그 뭐 비밀번호 변경이라든지 지급 정지 등을 좀 추가로 좀 해주시는 게 안전할 것 같습니다.\n아 핸드폰에 신분증이 있지는 않는데 모바일 신분증 같은 건 없는데 뭐 혹시 핸드폰에 있는 거 가지고 개인정보 어떤 주민등록번호 이런 것도 알 수가 있나요?\n일단 핸드폰에 그런 게 무슨 지금 실질적으로 배우자분 핸드폰이 어떤 게 있는지 제가 정확하게 알지 못하잖아요.\n일단 그렇다라고 한다면 혹시라도 이제 그런 해킹이라든지 악성 코드에 우려가 되신다라고 한다면은요.\n이거는 가장 깨끗하고 방법 가장 깨끗하고 안전한 방법은 공장 초기화를 하는 건데요.\n그 내용도 좀 고려를 해주셔야 될 것 같습니다.\n지금 공장 초기화 때문에 갔대요.\n가는 데 서비스 센터로 바로 다시 또 가고 있는데 그러면은 그걸로 인해서 해킹이 공장 초기화하면 해킹을 할 수가 없게 만들어지는 건가요?\n근데 이미 정보는 나갔다고 통신사 측에서 그러니까 선생님 지금 어찌 됐든 지금 정보에 링크를 클릭을 하셨고 지금 노출이 된 상태잖아요.\n노출이 된 상태는 다시 되돌릴 수가 없는 거잖아요.\n그렇기 때문에 추가적인 다른 피해가 발생되지 않도록 예방을 좀 더 신경을 쓰셔야 될 것 같아요.\n선생님\n맞아요.\n그래서 그 예방을 어떻게 해야 될지 그래서 지금 제가 예방법을 문자로 남겨드린 거고 솔직히 제가 예방법을 보내드렸다고 하더라도 이 방법이 무조건 100%는 없는 거잖아요.\n그렇기 때문에 선생님께서 걱정되는 부분이 있다라고 한다면 그에 따라서 좀 추가적으로 조치를 해주시는 것도 좀 더 안전하신 거죠.\n어 네.\n일단 알겠습니다.\n잠시만요.\n명의별 예방법 방금 보내주신 거 받았는데\n1번은 이 사이트에 들어가고 그러면은 뭐 어떻게 해야 되는 거예요?\n일단 선생님 그 1번 2번에 보시면요.\n각각 부서 그 부처마다 전화번호가 나와 있습니다.\n부처 쪽으로 문의를 해주시면 되시고요.\n다만 이제 뭐 선생님께서 뭐 번호등 찾은 서비스라든지 이런 추가적으로 신고하실 수 있는 방법이기 때문에 이 내용을 좀 참고를 해주시면 될 것 같습니다.\n전화를 해서 물어봐야 되고 첫 번째로는 242한테 가장 먼저 전화를 드리고 여기 각각 1, 2번 전화를 하고 일단 선생님께서는 지금 도용에 대한 신고보다 예방을 먼저 해주셔야 될 것 같아요.\n이걸 먼저 하는 게 나을까요?\n1, 2번을 먼저?\n그렇죠.\n왜냐하면 예방을 어떻게 피해가 언제 될지 모르니까 예방에 먼저 신경을 쓰시고 그 이후에 신고는 추후의 문제이잖아요.\n그렇기 때문에 예방을 먼저 신경 쓰세요.\n그럼 혹시 지금 신랑 건데 제가 대신 전화해서 이걸 해주시나요?\n아 네, 알겠습니다.\n감사합니다.",
+      "matched_keywords": [
+        "금융",
+        "해킹",
+        "개인정보",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "0d88082840c74c51914e15cc2343cec59f5d833b1c615ae8e6abbd7db7dfb1c4",
+        "normalized_content_hash_sha256": "5a15ca5889fd73d62d1d7898bb29e6f8af640623be91b970f21d50bc2cd7bbfd",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-b97aawA2",
+      "source_id": "b97aawA2",
+      "source_set": 3,
+      "source_file": "b97aawA2.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담센터 김민지입니다.\n네.\n안녕하세요.\n제가 보이스피싱으로 개인 정보가 유출되어 명의 도용 피해를 입었는데요.\n어떤 정보를 신고하려 하시는 건가요?\n저희가 신고를 받고 있는 건 아니고요, 개인적으로 명의가 도용된 피해 대처 방법을 안내해 드리고 있는데요.\n어떤 정보를 유출되셨나요?\n좀 말씀해 주시겠어요?\n잘 모르겠어요.\n정말로 모르겠어요.\n저는 그 사건 관련 부서의 경찰관입니다.\n저희가 그분께 받은 민원 내용이요. 네.\n그분 신분증을 저희에게 전달하셨다는 겁니다.\n일단 뭐 신분증 분실 신고를 하시고 재발급을 받으셔야 할 것 같고요.\n그 개인 정보가 유출되었다는 저희가 명의 도용 피해 대처 방법이 있습니다. 연락 주신 번호로 명의 도용 피해 대처 방법 문자를 보내 드릴 건데요.\n그 문자에 보시면 휴대폰 계통, 은행 계좌 개설 등 보안 관련 내용이 담겨 있으니, 문자에 안내된 1번과 2번을 꼭 따라 해 주셔야 할 것 같고요.\n일단 제가 문자 메시지를 보내 드릴 건데,\n지금 바로 문자 메시지에 안내된 내용을 따라 해 주시는 게 좋으실 것 같아요.\n보내 드릴 문자 내용의 1번과 2번이요?\n일단 1번과 2번이 가장 중요하실 것 같고요.\n3번, 4번 같은 경우에는 소액 계좌 정지 등의 조치이지만, 이건 비교적 쉽게 처리할 수 있습니다. 하지만 1번과 2번은 본인 인증 절차가 필요하므로, 먼저 진행해 주시는 게 좋으실 것 같아요.\n그렇게 하면 휴대폰을 촬영해서 신분증을 보낸 경우,\n그 1번과 2번만 하면 된다는 말씀이시죠?\n일단 가장 중요한 건 1번과 2번이지만, 그 추가적인 부분인 3번과 4번도 모두 처리해 주시면 되지만, 가장 중요한 건 1번과 2번이라고 생각하시면 될 것 같습니다.\n총 5가지 문자 메시지를 보내 드릴 테니,\n그 다음에 안내해 드리면 되실 것 같아요.\n아, 네, 알겠습니다.\n뭐 더 혹시 궁금한 점 있으세요?\n아니요.\n명의 도용 관련 문자 메시지를 보내 드릴게요.\n그 문자 메시지를 한번 확인해 보시겠어요?\n네, 네, 바로 보내 드리겠습니다.\n네, 네.\n괜찮으시면 한번 보시세요.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "계좌",
+        "경찰",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a4a4c35d06fe12af79f911b45d6d40be84f9e7c48e5bbf291b401924118d3ee7",
+        "normalized_content_hash_sha256": "0d6e1b93c6552b8c71481284e70eaebbe661faf68ffaf925e890a02a1f8bb0fc",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bC72GrQw",
+      "source_id": "bC72GrQw",
+      "source_set": 3,
+      "source_file": "bC72GrQw.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n2판 상담센터 김민지입니다.\r\n네.\r\n고생 많으십니다.\r\n한 가지 여쭤보려는데요.\r\n오늘 오후 8시 35분쯤에 네.\r\n전화번호가 [PHONE]이면요.\r\n국세청이라면서 전화가 왔어요.\r\n그래서 전화가 올 곳도 없는데도 전화가 와서 혹시나 하고 이렇게 네.\r\n받으니까 녹음된다는 소리가 바로 나오더라고요.\r\n그래서 바로 끊어버렸거든요.\r\n이게 스팸일 가능성이 있을까요?\r\n고객님, 이건요.\r\n저희가 과거에 받으셨던 경찰을 사칭하거나 검찰을 사칭했던 전화와는 조금 다릅니다. 우선 고객님께 국세청이라고 말하며 걸려온 전화번호로 다시는 전화하지 마시고,\r\n인터넷에서 진짜 국세청 콜센터 전화번호를 찾아보셔서\r\n혹시 고객님께 발신한 이력이 있는지 사실 관계를 확인해 보셔야 할 것 같습니다.\r\n아, 그래요. 그 번호로는 하지 말고요.\r\n아, 저 번호로는 안 돼요.\r\n왜 그러냐면 만약에 이게 보이스피싱이라면요.\r\n다 바꿔서 걸어올 수 있습니다.\r\n아, 근데 아니요. 녹음되는 소리를 듣고 제가 바로 끊어버렸어요.\r\n근데 고객님, 이런 경우도 있습니다.\r\n합법적이고 고객님께 필요한 전화라면 다시 걸어오실 텐데요.\r\n보통 보이스피싱은 두 번 다시는 오지 않습니다.\r\n그래서\r\n다시 걸려오면 이게 합법적인 전화인가요?\r\n바로 걸려오나요?\r\n아니면 며칠 있다 또 걸려올 수도 있습니다.\r\n바로 걸려올 수도 있고요.\r\n제가 고객님께서 그때까지 기다릴 수 있는 건 찡찡하시잖아요.\r\n네, 그렇죠.\r\n그냥 정말 국세청 콜센터 전화번호를 확인하시고 전화를 걸어보시면 그쪽에서 고객님께 어떤 내용으로 전화했는지 발신 이력 같은 게 아마 남아있을 겁니다.\r\n그거 확인해 보시죠.\r\n네, 알겠습니다.\r\n네, 감사합니다.\r\n네, 고맙습니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "검찰",
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "3b06a5406cffb3a6e291410ed66ec40658c1eab45256f69f4150cc109495c417",
+        "normalized_content_hash_sha256": "dd8b63a229b4d5f8ebad32ec86e3ff296c5cda6aec66109c82e8254b5bdf513a",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-Bc7E3agS",
+      "source_id": "Bc7E3agS",
+      "source_set": 3,
+      "source_file": "Bc7E3agS.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "3217 상담센터 상담원 박민지입니다.\r\n네, 안녕하세요.\r\n어떤 내용이 궁금하신가요?\r\n저희 건물 보안 시스템 관련해서, 차량과의 충돌 사고가 발생했는데 CCTV 영상 확보를 요청하셨습니다.\r\n그 영상을 차량 충돌 부분만 보여달라고 하셨는데, 이 경우 어떻게 처리해야 할까요?\r\n우선, 고객님께서 본인의 영상에 대한 CCTV 영상 열람을 요청하시는 건 맞으신가요?\r\n네, 맞습니다.\r\n네, 고객님께서 본인 영상에 대해 요청하시는 것이라면, 관리사무소 측에서 CCTV 열람 요청을 할 수 있습니다. 다만, 다른 차량이나 타인이 나오는 영상이라면 원칙적으로 상대방의 동의를 받아야 하지만, 동의를 받지 못했다면 해당 부분을 가려야 합니다.\r\n그렇다면 상대방의 동의는 어떻게 얻어야 할까요? 전화나 서면으로 해야 하나요?\r\n우선, 추후 증거 자료로 남을 수 있도록 서면이나 전화 통화 녹음 등을 남기는 것이 좋지만, 동의를 받지 않는다면 저희가 해당 부분을 처리하고 영상을 보여드릴 수 있습니다. 혹시 해당 차량의 번호판 정보가 모두 나오나요?\r\nCCTV에서 멀리서 보면 번호판이 잘 안 보여요.\r\n네, 고객님. 개인정보보호법에 따라 본인 영상의 경우 차량 정보가 명확하게 확인된다면 해당 차량의 정보 주체를 식별할 수 있습니다.\r\n본인 영상은 문제없이 확인하실 수 있지만, 옆으로 지나가는 차량은 어떨까요?\r\n네, 고객님. 본인 영상은 열람 요청이 가능합니다. 다만, 충돌 상황을 보여드리는 것은 어렵습니다.\r\n충돌 상황을 확인하고 싶으신데, 상대방의 영상을 열람하는 것은 개인정보보호법상 문제가 될 수 있습니다. 본인 영상에 대해서는 연락을 요청할 수 있지만, 상대방의 동의가 있거나 법적 근거가 있다면 볼 수 있습니다.\r\n그렇지 않다면 본인 영상만 열람 요청이 가능합니다.\r\n네.\r\n다른 차량에 대한 정보가 확인된다면, 동의를 받고 보여주는 것은 문제가 없을까요?\r\n네, 그렇습니다. 동의를 받고 영상을 보여드리면 됩니다.\r\n만약 동의를 받지 못했다면, 보여드리는 것은 문제가 될 수 있습니다.\r\n동의를 받고 영상을 살짝 찍어서 보여드리는 것은 괜찮을까요?\r\n알겠습니다. 반드시 동의를 받고 제공해야겠습니다.\r\n네, 감사합니다.\r\n박민지였습니다.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "e12ee9f6455652b59ef3f78efca989e0b6351fd55bf87b81f995e7559654ff69",
+        "normalized_content_hash_sha256": "74cf485fbcb27d0123fed9801a4dfc56f2807e407af99d5890eb923a74cbfb44",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bdrp5ESY",
+      "source_id": "bdrp5ESY",
+      "source_set": 3,
+      "source_file": "bdrp5ESY.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담팀 박서준입니다.\n네.\n제가 해외 발신 승인 문자 메시지를 받았는데 택배 CJ 대한통운이라고 되어 있어서 주소가 정확하지 않아서 발송이 지연되고 있다 해서 확인했는데 카카오톡으로 연결되길래 그냥 닫았어요.\n혹시 개인 정보가 이렇게 노출된 게 혹시라도 영향을 미칠까 봐 걱정이 많으실 텐데, 혹시 아이폰을 사용하시나요?\n안드로이드 폰을 사용하시나요?\n아이폰을 사용해요.\n아이폰은 누르는 것만으로는 무언가가 설치되기는 어렵다고 합니다.\n아, 그렇군요.\n지금 다시 찾아봤는데 그게\n클릭했을 때 카카오톡으로 넘어가면서 대한통운 김OO이라는 사람이랑 대화를 걸라고 하는데, 그걸 안 하고 제가 그냥 닫아버렸거든요.\n다른 곳을 찾아보니 그 사람과 대화를 하면서 입금을 유도한다고 하더라고요.\n거기까지는 가지 않았고, 혹시라도 클릭해서 문의를 하고 싶으신가요?\n번호를 도용하거나 요금 결제 같은 피해가 발생할 수 있으니, 선생님께서 통신사로 바로 전화하셔서요.\n요금 결제가 제대로 차단이 되어 있는지 확인해보시고,\n차단이 안 되어 있다면 들어온 메시지가 있는지 확인해보시고 차단하거나 한도를 낮추시는 것이 좋겠습니다.\n네, 알겠습니다.\n감사합니다.\n제가 방금 말씀드린 내용은 문자 메시지로도 보내드리겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "1edd39543515a210c63e64124f455f6853a0baa582606b40913a1a363a85d327",
+        "normalized_content_hash_sha256": "19810baf8c614c1b92853c8a439174abbc6819f2c5440395d1c3a527d78fd7bf",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BDY1fZoO",
+      "source_id": "BDY1fZoO",
+      "source_set": 3,
+      "source_file": "BDY1fZoO.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n128 상담팀 박서준입니다.\n네.\n바쁘신 와중에 죄송합니다.\n아니요.\n괜찮습니다.\n현재 전국적으로 회의가 진행 중입니다.\n네?\n회의 말씀이십니까?\n오늘 회의 준비 때문에 연락을 드렸는데.\n죄송합니다만, 어떤 번호로 연락 주셨습니까?\n2451에 24.\n아.\n여기 정보통신부인데, 오늘 중요한 회의가 있는데 화상 회의가.\n네, 네.\n그런데 계속해서 연결이 끊기고 작동이 되지 않습니다.\n어떤 내용의 회의입니까, 고객님?\n오늘 회의 말씀이십니까?\n잠시만 기다려 주십시오.\n소프트웨어 보안 관련 교육인데, 8시간 동안 진행되는 중요한 자리입니다.\n소프트웨어 보안 기본 교육, 7차 과정을 말씀하시는 건가요?\n네, 고객님. 보안 교육 담당 부서 연락처를 알려드리겠습니다. 해당 부서에 문의해 보시고, 메모 가능하십니까?\n지역번호는 [PHONE]입니다.\n123-4567.\n[PHONE].\n네, 정확합니다.\n네, 알겠습니다.\n감사합니다.\n박서준이었습니다.",
+      "matched_keywords": [],
+      "deduplication": {
+        "content_hash_sha256": "14179b03df69d6909009a7ee767f204434bccac0646efda6ce7f077ab0aaf267",
+        "normalized_content_hash_sha256": "468b3197800ca7d003767d1fb9340f46f03254f75e1891ee1761f46ae1a2216f",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BenIDLEh",
+      "source_id": "BenIDLEh",
+      "source_set": 3,
+      "source_file": "BenIDLEh.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\r\n공공지원입니다.\r\n안녕하세요.\r\n저는 부산에서 근무하는 아파트 관리사무소장이거든요.\r\n제가 3월에 합류해서 지금 7개월 됐는데 저희 단지에 층간소음, 분수 문제로 어려움을 겪는 세대가 있는데 이게 6개월 정도 된 일이에요.\r\n그런데 최근에 또 심해져서 경찰까지 출동했었어요.\r\n네, 그런데 그 가해 세대는 위층에 혼자 사는 30대 남성이시고 본인 소유입니다.\r\n네, 그분 부모님 전화번호가 저에게 있는데, 경찰이 출동했다는 사실을 부모님께 전화로 말씀드려도 되는지 궁금해서요.\r\n어, 그러셨어요?\r\n네, 선생님, 일단은 개인정보 보호법이 물론 있기는 합니다만,\r\n모든 상황에 있어서 개인정보 보호법이 우선시되는 것은 아니고요.\r\n법리적으로도 개인정보 보호법은 가장 하위법이고, 만약 선생님이 어떤 급박한 생명에 위험이 있다라든지 다른 법률이 근거가 있다라면, 어떤 위급한 상황이 있어서 합리적인 이유가 있다면 연락을 할 수도 있을 거예요.\r\n그런데,\r\n지금은 가해 세대가 1인 가구이고, 범죄 예방 차원에서 연락을 취하려는 건가요?\r\n선생님?\r\n경찰이 자주 올 것 같아서요.\r\n아래층과의 층간소음 문제 때문에, 그리고 그분 정신적인 문제 때문에 해결될 기미가 안 보이거든요.\r\n그렇군요?\r\n원칙적으로는 가해 세대 당사자분께 선생님의 가족분의 개인 정보를 가지고 있는데, 이분에게 연락을 드려도 되는지 여쭤봐야 합니다.\r\n개인정보 보호법 원칙상으로는요.\r\n아, 구체적으로요?\r\n네.\r\n다만, 아까 말씀드렸듯이 개인정보 보호법이 우선시되는 게 아니고 세상에 법이 많잖아요.\r\n예를 들어 의료기관에서는 개인정보 보호법보다 의료법이 더 우선시되죠. 의료법에 따라 급박한 생명이 위험한 환자에게는 주민번호를 수집해서 즉시 수술을 할 수 있습니다. 또한, 선생님이 거주하시는 공동주택에 관해서는 공동주택 관리법도 있고, 층간소음에 관련된 법률도 있을 거예요.\r\n그래서 우선은 지금 아파트에 거주하시는 중에 벌어진 일이니까, 공동주택 관리법이나 층간소음 관련 법률에 혹시 그런 상황에 있어서 가해 세대에 어떤 내용이 있었을 때, 위급 시에 혹시 그런 가족들의 연락처를 선생님이 활용해서 연락을 드릴 수 있다는 법적인 근거가 있다면 그 법에 따라서 업무를 하실 수도 있을 겁니다.\r\n그런 법률이 없다면 개인정보보호법은 원칙적으로 그분에게 동의를 얻어야 하는 부분이니까요.\r\n공동주택관리법은 국토교통부에서 관할할 거예요.\r\n선생님.\r\n그리고 층간소음에 관한 법률도 아마 따로 있기는 할 텐데, 그 관련된 지자체로 한번 이런 경우에 그분의 비상연락망으로 관리사무소에서 연락드리는 부분이 위법할지 한번 더 확인해보시고,\r\n정 법률에 근거가 없다면은 그분에게 동의를 얻을 수밖에 없어요.\r\n지자체는 시청이나 구청 말씀하시는 건가요?\r\n예.\r\n맞아요.\r\n알겠습니다.\r\n감사합니다.\r\n고맙습니다.\r\n예.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "4c6fbc0fa83590bd71bb9159fa4158ed841e0865f6e71b177763314dcd4e9e40",
+        "normalized_content_hash_sha256": "9b4dd552b1a738b93436a0f679a3de3949664f44df5993e6dfb28f054fbcd46e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BH4J1fJn",
+      "source_id": "BH4J1fJn",
+      "source_set": 3,
+      "source_file": "BH4J1fJn.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2541 상담센터 준희입니다.\n안녕하세요. 혹시 주민등록번호 도용 때문에 전화 주셨다고요?\n네, 맞습니다.\n어떤 내용이신가요?\n최근에 24시간 프린터에서 신분증을 분실했는데, 혹시 도용당했을까 봐 걱정돼서요.\n네, 네.\n혹시 분실하신 신분증이 어디에서 분실되셨나요?\n네, 어제 신분증을 가지고 프린터에 가서 복사를 했는데, 복사 후 신분증을 제대로 넣었다 빼지 않고 방치하다가 오늘 와서야 분실물 보관함이 아닌 프린터실 한쪽에 그냥 놓여있는 것을 발견했습니다.\n그것 때문에 혹시 누군가 그걸 이용해서 다른 데 사용할 수 있는 건 아닌지 걱정돼서요.\n분실하신 신분증이 하루 동안 노출된 것이 염려되시는군요.\n네, 그렇습니다.\n혹시 주민등록번호가 도용되어 금융 거래 등에서 피해가 발생할 가능성이 있나요?\n네, 신분증에는 발급 일자도 나와 있기 때문에 염려될 수 있습니다.\n혹시 피해가 발생하면 어떻게 해야 하나요?\n네, 일단 신분증을 분실 신고하시고 재발급받으시는 것이 가장 안전합니다.\n네, 알겠습니다.\n정부24 홈페이지에서 분실 신고 및 재발급이 가능합니다.\n혹시 피해 신고는 어디로 해야 하나요?\n네, 242 경찰청 민원센터로 신고하시면 됩니다.\n네, 242번이 경찰청 민원센터입니다.\n네, 알겠습니다. 자세한 안내 감사합니다.\n네, 도움이 되셨다니 다행입니다.\n감사합니다. 민원 담당자였습니다.",
+      "matched_keywords": [
+        "경찰",
+        "금융"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "9839ad2170e25cbe1af64d36771fa4cb0c4e44990ba86ba780ae3ee5c9bf178b",
+        "normalized_content_hash_sha256": "39ae48cd0f11dff36796aacd3dc06f845f63bf3ece07f7f6dfbcfaa164eb93a5",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-biaOon8Q",
+      "source_id": "biaOon8Q",
+      "source_set": 3,
+      "source_file": "biaOon8Q.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n희망가득 빌라 상담원 박서준입니다.\r\n제가 앱을 잘못 설치했는데 지금 클린으로 완전히 삭제해서 핸드폰이 안정될 것 같다는 말씀을 주셨습니다.\r\n네이버에서 계속 인증번호를 요구하고 다른 곳에서도 인증번호를 신청하지 않았는데 계속 뜨고, 네이버에 전화해서 최대한 해결을 시도했고, 114에도 전화해서 최대한 노력했는데 하나은행 측에서 제 핸드폰이 보이스피싱으로 도용된 것 같다고 알려주셔서 그분이 안내하는 대로 클린을 실행했는데 혹시를 대비해 2451에 전화해서 다시 한번 확인을 요청드렸습니다.\r\n네.\r\n혹시 최근에 택배 사칭한 문자 메시지를 받고 링크를 누르신 적 있으세요?\r\n아니요.\r\n링크는 전혀 누르지 않았습니다.\r\n현재 휴대폰으로 본인 이름, 번호 등이 계속 오는 건가요?\r\n아 예.\r\n그게 계속 왔습니다.\r\n한 한 달 전부터\r\n네이버에서 인증번호를 요구하며 자세한 내용을 확인하라는 문자가 여러 번 왔는데, 저는 전혀 그런 적이 없습니다. 혹시 아까 앱을 설치하셨다고 했는데, 그 앱에 개인정보를 입력하신 내용이 있으세요?\r\n네, 주민등록번호를 입력했습니다.\r\n그 정보 때문에 번호 도용과 같은 문제가 발생할 가능성이 있을 것 같아서요.\r\n명의도용 예방 방법을 담은 문자를 보내드리겠습니다.\r\n문자를 확인하신 후 안내에 따라 진행해 주시면 됩니다.\r\n지금 문자를 발송했으니 확인하시고 번호 순서대로 신청해 주시면 됩니다.\r\n지금 문자가 아직 도착하지 않았습니다.\r\n네, MMS라서요. 감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "앱",
+        "개인정보",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "02ff4a1b69a7499d676ad37e9374c1c900f934ee9ff95e450af402235d749af8",
+        "normalized_content_hash_sha256": "45b42d603fdb54963e167e1e5a6bf3cf3b5021bb306ba8f200a7dc63664af78e",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-biespHTk",
+      "source_id": "biespHTk",
+      "source_set": 3,
+      "source_file": "biespHTk.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 안녕하세요.\r\n네, 제가 핸드폰으로 긴급번호 111로 전화를 걸었다는 내용이 뜨는데, 제가 직접 전화를 걸지는 않았어요.\r\n그래서 이런 경우가 있는지 궁금합니다.\r\n일반적으로 이런 경우는 핸드폰 긴급통화 버튼이 다른 기능과 연결되어 있거나, 그런 것들 때문에 눌리는 경우가 있는 건가요?\r\n아니요, 그런 건 아니에요.\r\n혹시 해킹이나 의식 감염 같은 문제가 의심될 경우, 사용하시는 핸드폰은 안드로이드폰인가요?\r\n네.\r\n백신 프로그램인 알약이나 다른 백신으로 검사를 한번 해보시면 됩니다. 그래도 확실히 하고 싶다면 초기화를 진행하는 것도 방법입니다. 다만, 대부분의 경우 해킹이나 감염 때문에 이런 증상이 발생하는 경우는 드물고, 보통 버튼이 잘못 눌리는 경우가 많습니다.\r\n아, 그렇군요?\r\n혹시 알약 앱을 구글 플레이 스토어에서 '알약'이라고 검색해서 설치하시면 됩니다.\r\n아, 네, 알겠습니다. 감사합니다.\r\n네, 감사합니다. 수고하셨습니다.",
+      "matched_keywords": [
+        "앱",
+        "해킹"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "dbbc89fc66c2565d6b81e1853307fe6ca55dda61174d981ee1ee597c6dcd7269",
+        "normalized_content_hash_sha256": "c4917dfc7f778e20658c5381764b3768336cbb23eb0999b62fb0b63f88db1fa7",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bjBr244a",
+      "source_id": "bjBr244a",
+      "source_set": 3,
+      "source_file": "bjBr244a.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\r\n128 상담센터 박서준입니다.\r\n네, 안녕하세요.\r\n제가 혹시 신체 캠 피싱도 해당 사항이 가능한가요?\r\n선생님, 저희는 현재 해킹 바이러스 긴급 상담만 진행하고 있어서 신체 캠 피싱 관련해서는 휴대폰에 악성 앱이 설치되신 경우 치료 방법을 문자 메시지로 안내해 드릴 수 있습니다.\r\n그와 관련된 협박 내용 등은 수사기관에 신고하셔야 합니다.\r\n수사기관에 신고해야 한다고 하셨는데요.\r\n혹시 신체 캠 피싱 방지 업체인 카시아라는 회사를 알고 계시는지요? 저희는 경찰이 아니기 때문에 신체 캠 피싱 범죄 관련해서는 잘 알지 못합니다.\r\n다만 해킹 바이러스 관련 업무를 하는 한국인터넷진흥원 공공기관인데, 휴대폰에 악성 앱이 설치되셨다면 아까 말씀드린 것처럼 조치 방법을 매뉴얼 형태로 문자 메시지로 안내해 드리고 있습니다.\r\n아, 그럼 혹시 제 휴대폰에 악성 앱이 설치되어 있는지 확인 좀 부탁드려도 될까요?\r\n네, 저희가 원격으로 해 드리는 것이 아니라, 매뉴얼을 문자 메시지로 보내드리는 것입니다.\r\n사용하시는 휴대폰이 삼성이나 LG 같은 안드로이드폰이세요?\r\n네, 맞습니다.\r\n네, 그럼 안드로이드용으로 조치 방법을 문자 메시지로 보내드릴 테니 문자 메시지를 확인하시고 조치해 보시는 것이 좋겠습니다.\r\n선생님.\r\n아, 네, 알겠습니다.\r\n정말 감사합니다.\r\n네, 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "피싱",
+        "경찰",
+        "앱",
+        "해킹",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "ffc48aa182b5812a0e8fb160c9c8d7ce8a8aba411f6f41dfbc7d70ee3e80581e",
+        "normalized_content_hash_sha256": "3970b8b771287a14a605a9f2ef3cec4d9fdb1d85966d00a9c561252f64da59d3",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BJiwoW5m",
+      "source_id": "BJiwoW5m",
+      "source_set": 3,
+      "source_file": "BJiwoW5m.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\n2451 상담사 박서준입니다.\n혹시 개인정보 유출 방지 관련해서 전화 주셨나요?\n네.\n저희가 예방 수칙 같은 걸 알려드리고 있는데 무슨 일 때문에 그러세요?\n고객님.\n제가 요즘 대출 알아보다 인증번호를 확인했는데, 해당 웹사이트에서 그런 내용이 없다고 하더라고요.\n그런데 제가 인증번호를 입력한 게 있어서 몇 가지 추측을 해봤는데, 네.\n혹시 대출을 먼저 해주겠다는 연락이나 문자를 받고 진행하신 건가요?\n아니요, 제가 인터넷으로 알아본 거예요.\n아, 인터넷 광고 같은 걸 보고 해당 업체와 확인을 하셨고, 그래서 인증번호를 입력하라는 요청을 받아서 입력하셨다는 말씀이신 거죠?\n주민등록번호와 한도가 너무 높게 나와서 의아해서 본사에 전화했더니, 네, 그런 내용은 없다고 하더라고요.\n우선 고객님, 혹시 성년월일이나 주민등록번호 같은 개인정보를 알려주신 적 있으세요?\n우선 고객님, 인증번호로 어떤 피해가 발생했는지 정확히 알기는 어렵습니다.\n다만 인증을 통해 소액 결제가 이루어지거나, 특정 웹사이트 가입 등의 문제가 발생할 수 있습니다.\n저희 기관에서는 예방 방법을 안내해 드리고 있는데, 지금 문자 메시지로 몇 가지 예방 수칙을 보내드릴 예정입니다. 가장 중요한 건 휴대폰 소액 결제입니다. 통신사 측에 확인해서 소액 결제 한도가 높아졌는지, 혹은 결제가 이루어졌는지 확인해보세요. 만약 결제가 되었다면, 소액 결제 한도를 즉시 차단하는 것이 좋습니다.\n물론 기본적인 개인정보 유출만 알려주셨다면, 큰 피해가 발생하기는 어려울 겁니다.\n이후 사기범들이 대출을 미끼로 신용조회를 한다거나, 서류를 요청하는 등 추가적인 피해를 유도하는 경우가 있습니다.\n아직까지는 그런 상황은 발생하지 않은 것 같습니다.\n고객님, 다행히도 네. 만약 다시 전화가 와서 팀장이나 은행 직원인 척하며 연락을 주거나, 문자로 결제 확인을 요구하거나, 또 다른 사기성 문자를 보낼 수도 있습니다.\n그래서 앞으로는 그런 연락에 더 이상 응대하지 않으시면 안전하실 겁니다.\n나머지 개인정보 보호 방법은 문자 메시지로 보내드렸으니 참고해주세요.\n감사합니다.\n감사합니다.",
+      "matched_keywords": [
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "96f0e4a6d5ad0861d11026cd10a145e1170abd383535ccc350f338d4b30f47fd",
+        "normalized_content_hash_sha256": "ff904a9c2fdf7288c3575ec1d9ee2a7b4d54ba1226078ffc76c0f5ac145dfc56",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BK0NOpQh",
+      "source_id": "BK0NOpQh",
+      "source_set": 3,
+      "source_file": "BK0NOpQh.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n3217 상담팀 박서준입니다.\r\n아, 네, 안녕하세요.\r\n문자로 정지되었다고 연락이 와서 다시 연락드렸는데요.\r\n네, 어, 이게 뭐지, 도박 광고로 정지 사유가 왔는데 저는 그런 문자를 보낸 적이 없거든요.\r\n어, 혹시 선생님, 그러니까 번호가 스팸으로 신고되어 정지되었다는 문자를 받으셨다는 말씀이시죠?\r\n네.\r\n이의 제기를 하려면 이쪽 번호로 연락 주라고 해서 연락드린 거예요.\r\n일단은 혹시 뭐 정지가 될 예정인 번호가 몇 번인가요?\r\n[PHONE]번이요.\r\n제가 그럼 전산 조회해 보고 안내해 드릴 테니 잠시만 기다려 주십시오.\r\n일단 선생님 지금 확인해 봤을 때에는 저희가 따로 통신사 쪽에 제안을 요청한 게 없어서 이쪽으로 이직을 하셔야 되는 건 일단 아니고요.\r\n어찌 됐건 선생님 번호로 뭔가 스팸으로 신고된 데이터가 있다 보니까 여기 통신사에서 그런 이력을 가지고 제안을 하겠다라고 문자를 보냈던 것 같아요.\r\n네, 그럼 통신사 쪽에 연락을 드려야 하는 건가요?\r\n네, 근데 이제 대부분의 일반 상담 직원분들이 이런 내용에 대해서는 정확하게 숙지가 안 되다 보니깐 자꾸 저희 쪽으로 팽팽되는 사례가 많이 있거든요.\r\n그래서 다시 전화하셔서 똑같이 여기 진흥원으로 문의하라라고 안내가 된다면 그때는 이제 그 상담 직원의 상급자를 바꿔달라고 하시거나 아니면 혹시 스팸 업무를 전담으로 보는 부서가 있다면 그쪽에 담당자 바꿔달라 하셔서 정확하게 안내 받아보셔야 되겠네요.\r\n아, 네, 알겠습니다.\r\n감사합니다.\r\n예, 민원 담당이었습니다.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "3926094ac624c275830075aba020674523960ee7d941214961afd185cc33f5a6",
+        "normalized_content_hash_sha256": "ed3e64980be7057d2d2d3510cbb9272e5bb157b55c73cfb2b0fe3e4c553eb7d9",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BK1D9dSl",
+      "source_id": "BK1D9dSl",
+      "source_set": 3,
+      "source_file": "BK1D9dSl.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n안심 상담센터 박서준입니다.\r\n네.\r\n안녕하세요.\r\n저 방금 전에 해외에서 온 전화가 하나 있었는데, 중국어로 통화하던 여성분이 전화하셔서 스팸인지 물어보시더라고요. 저도 정확히 어떤 내용인지 알 수는 없지만, 관련 없는 내용이라면 보이스피싱일 가능성이 있으니요.\r\n너무 오래 통화하지 마시고 그냥 끊는 게 안전합니다.\r\n아 네.\r\n혹시 신고하는 방법이 있나요?\r\n저에게 010-****-****2로 전화가 왔었는데, 마치 경찰이나 검찰을 사칭하며 전화하는 보이스피싱일 가능성이 있습니다. 그런 경우, 보이스피싱 신고를 위해 경찰에 신고하는 방법이 있습니다. 혹은, \"저희 물건이 아주 좋아요\" 와 같이 광고성으로 접근하는 경우 스팸으로 신고할 수도 있습니다.\r\n좀 애매한 부분이 있어서, 경찰청 민원센터 242번으로 보이스피싱 관련 번호 신고가 가능한지 확인해보시는 것이 좋겠습니다.\r\n아, 만약에 국제 전화 요금이 많이 청구된다면 어떻게 해야 하나요?\r\n그렇다면 통신사에 전화해서 국제 전화 요금이 과다하게 청구된 건 아닌지, 소액 결제 내역은 없는지 확인해보시고, 확인된다면 통신사와 경찰에 함께 신고 문의해보시는 것이 좋겠습니다.\r\n제가 알기로는 잠깐 통화하는 것만으로는 요금이 많이 나오지는 않는다고 들었습니다.\r\n아, 네, 알겠습니다.\r\n감사합니다.\r\n감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "검찰",
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "ce94364c55d63cc1209da45fa7d45619bab0f9e1f2fd5dfc0a52b1a286b95aff",
+        "normalized_content_hash_sha256": "89f52da451113b6b49d391dd183557aa0c9e0cffbbfefd4e93f81fab4808ad29",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BKBNxdNZ",
+      "source_id": "BKBNxdNZ",
+      "source_set": 3,
+      "source_file": "BKBNxdNZ.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2451 상담센터 김민지입니다.\n아, 네, 제가 지금 제 휴대폰으로 문자 메시지가 왔는데요.\n제 전화번호로 누가 무슨 내용인지 모르는 문자 메시지를 보냈어요.\n저한테 검찰에 고소하겠다는 내용이 포함되어 있어서 좀 이상합니다.\n자꾸 계속 오네요.\n혹시 최근에 교통 위반이나 건강 검진, 국민연금, 청첩장 관련 문자 메시지를 받으시고 링크를 클릭하신 적 있으세요?\n아니요, 전혀 없어요.\n인증 번호를 입력하신 적 없으세요?\n아, 예를 들어 온라인 구매나 밴드 같은 곳에서 인증 번호를 입력하신 적 없으세요?\n네, 그런 적은 없어요. 정말 속이 터지네요.\n검찰에 고소하겠다는 내용의 문자가 왔는데, 지금 제 전화번호가 도용되어 문자가 발송되고 있는 것 같아요.\n네, 지금 확인했습니다.\n고객님께서 사용하시는 통신사에서 번호 도용 차단 서비스를 신청해 주시면 됩니다.\n번호 도용 차단 서비스 가입 완료까지 1일부터 3일 정도 소요됩니다.\n통신사 앱이나 웹사이트에 접속하셔서 번호 도용 차단 서비스 가입을 진행하시면 됩니다.\n그리고 제가 추가적으로, 인증하지 않은 인증 내역을 확인할 수 있는 방법을 문자로 보내드릴 테니, 혹시라도 인증하지 않은 내역이 있다면 탈퇴까지 가능한 사이트입니다. 이 말씀이 맞으신가요?\n네, 맞습니다.\n제가 안내받은 대로 접속했는데 안 되네요.\n문자로 안내해 드린 내용을 다시 한번 확인해 보시고 다시 시도해 보세요.\n고객님, 휴대폰으로도 되나요?\n네, 휴대폰과 컴퓨터 모두에서 가능합니다.\n아, 정말 황당하네요. 이렇게 고소당하면 어떻게 해야 하나요?\n현재로서는 저희 쪽에서 자세히 말씀드리기는 어렵습니다.\n다만, 스팸 신고가 많이 접수될 경우 이용 제한 등의 조치가 있을 수 있습니다.\n혹시 그 부분에 대해서는 추후 문의해 주시면 됩니다.\n현재는 번호 차단 서비스 신청과 문자 발송 내역 확인을 먼저 해보시는 것이 좋겠습니다.\n아, 네, 알겠습니다.\n감사합니다.\n김민지였습니다.",
+      "matched_keywords": [
+        "검찰",
+        "앱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "895fd739e90b4a2392ae6209810a2df87f32b9560c96fc5e1152e70f57abd68e",
+        "normalized_content_hash_sha256": "54526159419501799d2b347474b7c996d6dce97058c51a012cef4443a581c3f9",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-blbHe6Kz",
+      "source_id": "blbHe6Kz",
+      "source_set": 3,
+      "source_file": "blbHe6Kz.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "2451 상담센터입니다.\r\n아, 안녕하세요.\r\n제가 궁금한 점이 있어서 전화드렸습니다.\r\n네, 저희가 현재 회사인데, 5대 필수 교육 중 개인정보 보호 교육이 있거든요.\r\n네, 저희가 이 교육을 개인별로 듣고 싶은데, 개인정보 보호 교육 과정에 사업자용과 국민용이 있는데 어떤 것을 선택해야 할지 몰라서 사업자용으로 듣는 게 좋을까요?\r\n네, 사업자용으로 들으시면 됩니다.\r\n그 안에 어떤 것을 들어야 할지 잘 모르겠다면, 이 페이지로 넘어가시면 개인정보 관련 내용이 있습니다.\r\n네, 그걸 들으시면 됩니다.\r\n이 교육 시간을 1시간 채워야 하나요?\r\n아니요, 하나만 봐도 상관없습니다.\r\n동영상은 1개 이상 시청하면 됩니다.\r\n선생님, 동영상 시청은 모두 완료해야 수료증이 발급됩니다.\r\n네, 동영상 다 시청하면 됩니다.\r\n아, 지금 제가 사이트에 접속해서 사업자 교육 과정으로 들어가면, 맨 아래쪽에 \"개인정보 보호 교육\"이라고 보이시나요?\r\n네, 보입니다.\r\n네.\r\n이 교육을 많이들 시청하시거든요.\r\n네, 이 교육 하나만 완료하면 되는 건가요?\r\n네, 맞습니다.\r\n선생님, 1차부터 4차까지 교육 과정이 있습니다.\r\n모든 교육 과정을 완료하시면 수료증이 발급됩니다.\r\n그 수료증은 프론트에 보관해 주시면 됩니다.\r\n아, 알겠습니다.\r\n감사합니다.\r\n네.",
+      "matched_keywords": [
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "5d8b41df34747388ff6a89189a3bd0b79f2485ef85554ebd7402a5c0bb988cbd",
+        "normalized_content_hash_sha256": "99ea4cb70634ed622f55b3bdd677d1f1d7f14cd161c373bbd8c3dff2983ae2b5",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-blYminjV",
+      "source_id": "blYminjV",
+      "source_set": 3,
+      "source_file": "blYminjV.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n28 상담센터 민지입니다.\r\n네.\r\n여보세요.\r\n제가 요즘 계속 몇 달 전부터 어떤 투자 관련 업체에서 전화와 문자 메시지가 계속 오고 있어요.\r\n처음에는 받지 않고 끊었는데, 계속 끊어버리니 문자 메시지로 성적인 모욕을 하더라고요.\r\n이런 경우 어떻게 해야 할까요?\r\n우선 저희 쪽으로 광고성 메시지에 대해 스팸 신고를 해 주시면, 저희가 법적으로 문제가 있는지 사실 관계를 확인해 볼 겁니다.\r\n네, 바로 신고 방법 안내 문자를 보내 드릴까요?\r\n여기서 전화로도 신고가 돼요?\r\n아니요, 직접 하셔야 합니다. 저희가 문자 메시지로 안내해 드리고 있어요.\r\n아, 혹시 신고하면 이 번호들이 대부분 불법 스팸 번호인가요?\r\n아니요.\r\n고객님, 광고성 메시지를 받으신 건데요.\r\n제가 절차를 자세히 설명해 드릴게요.\r\n저희가 법적으로 문제가 있는지 사실 관계를 조사하고, 실제로 법을 위반한 것으로 확인되면 방송통신심의위원회로 이관하여 과태료나 처벌을 부과할 수 있습니다.\r\n그래서 저희 쪽에서 사실 관계를 확인하려면 신고를 먼저 하셔야 하니, 한번 신고해 보세요.\r\n고객님, 네, 감사합니다.\r\n네, 문자 메시지로 보내 드릴까요?\r\n네, 그렇게 부탁드립니다.\r\n다음 상담은 여기서 마치겠습니다.\r\n네.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "fd0f02ac43898c39439b5202bf313c87891cabbd7da97e8d049d6739a5eeeb81",
+        "normalized_content_hash_sha256": "0f0810b3618fcb185efa8edf78bf421cbd4d5a1a5f23bdd48b21ae5b15688728",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bqF2NOIE",
+      "source_id": "bqF2NOIE",
+      "source_set": 3,
+      "source_file": "bqF2NOIE.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "128 상담센터 박서준입니다.\n네, 안녕하세요. 혹시 스팸 신고를 할 수 있는 곳이 있나요? 혹시 아시나요?\n네, 네. 현재 저희는 영리성 광고 관련 스팸 신고를 받고 있습니다. 선생님.\n네?\n네, 영리성 광고에 대한 스팸 신고가 가능합니다.\n제가 지금 문자를 하나 받았는데, 그게 뭐냐… 잠깐 여쭤봐도 될까요? 제가요.\n제가 결제를 했는데 결제되었다는 문자가 왔어요.\n선생님, 그 회선 번호로 문자를 받으셨나요?\n네.\n선생님, 이건 영리성 광고 스피드 문자가 아니라 보이스피싱 조직에서 본인에게 전화를 연결하기 위해 보내는 가짜 문자입니다.\n따로 대응하지 않으시는 것이 가장 안전합니다.\n무시하면 되나요?\n네, 네.\n아, 네, 알겠습니다.\n무시하면 되는군요.\n네, 맞습니다.\n네, 알겠습니다.\n네, 감사합니다.\n그 안에 새 번호로 문자 내용에 몇 번으로 전화라고 기재된 문자 맞나요, 선생님?\n뭐, 02나 152 같은 번호로 되어 있는 거 맞을까요?\n문자 내용에?\n네, 밑에 그렇게 써 있었어요.\n뭐, 문의는 뭐 02?\n네, 그러면 거제 사진 문자 맞나요, 선생님?\n아니요, 아니요. 무시하면 된다고요.\n네, 네, 맞습니다.\n네.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "d50133afdaa573032a22e6ac1a9543ee85257373af7e0658551c43da434cccf8",
+        "normalized_content_hash_sha256": "fb9fe2251a43d49c83f901da84cdd17401411167f60399e0806fed807dea39ce",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bQkSO14W",
+      "source_id": "bQkSO14W",
+      "source_set": 3,
+      "source_file": "bQkSO14W.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "네, 안녕하세요.\r\n회사 메일 계정이 어제, 그제, 그전날에 해킹당했어요.\r\n그래서 메일 발송은 안 됐는데, 그냥 모르는 사람이 그 메일로 우리 메일이 다 보내져 있어서 우리가 모르고 있었거든요.\r\n뭐 하는 회사인데 견적서를 보냈냐 이런 식으로 전화를 많이 받았거든요.\r\n근데 저희가 수신은 지금은 메일 비밀번호를 바꿔서 쓰고 있는데 수신은 잘 되는 데 발송을 하면 상대방이 못 받았다고 계속 그러는데 이거 어떻게 돼요?\r\n선생님, 그 회사에서 받았던 이메일 있지 않습니까?\r\n네.\r\n혹시 그냥 일반 네이버라든지 뭐 이런 거 쓰고 계세요?\r\n네이버를 쓰고 있는데요.\r\n네이버요?\r\n선생님 혹시 네이버에다가 물어보셨어요?\r\n네이버는 계속 거기 안 돼요.\r\n상담은 연결이 안 되고요.\r\n계속 로봇하고 계속 상담하라 하는데 제가 원하는 답을 얻을 수 없어가지고 제가 왜 그러냐면 그\r\n네이버라든지 이런 데서는요.\r\n우리 같은 경우는 보통 RBL이라든지 스팸 반송 같은 것도 누군가는 분명히 선생님이 스팸을 신고를 했을 거잖습니까?\r\n아는 사람들이 했을 것 같아요.\r\n그러니깐 이게 스팸 차단이라고 해서 RBL이라는 게 있습니다.\r\n그래서 만약에 이런 것들을 신고를 하게 되면 이런 문제를 혹시\r\n일단 저희 유사한 사업부서가 있는데요.\r\n혹시 선생님 메모 하나 가능하실까요?\r\n여기가 그걸 해줄지 모르겠어요.\r\n원래 이거는 이제 네이버에서 네이버에서 전화를 해야 되는 건데 선생님께서 이거 안 된다고 하시니까 제가 문의를 하나 전화번호를 남겨드릴게요.\r\n[PHONE]\r\n이쪽으로 한번 그 유사한 부서예요.\r\n이쪽으로 한번 물어보십시오.\r\n선생님.\r\n지금 해결 안 되고 답답해서.\r\n그렇죠.\r\n왜 그러냐면 저희 쪽은 이거를 선생님 거를 명확하게 도움드린다고는 장담을 못 해요.\r\n왜냐하면 근데 이제 선생님이 지금 그쪽이 연락이 전혀 안 된다고 해서 답답하시다니까 저희 쪽에서 할 수 있는 거는 여기서 한번 물어보시라는 거를 제가 안내를 해드릴 수밖에 없네요.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "해킹"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "1babf53d3117b0a38bad0b73ad35c9cec294e16da0ee55317208c17659d11c5c",
+        "normalized_content_hash_sha256": "3d14472cd1f81a98699dacc5baa85e40ff850c89fba211456a77a4451c6a2a5b",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BRnCNBMI",
+      "source_id": "BRnCNBMI",
+      "source_set": 3,
+      "source_file": "BRnCNBMI.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "3217 상담센터 상담원입니다.\r\n네.\r\n안녕하세요?\r\n무엇을 도와드릴까요?\r\n최근 뉴스에서 유권해석에 대한 이야기가 나오던데, 그 내용이 궁금합니다.\r\n어떤 내용인지 말씀해주시겠어요?\r\n저희 아파트 관리사무소에서 운영하는 CCTV 영상을 입주민이 열람 요청하면, 개인정보가 노출되지 않도록 비식별화 처리 후 제공해야 한다는 내용이 있던데, 제가 이전에 알고 있던 내용과는 조금 다른 것 같습니다. 이전에는 동영상 전체를 열람하고 싶을 때 비식별화 조치를 개인 비용으로 처리해야 한다는 정보를 알고 있었거든요. 지금의 내용이 맞는지 궁금합니다.\r\n상담원으로서 안내해 드리자면, 저희 개인정보보호법은 예를 들어 경찰법이나 주차장법처럼 CCTV 열람 관련 규정이 별도로 명시되어 있지 않은 경우, 개인정보보호법을 따릅니다.\r\n개인정보보호법상, 개인정보 열람 요청은 영상 자체에 본인만 나오면 문제가 없지만, 다른 사람의 얼굴이나 차량 번호 등 개인정보를 식별할 수 있는 정보가 함께 포함되어 있다면, 그 정보는 본인 정보가 아니므로 열람에 대한 동의를 받아야 합니다.\r\n실제로 다른 사람의 정보가 포함된 영상을 열람하고 싶을 때는, 해당 정보가 가려지도록 조치하는 방법이 있습니다. 예를 들어, 시간이 너무 길거나 움직임이 심해서 전체를 가리기 어려운 경우에는 모자이크 처리 기관에 위탁하여 열람 요청자에게 제공할 수 있습니다. 이때 모자이크 비용은 열람을 요청한 사람이 부담하는 것이 원칙입니다.\r\n그러므로, 영상에 개인정보가 없는 상태, 즉 모자이크 처리된 영상은 열람 요청자가 비용을 부담하는 것이 원칙입니다. 만약 모자이크가 과도하게 필요하다면, 그건 다소 어렵습니다.\r\n캡처 사진의 경우, 모자이크 처리가 가능하지만 정지 화면의 경우에는 제한적일 수 있습니다.\r\n영상의 경우, 움직임이 적은 부분은 가릴 수 있습니다.\r\n관리 책임자가 확인 후 가려 보여줄 수 있도록 조치하고, 가려도 충분하지 않은 경우에는 기술적으로 모자이크를 제공하기 어렵기 때문에 위탁해야 합니다. 이 경우, 관련 비용은 열람 요청자가 부담해야 합니다.\r\n예를 들어, 10분이나 20분, 30분 정도의 영상에서 가리는 작업은 쉽지 않습니다.\r\n움직임이 없는 경우에는 미리 종이 등으로 가려 놓는 방법도 있습니다.\r\nCCTV는 동작 감지 센서가 작동하여 영상이 저장되므로, 움직임이 없으면 영상이 건너뛰는 경우가 있습니다.\r\n따라서, 관리 책임자가 확인 후 가리는 것이 어렵다고 판단되는 경우에는 저희가 자체적으로 판단할 수 있습니다.\r\n보여드릴 때 미리 구도를 확인하고, 가려야 할 부분이 있다면 그렇게 제공해 드릴 수 있습니다.\r\n모자이크 처리까지 요청하시면, 개인 비용으로 처리하여 제공해 드릴 수 있습니다.\r\n물론, 개인 비용을 부담하기를 원치 않으시는 경우에도 열람은 가능합니다.\r\n네, 알겠습니다. 감사합니다.\r\n네.",
+      "matched_keywords": [
+        "경찰",
+        "개인정보"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "7aed97c20460f9059fd89442260eaea651b4aad241da8f6152a124c2262de95f",
+        "normalized_content_hash_sha256": "6d01f06687cf2aaff018f6414758acdb6751a5bc3d26a3a68883d112458cd23d",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bs3yj7hc",
+      "source_id": "bs3yj7hc",
+      "source_set": 3,
+      "source_file": "bs3yj7hc.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\n서울 상담센터 강민지입니다.\n네, 제 핸드폰으로 계속해서 발신이 되는 것 같아요.\n어떤 종류의 악성코드 같은 것들이 일어난 건가요?\n정확히 뭔지는 모르겠지만, 제 번호로 누군가에게 문자 메시지가 계속 오는데, 혹시 상담원님 번호가 이미 차단되었나요?\n네, 그런 문자가 계속 오더라고요.\n그렇다면, 지금 문자가 오는 게 차단된 건지, 아니면 완전히 수신이 안 되는 건지가 중요하거든요.\n고객님.\n등록이 되어 있어서 차단되었습니다.\n아, 차단되었다는 문자가 왔고, 지금 현재 발신과 수신이 전혀 안 되는 상황이신 거죠?\n발신은 안 되는지는 잘 모르겠어요.\n일단 여기로 전화를 걸어보려고요.\n고객님 전화번호 다시 한번 말씀해 주시겠어요?\n010-****-****입니다.\n잠시만 기다려 주세요.\n여보세요?\n고객님, 혹시 저희 시스템상 010-****-**** 맞으시죠?\n네.\n확인해 봤는데, 저희 쪽에서 혹시 이걸 차단시켰다면 담당자 정보가 기록되어 있어서 시스템에 표시가 되거든요.\n그런데 저희 쪽에는 그런 정보가 없습니다.\n저희 쪽에서 이걸 차단시킨 게 아니라, 통신사 자체 규정에 의해서 차단된 겁니다.\n고객님, 현재 사용하시는 통신사로 연락하셔서 일반 상담원 말고,\n스팸 담당 부서에 연락하셔서 해제 관련 문의를 해 주시면 됩니다.\n저희 쪽에서 고객님 전화번호를 차단시킨 게 아니에요.\n모든 통신사는 한국인터넷진흥원이라는 문구를 사용합니다.\n왜냐하면 저희가 스팸 관련 업무를 담당하는 공공기관이니까요.\n만약 저희가 이용을 차단시켰다면 담당자 정보가 기록되어 있어서 그분에게 고객님께 전달될 텐데, 고객님 전화번호는 없습니다.\n아, 네, 일단 알겠습니다.\n네, 통신사로 문의 한번 해보겠습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "d41fc330088f1e532a89a2db6b6085457accf4f9ed8d04932ae5c722e949ac3a",
+        "normalized_content_hash_sha256": "52d25d87c01c2842e6888d3648a3a51e731bbeffbe9cdf9828f51c38bf65758f",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BSd5cRqu",
+      "source_id": "BSd5cRqu",
+      "source_set": 3,
+      "source_file": "BSd5cRqu.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n미소 상담센터 박입니다.\r\n네.\r\n여보세요.\r\n저 이번에 층간소음 관련 문자 왔었는데 전화가 오네요? 소음 관련입니다?\r\n혹시 담당자님께 전화 걸었나요?\r\n아니요.\r\n저번에 부재중 전화가 010-****-**** 이런 번호로 왔는데, 이 지역이 아니어서요.\r\n그게 혹시 다른\r\n아파트나 다른 곳인가 해서 확인해봤더니, 공주라는 단어가 나왔는데 이상해서 그냥 끊었거든요.\r\n근데 문자님, 지금 말씀하신 내용에 대해 정확하게 확인해 보시고, 여보세요?\r\n정확하게 확인해 보시고 싶으시다면요.\r\n고객님께서 말씀하신 그 아파트 이름이 공주 아파트였죠?\r\n그쪽 대표 전화번호를 인터넷에서 검색해서 한번 문의해 보시고,\r\n안내받으신 내용에 대해서 정확하게 확인하신 후에 대처하시는 것이 좋으실 것 같습니다.\r\n만약에 고객님께 피해를 주려는 의도가 있는 그런 문자였다면, 더 이상 그쪽으로 전화 대응은 하지 마시고,\r\n전화번호로 전화하셔서 주민등록번호를 말씀하셨다거나, 휴대폰을 설치하셨다거나.\r\n그런 건 아니었어요.\r\n그렇지 않다면 피해로 이어지는 건 아니니까 너무 걱정하지 않으셔도 됩니다.\r\n고객님.\r\n전화 한 번 걸어온 것으로 해킹이 되지는 않아요?\r\n초기화 여쭤보려고요.\r\n전화 시도를 한 것만으로 해킹이 되지 않습니다.\r\n걱정하지 마세요.\r\n고객님 연락처는 상대방이 알고 있기 때문에, 모르는 번호로 전화나 문자가 또 올 수 있습니다.\r\n이런 부분은 고객님께서 조금 주의를 기울여 주셔야 되는 부분입니다.\r\n아, 네, 알겠습니다.\r\n피해를 입지 않도록 문자만 와도 신고가 안 되는 건가요?\r\n저희는 검찰이나 처벌 목적의 신고를 받는 기관은 아니고요.\r\n개인 정보 관련해서는 저희가 대처 방법을 안내해 드리고, 만약에 신고를 원하시면 경찰에 문의해 주셔야 합니다. 지금 신고나 이런 부분에 대해서는 번호로 별도로 신고하는 부분은 없는 것으로 알고 있습니다.\r\n다만, 하반기에는 경찰에서도 보이스피싱 전담 조직을 운영할 예정이라고 하니, 그때는 조금 개선이 되지 않을까 싶습니다.\r\n감사합니다.\r\n네, 혹시 고객님께서 만족도 조사를 진행하고 있는데, 혹시 괜찮으시면 6월 말쯤에 전화 한 통 드릴 예정입니다.\r\n그때 조사를 받을 수 있으실까요?\r\n아, 네, 그럼요.\r\n네, 지금 고객님께서 전화하신 번호로 만족도 조사 관련 내용을 문자로 보내드리겠습니다.\r\n내용 확인하시고 조사에 응해주시면 감사하겠습니다.\r\n네, 감사합니다.\r\n수고하셨습니다.\r\n네, 고맙습니다.\r\n네, 감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "검찰",
+        "경찰",
+        "해킹",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "7ae71fd3df765a59c3720086c2ca3b1a0b6c81ff45ee3c4bb079181330f864d9",
+        "normalized_content_hash_sha256": "336e40be6576aef439c62bf574cd630f2efe37966e58d35d0bdda7443e06d244",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BThBlwlg",
+      "source_id": "BThBlwlg",
+      "source_set": 3,
+      "source_file": "BThBlwlg.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요.\n행복한 하루 상담센터 박서준입니다.\n네.\n저번에 휴대폰 번호 도용으로 연락을 받았습니다.\n개인정보 보호 서비스에 들어가서 문자 발송 서비스 가입 여부를 확인하라고 하는데, 개인정보 보호 서비스 안에서 문자 발송 서비스 가입 상태를 확인하는 방법을 알고 싶습니다. 어디서 확인해야 하나요?\n담당자님, 지난번 상담 때 웹사이트 회원 탈퇴 관련 문자를 받으셨다고 하셨는데, 그 내용이 맞으신가요?\n웹사이트 회원 탈퇴 안내가 지금 고객님께서 말씀하시는 내용이 맞습니다.\n웹사이트 회원 탈퇴 경로가 안내되어 있습니다.\n개인정보 보호 서비스에서 회원 탈퇴 관련 안내를 다시 한번 보내드리겠습니다.\n개인정보 보호 서비스에서 들어가시는 경로가 안내되어 있나요?\n아니요, 여기 들어가서 전체 화면만 뜨고 다른 내용은 안 보여요.\n웹사이트 맨 위쪽에 세 줄로 된 메뉴가 있는데, 그게 전체 메뉴입니다.\n거기서 개인 서비스 메뉴를 선택하신 후 확인해 주시면 됩니다.\n개인 서비스 메뉴에 있는 정보 주체 권리 행사 항목을 확인해 보세요.\n정보 주체 권리 행사 안에 웹사이트 회원 탈퇴 관련 내용이 있습니다.\n그 부분을 말씀해 주셔야 합니다.\n지금까지 말씀하신 내용과 문자에 안내된 경로가 일치하나요?\n아니요, 문자에 안내된 경로가 자세하게 나와 있는데, 일단 여기서 탈퇴를 하면 된다고요?\n네, 네.\n아, 알겠습니다.\n고맙습니다.",
+      "matched_keywords": [
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "4e0749465120ed9caf421bbfac29cbeccd2e859a58ef035ce8935bcf4cf4ba19",
+        "normalized_content_hash_sha256": "8f68eb50d206d63e6b3f6209c17b9cb094bbfc2261779468fc19df88ab3d0155",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BUSX8DSe",
+      "source_id": "BUSX8DSe",
+      "source_set": 3,
+      "source_file": "BUSX8DSe.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까.\r\n3217 상담센터 박지현입니다.\r\n네.\r\n전에 잠시 연락드렸었는데, 저희 부모님께서 보이스피싱 전화를 받은 것 같아서, 여기서 블랙리스트 관리를 하신다고 들었는데 혹시 조회나 등록 같은 걸 도와주실 수 있나요?\r\n저희가 블랙 IP 관련해서 보이스피싱으로 오시는 건 어떤 건가요?\r\n그렇군요?\r\n그런데 경찰관은 이 번호를 알려주시면서, 이쪽에 문의하시면 될 거라는 안내를 받았습니다.\r\n아니요.\r\n그것은 경찰관이 잘못 안내하신 것 같습니다.\r\n번호 조회 같은 건 안 돼요?\r\n저희는 그런 권한은 전혀 없습니다.\r\n저희가 아직 피해가 발생한 건 아니지만, 혹시 몰라서 문의드리는 건데, 혹시 어떤 점을 문의하시는 건가요?\r\n번호로 신고가 들어온 건이 있는지, 그걸 가장 먼저 알고 싶습니다. 하지만 여기는 보이스피싱 번호를 신고받는 곳이 아니어서…\r\n그건 지금 알 수 없고요.\r\n아까 받으셨지만, 단순한 전화 통화만으로는 피해가 되는 건 아니니까, 개인 정보를 직접적으로 알려주신 적이 없으시면 크게 걱정하실 필요는 없을 것 같습니다.\r\n그런데 단순한 무작위 전화가 아니라, 저희가 비자 신청 사실을 알고 그게 잘못되었다고 전화มา니 걱정이 되더라고요.\r\n찜찜하고요.\r\n그렇습니다. 우려하시는 것처럼 우연의 일치일 수도 있고, 정말로 비자 발급 상황을 알고 접근했을 수도 있습니다.\r\n하지만 반대로 생각하면 그런 내용만 가지고 접근했다는 건, 어쨌든 주요 정보를 모르니까 탈취할 목적으로 전화를 한 거겠죠.\r\n이미 주요 정보를 알고 있다면 오히려 전화를 안 하고 피해가 발생했을 겁니다.\r\n네, 일단 알겠습니다.\r\n네, 기존 담당자였습니다.\r\n네.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "경찰"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "c6d1ea55c3b0ef289776578a707d610872f92a86b12b0055f41c9587180a824f",
+        "normalized_content_hash_sha256": "4b23cedd39537fab0650ce0dd1552c9dc1d1c0e5204067424975e8ad88039eff",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BUVmZpRa",
+      "source_id": "BUVmZpRa",
+      "source_set": 3,
+      "source_file": "BUVmZpRa.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하세요. 핸드폰 상담센터 박서준입니다.\n네.\n오늘 저녁 6시 5분쯤 연락을 드렸는데요.\n스팸입니다.\n스팸이 맞습니다. 스미싱으로 의심되어서요.\n스미싱 같은데 전화번호를 등록했는데.\n3번을 누르면 되나요?\n음, 고객님. 저희가 스팸으로 분류하는 건 광고성 문자이고, 스미싱은 URL 주소로 신고를 받고 있습니다.\n아, URL 주소를 알려줘야 하나요?\n네, URL 주소는 전화가 아닌 스팸 신고 방법처럼 신고해 주시면 담당 부서에서 확인 후 해당 URL 접속을 차단하도록 조치합니다.\n저희가 고객님께 별도로 결과를 안내해 드린 적 없으신가요?\n아, 그러시군요?\n오늘 아침 안내를 못 받고 ARS로 진행했는데 어떻게 되는지 궁금해서요.\n아니요, 스팸이 아니라 스미싱 같아요.\n계속 인증 코드를 누르라고 하더라고요.\n30분 간격으로, 1시간 간격으로요.\n인증 코드는 스미싱으로 보기 어렵고, 스미싱은 택배 주소 확인을 위한 링크를 클릭하라고 안내하는 경우가 많습니다.\n네, 링크를 클릭했어요.\n대한통운에서 온 문자였는데, 앱을 설치하라고 했어요.\n그 후로 계속 인증 코드 확인 문자가 오더라고요.\n지금 고객님 피해를 입고 계시는 건데, 신고한다고 해서 차단되는 건 아니에요.\n피해 신고는 경찰에 하시는 게 좋고, 저희 기관에서는 몇 가지 조치 방법을 안내해 드리고 있습니다.\n네?\n제가 지금 고객님께 전화 드린 번호로요.\n조치 방법 문자로 보내드릴 건데요.\n그 링크를 클릭하면 악성 코드가 설치돼서 소액 결제가 되거나 번호가 도용돼서 다른 사람에게 같은 문자를 보내게 만들 수 있습니다.\n그러면 고객님께서 신고를 받으시는 상황이 발생할 수 있습니다.\n그래서 미리 예방할 수 있는 조치 방법인데요. 1번부터 5번까지는 조치 방법이고, 6번은 신고 방법입니다.\n1번부터 천천히 읽어보시고 바로 진행해 보시는 게 좋겠습니다.\n아, 그럼 문자로 보내주세요.\n지금 확인해 보겠습니다.\n네, 네. 문자로 발송해 드렸습니다.\n네, 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "경찰",
+        "앱",
+        "문자",
+        "링크"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "9e9c138fa7cd2a9cd7117329681758b3d7b50d2abade8a165f650d84b8e6d087",
+        "normalized_content_hash_sha256": "9164457f41236dde51e506ca8713070393eac64686629964276b2ae938a49228",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-BV4Put9Q",
+      "source_id": "BV4Put9Q",
+      "source_set": 3,
+      "source_file": "BV4Put9Q.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "안녕하십니까?\r\n119 상담센터 강민주입니다.\r\n아이고 예 수고 많습니다.\r\n네 안녕하세요.\r\n제가 어제 스마일론이라고 금리를 저렴하게 갈아탈 수 있다고 근데 제가 가지고 있는 은행에\r\n보험약관 대출 이천만원 이런 걸 알고 있더라고요.\r\n그래가 전화가 와가지고 그걸 돈을 여기 3.몇%로 갚을 수가 있다고 그래서 제가 그 어릴 때 저 개인정보 유출이 됐거든요.\r\n아 그러셨습니까?\r\n주민등록번호도 다 유출하신 거예요?\r\n주민등록증 앞뒤로 사진 찍어서 보내주셨고 그래서 오늘 오전에 제가 어디서 다른 데서 연락이 와가지고 보이스피싱에 말려든 거 같다 하는 바람에 자동차 운전면허 그다음에 주민등록 그다음에 제가 거래하는 카드\r\n은행은 전부 다 다 막았거든요.\r\n통신사까지도 막았는데 혹시 개인정보 유출로 인해가지고 이 사람들이 다른 데서 저한테 그럴 수 있습니다.\r\n선생님.\r\n왜냐면요.\r\n불법폰 불법통장 원래 있던 것들은 선생님께서 알고 계시니까 막을 수 있잖아요.\r\n근데 없던 게 만들어져요.\r\n예를 들어 불법폰 불법통장 이런 거.\r\n선생님 제가 지금 문자 하나 발송을 해드린 게 있거든요.\r\n문자 하나 수신하셔서 문자 보시면\r\n1번부터 5번까지 다섯 가지 조치 방법이 써 있습니다.\r\n그 중에서 1번, 2번, 3번 이 세 개는 지금 빨리 하셔야 돼요.\r\n그게 그거를 안 해놓으시면 불법 물품, 불법 통장 이런 게 만들어질 수 있습니다.\r\n다른 또 폐기책은 없나요?\r\n일단은 그거를 먼저 등록을 해놔요.\r\n그 사람들이 못 만들어요.\r\n그런 것들이 그걸로 인해가지고 폐가 되게 많이 발생거든요.\r\n보시고요.\r\n6시에는 사람들이 다 업무가 종료하기 때문에 그 전에 하셔야 되니까 빨리 하십시오.\r\n감사합니다.",
+      "matched_keywords": [
+        "보이스피싱",
+        "피싱",
+        "개인정보",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "2c9ec609463f682e5aadb5c24334b54159ca7e18c4daada8e379a198a8d721ed",
+        "normalized_content_hash_sha256": "16505e3826c440e4bc6a043bb6542124df241cec0692fd1062138a506a0285b1",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "record_id": "kisa-3-bVV8jAKy",
+      "source_id": "bVV8jAKy",
+      "source_set": 3,
+      "source_file": "bVV8jAKy.synth",
+      "source_url": "https://www.data.go.kr/data/15150832/fileData.do",
+      "synthetic": true,
+      "transcript": "168 상담센터 김민지입니다.\r\n여보세요?\r\n네.\r\n제가 어제 스미싱에 당했거든요.\r\n그래서 여기 전화를 한번 해보라고 해서 전화를 드렸거든요.\r\n스미싱 상담원 전화 받고요.\r\n정보 알려주신 부분이 있으셨나요?\r\n제가 처음에 문자 와갖고 부모님 하나 뭐... 네.\r\n예.\r\n계좌 정보 따로 문자 받고 뭐 정보 보내신 거 있으세요?\r\n제가 그거 뭐꼬 운전면허증 신분증을 부모님 보내달래갖고 그거 예.\r\n신분증을 줬어요.\r\n복사를 해가 그 뭐꼬 사진참 예.\r\n상담원님 그러면은 뭐 파일 같은 거 열어봤다더거나 사이트 접속하였다거나 그런 건 아니고 면허증을 보낸 상태예요?\r\n그럼 면허증 상담원님 면허번호나 발급일자 이런 부분이 다 확인이 되면은\r\n그걸 많이 악용하기 때문에요.\r\n면허번호나 발급일자는 변경될 수 있도록 분실된 이후에 재발급 받는 게 안전하고요.\r\n그리고 상담원님 그 따로 유출되었을 때 상담원님 명의로 계좌 개설이나 휴대폰을 불법으로 개통할 수가 있습니다.\r\n그래서 이걸 못하도록 차단 가능한 사이트가 있거든요.\r\n그래서 해당 사이트 통해서 미리 차단해 두시는 게 안전하세요.\r\n상담원님.\r\n아, 그럼 그거 휴대폰하고 그거 뭐고, 그거 금융사기 피해 예방을 어디 가서 차단 시켜야 되나요?\r\n네, 제가 문자 보냈거든요, 상담원님.\r\n이거는 인터넷 사이트에서 해야 되기 때문에요.\r\n사이트에 참고해 보세요.\r\n아, 그거 인터넷에 열어야 돼요?\r\n맞아요, 상담원님.\r\n그래서 신분증 분실 정지 먼저 하는 게 좋고요.\r\n휴대폰 불법 개통되었는지 여부 확인과 못하도록 차단해 주시고요.\r\n그 계좌도 계속 못 하도록 차단해주는 게 좋은데 이게 인터넷 사이트에서 가능하기 때문에요.\r\n한번 그렇게 차단 조치해주시는 게 좋겠습니다.\r\n아 예 알겠습니다.\r\n네 감사합니다.\r\n네 여보세요.\r\n네 상담원님 말씀하세요.\r\n혹시 휴대폰 불법 개통한 거를 제가 어디 가서 전화해서 알아봐야 됩니까?\r\n사이트에 문자 보냈는데요.\r\n문자 내용 1번에 사이트가 기재가 되어 있어요.\r\n예예 아 예 알겠습니다.\r\n예 감사합니다.",
+      "matched_keywords": [
+        "스미싱",
+        "계좌",
+        "금융",
+        "문자"
+      ],
+      "deduplication": {
+        "content_hash_sha256": "a7a7b3bede4ea4119c4cb6571de25133613b3510ac8b7e748698963b0b285597",
+        "normalized_content_hash_sha256": "07eaef6888569b35bb7c9ed38f7c0f511128d48cc89d0903e4c2b9dfb28258d3",
+        "duplicate_of": null
+      },
+      "annotation": {
+        "reviewed": false,
+        "relevant_to_transfer_intent": null,
+        "fraud": null,
+        "fraud_type": [],
+        "channel": [],
+        "impersonation": [],
+        "requested_action": [],
+        "risk_signals": [],
+        "attack_stage": "unknown"
+      }
+    }
+  ]
+}

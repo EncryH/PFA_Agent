@@ -1,0 +1,504 @@
+{
+  "schema_version": "1.0.0",
+  "dataset": "AI Hub 금융분야 고객상담 데이터 — 정상 금융대화 대조군",
+  "source_url": "https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&dataSetSn=71926&topMenu=100",
+  "generated_at": "2026-08-16T22:30:54.5500198+09:00",
+  "purpose": "정상 금융 목적의 대화와 사기성 행동 유도 대화의 차이를 비교하기 위한 정상 대조군",
+  "source_scope": {
+    "downloaded_label_records": 90000,
+    "official_total_label_records": 100000,
+    "note": "현재 다운로드 폴더에 포함된 Training 80,000건과 Validation 10,000건만 변환함"
+  },
+  "labels": {
+    "fraud": false,
+    "intent_class": "normal_financial_service",
+    "interaction_context": "official_financial_customer_service",
+    "interaction_direction": "customer_to_financial_institution",
+    "label_caution": "fraud=false는 데이터셋의 정상 금융상담 대조군 역할에 따른 데이터셋 수준 라벨이며 개별 사례를 사람이 재판정한 결과가 아님"
+  },
+  "totals": {
+    "conversation_source_entries": 65262,
+    "conversations": 65259,
+    "qa_records": 90000,
+    "cross_split_overlap_sources": 3
+  },
+  "parts": [
+    {
+      "source_zip": "TL_은행.zip",
+      "split": "training",
+      "domain": "bank",
+      "source_entries": 26577,
+      "conversations": 26577,
+      "qa_records": 40000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/training-bank-0001.json",
+          "record_count": 2000,
+          "bytes": 11608632
+        },
+        {
+          "file": "conversations/training-bank-0002.json",
+          "record_count": 2000,
+          "bytes": 11555313
+        },
+        {
+          "file": "conversations/training-bank-0003.json",
+          "record_count": 2000,
+          "bytes": 11560757
+        },
+        {
+          "file": "conversations/training-bank-0004.json",
+          "record_count": 2000,
+          "bytes": 11227917
+        },
+        {
+          "file": "conversations/training-bank-0005.json",
+          "record_count": 2000,
+          "bytes": 11575120
+        },
+        {
+          "file": "conversations/training-bank-0006.json",
+          "record_count": 2000,
+          "bytes": 11487649
+        },
+        {
+          "file": "conversations/training-bank-0007.json",
+          "record_count": 2000,
+          "bytes": 11164713
+        },
+        {
+          "file": "conversations/training-bank-0008.json",
+          "record_count": 2000,
+          "bytes": 10945173
+        },
+        {
+          "file": "conversations/training-bank-0009.json",
+          "record_count": 2000,
+          "bytes": 11812552
+        },
+        {
+          "file": "conversations/training-bank-0010.json",
+          "record_count": 2000,
+          "bytes": 11786350
+        },
+        {
+          "file": "conversations/training-bank-0011.json",
+          "record_count": 2000,
+          "bytes": 10966480
+        },
+        {
+          "file": "conversations/training-bank-0012.json",
+          "record_count": 2000,
+          "bytes": 11274018
+        },
+        {
+          "file": "conversations/training-bank-0013.json",
+          "record_count": 2000,
+          "bytes": 11080593
+        },
+        {
+          "file": "conversations/training-bank-0014.json",
+          "record_count": 577,
+          "bytes": 3077403
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/training-bank-0001.json",
+          "record_count": 2000,
+          "bytes": 5863664
+        },
+        {
+          "file": "qa/training-bank-0002.json",
+          "record_count": 2000,
+          "bytes": 5913524
+        },
+        {
+          "file": "qa/training-bank-0003.json",
+          "record_count": 2000,
+          "bytes": 5956460
+        },
+        {
+          "file": "qa/training-bank-0004.json",
+          "record_count": 2000,
+          "bytes": 5847784
+        },
+        {
+          "file": "qa/training-bank-0005.json",
+          "record_count": 2000,
+          "bytes": 5880472
+        },
+        {
+          "file": "qa/training-bank-0006.json",
+          "record_count": 2000,
+          "bytes": 5972323
+        },
+        {
+          "file": "qa/training-bank-0007.json",
+          "record_count": 2000,
+          "bytes": 6007144
+        },
+        {
+          "file": "qa/training-bank-0008.json",
+          "record_count": 2000,
+          "bytes": 6105965
+        },
+        {
+          "file": "qa/training-bank-0009.json",
+          "record_count": 2000,
+          "bytes": 5863886
+        },
+        {
+          "file": "qa/training-bank-0010.json",
+          "record_count": 2000,
+          "bytes": 5718583
+        },
+        {
+          "file": "qa/training-bank-0011.json",
+          "record_count": 2000,
+          "bytes": 5988865
+        },
+        {
+          "file": "qa/training-bank-0012.json",
+          "record_count": 2000,
+          "bytes": 6087539
+        },
+        {
+          "file": "qa/training-bank-0013.json",
+          "record_count": 2000,
+          "bytes": 5994959
+        },
+        {
+          "file": "qa/training-bank-0014.json",
+          "record_count": 2000,
+          "bytes": 6049603
+        },
+        {
+          "file": "qa/training-bank-0015.json",
+          "record_count": 2000,
+          "bytes": 5959954
+        },
+        {
+          "file": "qa/training-bank-0016.json",
+          "record_count": 2000,
+          "bytes": 5824957
+        },
+        {
+          "file": "qa/training-bank-0017.json",
+          "record_count": 2000,
+          "bytes": 6003661
+        },
+        {
+          "file": "qa/training-bank-0018.json",
+          "record_count": 2000,
+          "bytes": 6108432
+        },
+        {
+          "file": "qa/training-bank-0019.json",
+          "record_count": 2000,
+          "bytes": 6238955
+        },
+        {
+          "file": "qa/training-bank-0020.json",
+          "record_count": 2000,
+          "bytes": 5821855
+        }
+      ]
+    },
+    {
+      "source_zip": "TL_보험.zip",
+      "split": "training",
+      "domain": "insurance",
+      "source_entries": 19715,
+      "conversations": 19715,
+      "qa_records": 24000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/training-insurance-0001.json",
+          "record_count": 2000,
+          "bytes": 13169233
+        },
+        {
+          "file": "conversations/training-insurance-0002.json",
+          "record_count": 2000,
+          "bytes": 13014909
+        },
+        {
+          "file": "conversations/training-insurance-0003.json",
+          "record_count": 2000,
+          "bytes": 14287097
+        },
+        {
+          "file": "conversations/training-insurance-0004.json",
+          "record_count": 2000,
+          "bytes": 13198166
+        },
+        {
+          "file": "conversations/training-insurance-0005.json",
+          "record_count": 2000,
+          "bytes": 12889938
+        },
+        {
+          "file": "conversations/training-insurance-0006.json",
+          "record_count": 2000,
+          "bytes": 12795822
+        },
+        {
+          "file": "conversations/training-insurance-0007.json",
+          "record_count": 2000,
+          "bytes": 13111946
+        },
+        {
+          "file": "conversations/training-insurance-0008.json",
+          "record_count": 2000,
+          "bytes": 13089693
+        },
+        {
+          "file": "conversations/training-insurance-0009.json",
+          "record_count": 2000,
+          "bytes": 12856037
+        },
+        {
+          "file": "conversations/training-insurance-0010.json",
+          "record_count": 1715,
+          "bytes": 10892071
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/training-insurance-0001.json",
+          "record_count": 2000,
+          "bytes": 6230621
+        },
+        {
+          "file": "qa/training-insurance-0002.json",
+          "record_count": 2000,
+          "bytes": 6399092
+        },
+        {
+          "file": "qa/training-insurance-0003.json",
+          "record_count": 2000,
+          "bytes": 6393554
+        },
+        {
+          "file": "qa/training-insurance-0004.json",
+          "record_count": 2000,
+          "bytes": 6616535
+        },
+        {
+          "file": "qa/training-insurance-0005.json",
+          "record_count": 2000,
+          "bytes": 6192274
+        },
+        {
+          "file": "qa/training-insurance-0006.json",
+          "record_count": 2000,
+          "bytes": 6481079
+        },
+        {
+          "file": "qa/training-insurance-0007.json",
+          "record_count": 2000,
+          "bytes": 6558151
+        },
+        {
+          "file": "qa/training-insurance-0008.json",
+          "record_count": 2000,
+          "bytes": 6552382
+        },
+        {
+          "file": "qa/training-insurance-0009.json",
+          "record_count": 2000,
+          "bytes": 6641615
+        },
+        {
+          "file": "qa/training-insurance-0010.json",
+          "record_count": 2000,
+          "bytes": 6246953
+        },
+        {
+          "file": "qa/training-insurance-0011.json",
+          "record_count": 2000,
+          "bytes": 6361140
+        },
+        {
+          "file": "qa/training-insurance-0012.json",
+          "record_count": 2000,
+          "bytes": 6491807
+        }
+      ]
+    },
+    {
+      "source_zip": "TL_증권.zip",
+      "split": "training",
+      "domain": "securities",
+      "source_entries": 12183,
+      "conversations": 12183,
+      "qa_records": 16000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/training-securities-0001.json",
+          "record_count": 2000,
+          "bytes": 11817668
+        },
+        {
+          "file": "conversations/training-securities-0002.json",
+          "record_count": 2000,
+          "bytes": 11795239
+        },
+        {
+          "file": "conversations/training-securities-0003.json",
+          "record_count": 2000,
+          "bytes": 11062423
+        },
+        {
+          "file": "conversations/training-securities-0004.json",
+          "record_count": 2000,
+          "bytes": 10244212
+        },
+        {
+          "file": "conversations/training-securities-0005.json",
+          "record_count": 2000,
+          "bytes": 10855781
+        },
+        {
+          "file": "conversations/training-securities-0006.json",
+          "record_count": 2000,
+          "bytes": 11000414
+        },
+        {
+          "file": "conversations/training-securities-0007.json",
+          "record_count": 183,
+          "bytes": 1013679
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/training-securities-0001.json",
+          "record_count": 2000,
+          "bytes": 6465192
+        },
+        {
+          "file": "qa/training-securities-0002.json",
+          "record_count": 2000,
+          "bytes": 6191085
+        },
+        {
+          "file": "qa/training-securities-0003.json",
+          "record_count": 2000,
+          "bytes": 6500021
+        },
+        {
+          "file": "qa/training-securities-0004.json",
+          "record_count": 2000,
+          "bytes": 6126547
+        },
+        {
+          "file": "qa/training-securities-0005.json",
+          "record_count": 2000,
+          "bytes": 6278513
+        },
+        {
+          "file": "qa/training-securities-0006.json",
+          "record_count": 2000,
+          "bytes": 6036594
+        },
+        {
+          "file": "qa/training-securities-0007.json",
+          "record_count": 2000,
+          "bytes": 6037664
+        },
+        {
+          "file": "qa/training-securities-0008.json",
+          "record_count": 2000,
+          "bytes": 6159551
+        }
+      ]
+    },
+    {
+      "source_zip": "VL_은행.zip",
+      "split": "validation",
+      "domain": "bank",
+      "source_entries": 3581,
+      "conversations": 3579,
+      "qa_records": 5000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/validation-bank-0001.json",
+          "record_count": 2000,
+          "bytes": 10917061
+        },
+        {
+          "file": "conversations/validation-bank-0002.json",
+          "record_count": 1579,
+          "bytes": 8601282
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/validation-bank-0001.json",
+          "record_count": 2000,
+          "bytes": 6158910
+        },
+        {
+          "file": "qa/validation-bank-0002.json",
+          "record_count": 2000,
+          "bytes": 6170350
+        },
+        {
+          "file": "qa/validation-bank-0003.json",
+          "record_count": 1000,
+          "bytes": 3097750
+        }
+      ]
+    },
+    {
+      "source_zip": "VL_보험.zip",
+      "split": "validation",
+      "domain": "insurance",
+      "source_entries": 1499,
+      "conversations": 1498,
+      "qa_records": 3000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/validation-insurance-0001.json",
+          "record_count": 1498,
+          "bytes": 10355426
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/validation-insurance-0001.json",
+          "record_count": 2000,
+          "bytes": 6886131
+        },
+        {
+          "file": "qa/validation-insurance-0002.json",
+          "record_count": 1000,
+          "bytes": 3188616
+        }
+      ]
+    },
+    {
+      "source_zip": "VL_증권.zip",
+      "split": "validation",
+      "domain": "securities",
+      "source_entries": 1707,
+      "conversations": 1707,
+      "qa_records": 2000,
+      "conversation_chunks": [
+        {
+          "file": "conversations/validation-securities-0001.json",
+          "record_count": 1707,
+          "bytes": 9687067
+        }
+      ],
+      "qa_chunks": [
+        {
+          "file": "qa/validation-securities-0001.json",
+          "record_count": 2000,
+          "bytes": 6469886
+        }
+      ]
+    }
+  ]
+}
