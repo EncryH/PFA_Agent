@@ -114,6 +114,34 @@ function thecheatMockApi(): Plugin {
   }
 }
 
+function riskScoreApi(): Plugin {
+  return {
+    name: 'ansim-risk-score-api',
+    configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/risk.js')).href
+      server.middlewares.use('/api/risk-score', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          return res.end(JSON.stringify({ error: 'POST only' }))
+        }
+        try {
+          const chunks: Buffer[] = []
+          for await (const c of req) chunks.push(c as Buffer)
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+          const { scoreRisk } = await import(handlerPath)
+          res.statusCode = 200
+          res.end(JSON.stringify(scoreRisk(body)))
+        } catch (e) {
+          console.error('[ansim-risk-score-api]', e)
+          res.statusCode = 502
+          res.end(JSON.stringify({ error: (e as Error).message }))
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // 루트 .env (저장소 최상위) — GEMINI_API_KEY 등 서버 전용 키
   const env = loadEnv(mode, '..', '')
@@ -127,6 +155,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       backendApi(env.GEMINI_API_KEY),
       thecheatMockApi(),
+      riskScoreApi(),
     ],
     // 사용하지 않는 envFrontend 변수를 최소한으로 참조해 lint 경고 방지
     define: {

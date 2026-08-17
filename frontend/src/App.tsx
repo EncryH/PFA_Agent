@@ -16,24 +16,29 @@ import ParentHome from "./screens/ParentHome";
 import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
 import Verify from "./screens/Verify";
+import SavingsDetail from "./screens/SavingsDetail";
 import IncomingCall from "./screens/IncomingCall";
 import IncomingMessage from "./screens/IncomingMessage";
 import NotificationShade from "./shared/NotificationShade";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
+import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
+import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
 
-type ParentPage = "home" | "guardian" | "transfer" | "history" | "verify";
+type ParentPage = "home" | "guardian" | "transfer" | "history" | "verify" | "savings";
 
 export default function App() {
   const [role, setRole] = useState<Role>("parent");
   const [tab, setTab]   = useState<typeof parentTabs[number]>("홈");
   const [page, setPage] = useState<ParentPage>("home");
   const [accountIdx, setAccountIdx] = useState(0);
+  const [savingsIdx, setSavingsIdx] = useState(1);
   const [showNotifications, setShowNotifications] = useState(false);
   const [demoIdx, setDemoIdx] = useState(0);
   const [activeCall, setActiveCall] = useState<typeof DEMO_SCENARIOS[number] | null>(null);
   const [msgIdx, setMsgIdx] = useState(0);
   const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
+  const [behaviorSignals, setBehaviorSignals] = useState<BehaviorSignals>(INITIAL_SIGNALS);
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
 
@@ -75,9 +80,17 @@ export default function App() {
           </header>
 
           <main className="flex-1 px-3 pb-4">
-            {page === "transfer" && <Transfer onExit={() => setPage("home")} />}
+            {page === "transfer" && <Transfer onExit={() => setPage("home")} behaviorSignals={behaviorSignals} />}
             {page === "guardian" && <Guardian appRole="parent" onExit={() => setPage("home")} />}
-            {page === "verify"   && <Verify onBack={() => setPage("home")} />}
+            {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
+            {page === "savings"  && (
+              <SavingsDetail
+                account={MY_ACCOUNTS[savingsIdx]}
+                onBack={() => setPage("home")}
+                onTransfer={() => setPage("transfer")}
+                onEarlyClosure={() => setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }))}
+              />
+            )}
             {page === "history" && (
               <History
                 account={MY_ACCOUNTS[accountIdx]}
@@ -90,16 +103,44 @@ export default function App() {
               <ParentHome
                 onTransfer={() => setPage("transfer")}
                 onGuardian={() => setPage("guardian")}
-                onAccount={(i) => { setAccountIdx(i); setPage("history"); }}
+                onAccount={(i) => {
+                  setBehaviorSignals((s) => ({ ...s, historyVisits: s.historyVisits + 1 }));
+                  const name = MY_ACCOUNTS[i].name;
+                  if (name.includes("적금") || name.includes("예금")) {
+                    setSavingsIdx(i); setPage("savings");
+                  } else {
+                    setAccountIdx(i); setPage("history");
+                  }
+                }}
                 onVerify={() => setPage("verify")}
+                onAllAccounts={() => setTab("금융")}
+                onMonthlyDetail={() => setTab("금융")}
               />
             )}
+            {page === "home" && tab === "금융" && (
+              <FinancialTab
+                onAccount={(i) => {
+                  setBehaviorSignals((s) => ({ ...s, historyVisits: s.historyVisits + 1 }));
+                  const name = MY_ACCOUNTS[i].name;
+                  if (name.includes("적금") || name.includes("예금")) {
+                    setSavingsIdx(i); setPage("savings");
+                  } else {
+                    setAccountIdx(i); setPage("history");
+                  }
+                }}
+              />
+            )}
+            {page === "home" && tab === "상품" && (
+              <ProductsTab onSavings={(i) => { setSavingsIdx(i); setPage("savings"); }} />
+            )}
+            {page === "home" && tab === "혜택" && <BenefitsTab />}
+            {page === "home" && tab === "주식" && <StocksTab />}
           </main>
 
           <nav className="sticky bottom-0 bg-white rounded-[28px] flex justify-around py-2 pt-3 mt-4">
             {parentTabs.map((t) => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`flex flex-col items-center gap-1 text-[11px] py-1 px-3 ${tab === t ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
+              <button key={t} onClick={() => { setTab(t); if (page !== "home") setPage("home"); }}
+                className={`flex flex-col items-center gap-1 text-[11px] py-1 px-3 ${tab === t && page === "home" ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
                 {parentIcons[t]}{t}
               </button>
             ))}

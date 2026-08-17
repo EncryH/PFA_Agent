@@ -171,5 +171,47 @@ export const DEMO_ALERT = {
 
 export type DemoAlert = typeof DEMO_ALERT;
 
+// ─── 적금·예금 상세 정보 ──────────────────────────────────────────────────────
+export const SAVINGS_INFO: Record<string, {
+  type: string;
+  rate: number;
+  penaltyRate: number;
+  maturityDate: string;
+  startDate: string;
+  monthlyAmt: number | null;
+  totalDeposited: number;
+  earnedInterest: number;
+  penaltyAmount: number;
+  afterPenaltyBalance: number;
+  mainAccountName: string;
+}> = {
+  "1000751604": {
+    type: "정기적금",
+    rate: 5.2,
+    penaltyRate: 2.6,
+    maturityDate: "2027-08-20",
+    startDate: "2026-08-20",
+    monthlyAmt: 1_000_000,
+    totalDeposited: 70_000_000,
+    earnedInterest: 142_000,
+    penaltyAmount: 71_000,
+    afterPenaltyBalance: 70_071_000,
+    mainAccountName: "한결은행 입출금통장",
+  },
+  "1102223333": {
+    type: "정기예금",
+    rate: 4.8,
+    penaltyRate: 2.4,
+    maturityDate: "2027-03-15",
+    startDate: "2026-03-15",
+    monthlyAmt: null,
+    totalDeposited: 34_000_000,
+    earnedInterest: 738_000,
+    penaltyAmount: 369_000,
+    afterPenaltyBalance: 34_369_000,
+    mainAccountName: "한결은행 입출금통장",
+  },
+};
+
 export const nowTime = () =>
   new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });

@@ -1,6 +1,27 @@
 // 상대방 검증 화면 — 전화번호·URL·기관명을 검증해 안전 여부를 알린다.
 
 import { useState } from "react";
+
+function formatPhoneNumber(raw: string): string {
+  const d = raw.replace(/\D/g, '');
+  if (!d) return '';
+  // 서울 02: 02-XXX-XXXX(9자리) 또는 02-XXXX-XXXX(10자리)
+  if (d.startsWith('02')) {
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0,2)}-${d.slice(2)}`;
+    if (d.length <= 9) return `${d.slice(0,2)}-${d.slice(2,5)}-${d.slice(5)}`;
+    return `${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6,10)}`;
+  }
+  // 010·070·0XX 등: 3+4+4
+  if (d.startsWith('0')) {
+    if (d.length <= 3) return d;
+    if (d.length <= 7) return `${d.slice(0,3)}-${d.slice(3)}`;
+    return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7,11)}`;
+  }
+  // 15XX·16XX 등 4자리 대표번호: XXXX-XXXX
+  if (d.length <= 4) return d;
+  return `${d.slice(0,4)}-${d.slice(4,8)}`;
+}
 import { verifyPhone, verifyUrl, verifyInstitution, type VerifyResult } from "../shared/verify";
 
 type Tab = "전화번호" | "링크·URL" | "기관명";
@@ -91,8 +112,13 @@ export default function Verify({ onBack }: { onBack: () => void }) {
         <div className="flex gap-2">
           <input
             type="text"
+            inputMode={tab === "전화번호" ? "numeric" : "text"}
             value={input}
-            onChange={(e) => { setInput(e.target.value); setResult(null); }}
+            onChange={(e) => {
+              const v = tab === "전화번호" ? formatPhoneNumber(e.target.value) : e.target.value;
+              setInput(v);
+              setResult(null);
+            }}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             placeholder={PLACEHOLDERS[tab]}
             className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[14px] text-gray-900 placeholder-gray-300 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"

@@ -13,6 +13,120 @@ import {
   fmtAccount, fmtAmt, parseAmt, runRisk, isMyAccount, nowTime,
   type TransferStep,
 } from "../shared/data";
+import { fetchRiskScore, type RiskResult } from "../api/riskScore";
+import type { BehaviorSignals } from "../shared/behavior";
+
+// ── 보안 분석 결과 카드 ─────────────────────────────────────────────────────
+const GRADE_STYLE = {
+  safe:    { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-700",  badge: "bg-green-500"  },
+  caution: { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700",  badge: "bg-amber-500"  },
+  warning: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "bg-orange-500" },
+  danger:  { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-700",    badge: "bg-red-500"    },
+} as const;
+
+function RiskGradeCard({
+  result, onProceed, freezeSecsLeft, onSkipFreeze,
+}: {
+  result: RiskResult;
+  onProceed: () => void;
+  freezeSecsLeft: number | null;
+  onSkipFreeze: () => void;
+}) {
+  const s = GRADE_STYLE[result.gradeColor];
+  const isHigh = result.grade === "C" || result.grade === "D";
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className={`rounded-2xl border p-5 ${s.bg} ${s.border}`}>
+        <p className="text-[13px] font-semibold text-gray-500 mb-3">🛡 안심동행 보안 분석 결과</p>
+
+        {/* 등급 배지 + 점수 */}
+        <div className="flex items-center gap-4 mb-4">
+          <div className={`w-[60px] h-[60px] rounded-2xl ${s.badge} flex items-center justify-center`}>
+            <span className="text-[32px] font-black text-white leading-none">{result.grade}</span>
+          </div>
+          <div>
+            <p className={`text-[24px] font-black leading-tight ${s.text}`}>{result.gradeLabel}</p>
+            <p className="text-[12px] text-gray-400">종합 위험 점수 {result.score}점 / 100점</p>
+          </div>
+        </div>
+
+        {/* 점수 바 */}
+        <div className="flex flex-col gap-2 mb-4">
+          {[
+            { label: "행동 분석", val: result.behaviorScore },
+            { label: "거래 검사", val: result.transactionScore },
+          ].map(({ label, val }) => (
+            <div key={label} className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500 w-[60px] shrink-0">{label}</span>
+              <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden">
+                <div className={`h-full ${s.badge} rounded-full`} style={{ width: `${Math.min(100, val)}%` }} />
+              </div>
+              <span className="text-[11px] font-bold text-gray-600 w-7 text-right">{val}점</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 감지 항목 */}
+        {result.reasons.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {result.reasons.map((r) => (
+              <div key={r} className="flex items-center gap-1.5">
+                <span className="text-[11px]">{isHigh ? "⚠" : "•"}</span>
+                <span className={`text-[12px] font-medium ${s.text}`}>{r}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 액션 버튼 */}
+      {result.grade === "A" ? (
+        <div className="flex items-center justify-center gap-2 py-1.5 text-green-600">
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-green-300 border-t-green-600 animate-spin" />
+          <span className="text-[13px]">안전 확인 — 송금을 진행합니다</span>
+        </div>
+      ) : result.grade === "B" ? (
+        <button onClick={onProceed} className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-amber-500 active:scale-[0.98] transition-all">
+          확인 후 송금하기
+        </button>
+      ) : result.grade === "C" ? (
+        <>
+          <button onClick={onProceed} className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
+            AI와 거래 목적 확인하기
+          </button>
+          <p className="text-[12px] text-gray-400 text-center">위험 신호가 감지됐어요 — AI가 목적을 여쭤볼게요</p>
+        </>
+      ) : (
+        /* D등급 — 5분 송금 정지 */
+        freezeSecsLeft !== null && freezeSecsLeft > 0 ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[18px]">🔒</span>
+              <span className="text-[14px] font-bold text-red-700">송금 5분 정지 중</span>
+            </div>
+            <div className="text-[52px] font-black text-red-600 font-mono tracking-[4px] leading-none">
+              {String(Math.floor(freezeSecsLeft / 60)).padStart(2, "0")}:{String(freezeSecsLeft % 60).padStart(2, "0")}
+            </div>
+            <p className="text-[12px] text-red-500 text-center leading-relaxed">
+              매우 높은 위험 신호가 감지됐어요.<br />지금 바로 가족에게 연락해 확인하세요.
+            </p>
+            <button onClick={onSkipFreeze} className="text-[11px] text-gray-400 underline underline-offset-2 active:scale-95 transition-transform">
+              데모 건너뛰기 →
+            </button>
+          </div>
+        ) : (
+          <>
+            <button onClick={onProceed} className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
+              AI와 거래 목적 확인하기
+            </button>
+            <p className="text-[12px] text-gray-400 text-center">정지 해제됨 — AI가 거래 목적을 확인할게요</p>
+          </>
+        )
+      )}
+    </div>
+  );
+}
 
 const TITLES: Record<TransferStep, string> = {
   input: "어디로 보낼까요?", account: "어떤 계좌로 보낼까요?", amount: "얼마를 보낼까요?",
@@ -22,8 +136,8 @@ const TITLES: Record<TransferStep, string> = {
 };
 
 export default function Transfer({
-  onExit, accounts = MY_ACCOUNTS,
-}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS }) {
+  onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false },
+}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals }) {
   const [step, setStep] = useState<TransferStep>("input");
   const [account, setAccount] = useState("");
   const [bank, setBank]       = useState("");
@@ -48,6 +162,14 @@ export default function Transfer({
   const [fallback, setFallback]   = useState(false); // LLM 실패로 폴백 사용 중
   const [riskLabels, setRiskLabels] = useState<string[]>([]);
   const [goldenChecks, setGoldenChecks] = useState([false, false, false]);
+
+  // 행동 감지 — Transfer 내부 신호
+  const [backPresses, setBackPresses]   = useState(0);
+  const [riskResult, setRiskResult]     = useState<RiskResult | null>(null);
+  const [checkPhase, setCheckPhase]     = useState<"analyzing" | "result">("analyzing");
+  const [analyzeStep, setAnalyzeStep]   = useState(0);
+  const [freezeSecsLeft, setFreezeSecsLeft] = useState<number | null>(null);
+  const sessionStartRef = useRef<number>(Date.now());
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const time = nowTime();
@@ -101,22 +223,74 @@ export default function Transfer({
     if (hit) { setBank(hit.bank); setName(hit.name); }
   }, [account, step]);
 
-  // 분석 완료 → 다음 화면 결정
+  // 분석 완료 → 행동 감지 + 거래 검사 → 등급 카드 표시
   useEffect(() => {
     if (step !== "checking") return;
-    const t = setTimeout(() => {
-      const result = runRisk(account, parseAmt(amt), name);
-      if (result === "success") setStep("success");
-      else if (result === "db-warning") setStep("db-warning");
-      else {
-        setMessages([{ role: "ai", text: FIRST_QUESTION }]);
-        setTurnCount(0);
-        setChatDone(false);
-        setStep("ai-chat");
-      }
-    }, 1800);
-    return () => clearTimeout(t);
+    setCheckPhase("analyzing");
+    setAnalyzeStep(0);
+    setRiskResult(null);
+
+    // 즉결 처리 (API 불필요)
+    if (isMyAccount(account)) { setStep("success"); return; }
+    const clean = account.replace(/\D/g, "");
+    if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7)))) {
+      setStep("db-warning"); return;
+    }
+
+    // 분석 단계 애니메이션 (3단계 × 900ms)
+    const pt1 = setTimeout(() => setAnalyzeStep(1), 900);
+    const pt2 = setTimeout(() => setAnalyzeStep(2), 1800);
+
+    const sessionSec = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+    const known = KNOWN_RECIPIENTS.find(
+      (k) => (clean.length >= 8 && clean.includes(k.account.slice(0, 8))) || name === k.name,
+    );
+    const MIN_DISPLAY = 2700;
+    const startTs = Date.now();
+
+    const goAiChat = () => {
+      setMessages([{ role: "ai", text: FIRST_QUESTION }]);
+      setTurnCount(0); setChatDone(false);
+      setStep("ai-chat");
+    };
+
+    fetchRiskScore({
+      behavior: { ...behaviorSignals, backPresses, sessionSeconds: sessionSec },
+      transaction: {
+        amount: parseAmt(amt),
+        isKnownRecipient: !!known,
+        isMyAccount: false,
+        hourOfDay: new Date().getHours(),
+      },
+    }).then((result) => {
+      const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
+      setTimeout(() => {
+        setRiskResult(result);
+        setCheckPhase("result");
+        if (result.grade === "A") setTimeout(() => setStep("success"), 1500);
+        else if (result.grade === "D") setFreezeSecsLeft(300); // 5분 정지
+      }, delay);
+    }).catch(() => {
+      // API 장애 시 기존 로직으로 폴백
+      const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
+      setTimeout(() => {
+        const r = runRisk(account, parseAmt(amt), name);
+        if (r === "success") setStep("success");
+        else if (r === "db-warning") setStep("db-warning");
+        else goAiChat();
+      }, delay);
+    });
+
+    return () => { clearTimeout(pt1); clearTimeout(pt2); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
+
+  // D등급 5분 정지 카운트다운
+  useEffect(() => {
+    if (freezeSecsLeft === null || freezeSecsLeft <= 0) return;
+    const t = setTimeout(() => setFreezeSecsLeft((s) => (s !== null ? s - 1 : null)), 1000);
+    return () => clearTimeout(t);
+  }, [freezeSecsLeft]);
 
   // hold 화면 도달 시 자녀 탭에 알림 공유
   useEffect(() => {
@@ -140,6 +314,9 @@ export default function Transfer({
     setMessages([]); setInput(""); setTurnCount(0); setChatDone(false);
     setIsTyping(false); setFallback(false); setRiskLabels([]);
     setGoldenChecks([false, false, false]);
+    setBackPresses(0); setRiskResult(null); setCheckPhase("analyzing"); setAnalyzeStep(0);
+    setFreezeSecsLeft(null);
+    sessionStartRef.current = Date.now();
   };
 
   const goHome = () => { reset(); onExit(); };
@@ -152,8 +329,9 @@ export default function Transfer({
   const accountReady = account.replace(/\D/g, "").length >= 8 && !!bank;
   const canSubmit = accountReady && parseAmt(amt) > 0;
 
-  // 뒤로가기 — 단계별로 한 칸씩
+  // 뒤로가기 — 단계별로 한 칸씩 (횟수는 행동 신호로 수집)
   const goBack = () => {
+    setBackPresses((p) => p + 1);
     if (step === "account") { setStep("input"); setBankOpen(false); }
     else if (step === "amount") setStep("account");
     else goHome();
@@ -439,29 +617,58 @@ export default function Transfer({
         </div>
       )}
 
-      {/* ── 분석 중 ── */}
+      {/* ── 분석 중 / 등급 결과 ── */}
       {step === "checking" && (
-        <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-6">
-          <div className="relative w-20 h-20">
-            <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-100)]" />
-            <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-500)] border-t-transparent animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="#3b82f6" className="w-8 h-8"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
+        checkPhase === "analyzing" ? (
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-6">
+            <div className="relative w-20 h-20">
+              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-100)]" />
+              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-500)] border-t-transparent animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="#3b82f6" className="w-8 h-8"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-[16px] font-bold text-gray-900">안심동행 AI 분석 중</p>
+              <p className="text-[13px] text-gray-400 mt-1 font-mono">{account} · {amt}원</p>
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              {["행동 패턴 분석 중", "거래 이상 탐지 중", "안전 등급 산출 중"].map((s, i) => (
+                <div key={s} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                  {analyzeStep > i ? (
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  ) : analyzeStep === i ? (
+                    <div className="w-5 h-5 rounded-full bg-[var(--ac-100)] flex items-center justify-center shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-[var(--ac-400)] animate-pulse" />
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-gray-300" />
+                    </div>
+                  )}
+                  <p className={`text-[13px] ${analyzeStep >= i ? "text-gray-700" : "text-gray-300"}`}>{s}</p>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="text-center">
-            <p className="text-[16px] font-bold text-gray-900">거래를 분석하고 있어요</p>
-            <p className="text-[13px] text-gray-400 mt-1 font-mono">{account} · {amt}원</p>
-          </div>
-          <div className="w-full flex flex-col gap-1">
-            {["거래 패턴 확인 중", "신고 이력 DB 조회 중", "수취인 분석 중"].map((s) => (
-              <div key={s} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
-                <div className="w-5 h-5 rounded-full bg-[var(--ac-100)] flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-[var(--ac-400)] animate-pulse" /></div>
-                <p className="text-[13px] text-gray-500">{s}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        ) : riskResult ? (
+          <RiskGradeCard
+            result={riskResult}
+            freezeSecsLeft={freezeSecsLeft}
+            onSkipFreeze={() => setFreezeSecsLeft(0)}
+            onProceed={() => {
+              if (riskResult.grade === "A" || riskResult.grade === "B") {
+                setStep("success");
+              } else {
+                setMessages([{ role: "ai", text: FIRST_QUESTION }]);
+                setTurnCount(0); setChatDone(false);
+                setStep("ai-chat");
+              }
+            }}
+          />
+        ) : null
       )}
 
       {/* ── 성공 ── */}
