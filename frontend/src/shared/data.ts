@@ -63,45 +63,47 @@ export const fmtAmt = (v: string) => {
 export const parseAmt = (v: string) => parseInt(v.replace(/,/g, ""), 10) || 0;
 
 /** 계좌별 거래내역 — 계좌번호를 키로 쓴다. amount 가 양수면 입금, 음수면 출금. */
-export const TRANSACTIONS: Record<string, { date: string; time: string; name: string; memo: string; amount: number; balance: number }[]> = {
+export type TxnRow = { date: string; time: string; name: string; memo: string; amount: number; balance: number };
+
+export const TRANSACTIONS: Record<string, TxnRow[]> = {
   // 한결은행 입출금통장 — 연금이 들어오고 생활비가 나가는 주거래 계좌
   "1101234567": [
-    { date: "09.12", time: "09:00", name: "아파트 관리비",     memo: "자동이체", amount:   -184_000, balance: 21_470_000 },
-    { date: "09.10", time: "15:22", name: "약국",              memo: "체크카드", amount:    -32_400, balance: 21_654_000 },
-    { date: "09.08", time: "10:41", name: "시장 상회",         memo: "이체",     amount:   -150_000, balance: 21_686_400 },
-    { date: "09.05", time: "13:07", name: "딸 지혜",           memo: "이체",     amount:   -500_000, balance: 21_836_400 },
-    { date: "09.03", time: "08:30", name: "국민연금공단",      memo: "연금",     amount:  1_012_000, balance: 22_336_400 },
-    { date: "08.28", time: "09:00", name: "안심생명",          memo: "보험료",   amount:   -128_000, balance: 21_324_400 },
-    { date: "08.25", time: "09:00", name: "한국전력",          memo: "자동이체", amount:    -46_800, balance: 21_452_400 },
-    { date: "08.22", time: "16:55", name: "약국",              memo: "체크카드", amount:    -18_600, balance: 21_499_200 },
-    { date: "08.20", time: "09:00", name: "토스뱅크 정기적금", memo: "자동이체", amount: -1_000_000, balance: 21_517_800 },
-    { date: "08.03", time: "08:30", name: "국민연금공단",      memo: "연금",     amount:  1_012_000, balance: 22_517_800 },
+    { date: "08.17", time: "09:00", name: "아파트 관리비",     memo: "자동이체", amount:   -184_000, balance: 21_470_000 },
+    { date: "08.15", time: "15:22", name: "약국",              memo: "체크카드", amount:    -32_400, balance: 21_654_000 },
+    { date: "08.13", time: "10:41", name: "시장 상회",         memo: "이체",     amount:   -150_000, balance: 21_686_400 },
+    { date: "08.10", time: "13:07", name: "딸 지혜",           memo: "이체",     amount:   -500_000, balance: 21_836_400 },
+    { date: "08.03", time: "08:30", name: "국민연금공단",      memo: "연금",     amount:  1_012_000, balance: 22_336_400 },
+    { date: "07.28", time: "09:00", name: "안심생명",          memo: "보험료",   amount:   -128_000, balance: 21_324_400 },
+    { date: "07.25", time: "09:00", name: "한국전력",          memo: "자동이체", amount:    -46_800, balance: 21_452_400 },
+    { date: "07.22", time: "16:55", name: "약국",              memo: "체크카드", amount:    -18_600, balance: 21_499_200 },
+    { date: "07.20", time: "09:00", name: "토스뱅크 정기적금", memo: "자동이체", amount: -1_000_000, balance: 21_517_800 },
+    { date: "07.03", time: "08:30", name: "국민연금공단",      memo: "연금",     amount:  1_012_000, balance: 22_517_800 },
   ],
   // 토스뱅크 정기적금 — 매월 자동이체로만 쌓인다
   "1000751604": [
-    { date: "09.20", time: "05:00", name: "이자",     memo: "예금이자", amount:   142_000, balance: 70_000_000 },
-    { date: "08.20", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 69_858_000 },
-    { date: "07.20", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 68_858_000 },
-    { date: "06.20", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 67_858_000 },
-    { date: "05.20", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 66_858_000 },
+    { date: "08.10", time: "05:00", name: "이자",     memo: "예금이자", amount:   142_000, balance: 70_000_000 },
+    { date: "07.10", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 69_858_000 },
+    { date: "06.10", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 68_858_000 },
+    { date: "05.10", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 67_858_000 },
+    { date: "04.10", time: "09:00", name: "정기적금", memo: "자동이체", amount: 1_000_000, balance: 66_858_000 },
   ],
   // 나눔은행 자유입출금 (자녀 김지혜) — 급여가 들어오고 생활비가 나간다
   "35615324608": [
-    { date: "09.14", time: "12:31", name: "카페",         memo: "체크카드", amount:   -5_500, balance:  2_840_000 },
-    { date: "09.12", time: "19:04", name: "편의점",       memo: "체크카드", amount:  -12_800, balance:  2_845_500 },
-    { date: "09.10", time: "09:00", name: "통신비",       memo: "자동이체", amount:  -55_000, balance:  2_858_300 },
-    { date: "09.07", time: "20:15", name: "어머니 김영순", memo: "이체",     amount: -300_000, balance:  2_913_300 },
-    { date: "09.05", time: "09:00", name: "카드대금",      memo: "자동이체", amount: -742_000, balance:  3_213_300 },
-    { date: "09.01", time: "10:00", name: "급여",          memo: "입금",     amount: 3_150_000, balance:  3_955_300 },
-    { date: "08.25", time: "09:00", name: "월세",          memo: "자동이체", amount: -700_000, balance:    805_300 },
-    { date: "08.01", time: "10:00", name: "급여",          memo: "입금",     amount: 3_150_000, balance:  1_505_300 },
+    { date: "08.17", time: "12:31", name: "카페",          memo: "체크카드", amount:    -5_500, balance:  2_840_000 },
+    { date: "08.15", time: "19:04", name: "편의점",        memo: "체크카드", amount:   -12_800, balance:  2_845_500 },
+    { date: "08.13", time: "09:00", name: "통신비",        memo: "자동이체", amount:   -55_000, balance:  2_858_300 },
+    { date: "08.10", time: "20:15", name: "어머니 김영순", memo: "이체",     amount:  -300_000, balance:  2_913_300 },
+    { date: "08.08", time: "09:00", name: "카드대금",      memo: "자동이체", amount:  -742_000, balance:  3_213_300 },
+    { date: "08.01", time: "10:00", name: "급여",          memo: "입금",     amount: 3_150_000, balance:  3_955_300 },
+    { date: "07.25", time: "09:00", name: "월세",          memo: "자동이체", amount:  -700_000, balance:    805_300 },
+    { date: "07.01", time: "10:00", name: "급여",          memo: "입금",     amount: 3_150_000, balance:  1_505_300 },
   ],
   // 쏠편한 정기예금 — 목돈을 넣어두고 이자만 붙는다
   "1102223333": [
-    { date: "09.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    248_000, balance: 34_000_000 },
-    { date: "06.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    246_000, balance: 33_752_000 },
-    { date: "03.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    244_000, balance: 33_506_000 },
-    { date: "12.15", time: "11:20", name: "정기예금 예치", memo: "신규",     amount: 33_262_000, balance: 33_262_000 },
+    { date: "08.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    248_000, balance: 34_000_000 },
+    { date: "05.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    246_000, balance: 33_752_000 },
+    { date: "02.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    244_000, balance: 33_506_000 },
+    { date: "11.15", time: "11:20", name: "정기예금 예치", memo: "신규",     amount: 33_262_000, balance: 33_262_000 },
   ],
 };
 
@@ -206,6 +208,48 @@ export const DEMO_ALERT = {
 };
 
 export type DemoAlert = typeof DEMO_ALERT;
+
+// ─── 적금·예금 상세 정보 ──────────────────────────────────────────────────────
+export const SAVINGS_INFO: Record<string, {
+  type: string;
+  rate: number;
+  penaltyRate: number;
+  maturityDate: string;
+  startDate: string;
+  monthlyAmt: number | null;
+  totalDeposited: number;
+  earnedInterest: number;
+  penaltyAmount: number;
+  afterPenaltyBalance: number;
+  mainAccountName: string;
+}> = {
+  "1000751604": {
+    type: "정기적금",
+    rate: 5.2,
+    penaltyRate: 2.6,
+    maturityDate: "2027-08-20",
+    startDate: "2026-08-20",
+    monthlyAmt: 1_000_000,
+    totalDeposited: 70_000_000,
+    earnedInterest: 142_000,
+    penaltyAmount: 71_000,
+    afterPenaltyBalance: 70_071_000,
+    mainAccountName: "한결은행 입출금통장",
+  },
+  "1102223333": {
+    type: "정기예금",
+    rate: 4.8,
+    penaltyRate: 2.4,
+    maturityDate: "2027-03-15",
+    startDate: "2026-03-15",
+    monthlyAmt: null,
+    totalDeposited: 34_000_000,
+    earnedInterest: 738_000,
+    penaltyAmount: 369_000,
+    afterPenaltyBalance: 34_369_000,
+    mainAccountName: "한결은행 입출금통장",
+  },
+};
 
 export const nowTime = () =>
   new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
