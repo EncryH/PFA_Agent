@@ -3,8 +3,13 @@
 // 필터 바텀시트, 거래 상세 패널 포함.
 
 import { useState } from "react";
-import { TRANSACTIONS, fmtAccount } from "../shared/data";
+import { TRANSACTIONS, fmtAccount, type TxnRow } from "../shared/data";
 import { PageHeader } from "../shared/ui";
+
+const fmtDate = (d: string) => {
+  const [m, day] = d.split(".");
+  return `${parseInt(m)}월 ${parseInt(day)}일`;
+};
 
 type Account = { name: string; account: string; bank: string; balance: string };
 
@@ -36,10 +41,10 @@ type FilterState = {
 const DEFAULT_FILTER: FilterState = { period: "3개월", txType: "전체", sort: "최신순" };
 
 export default function History({
-  account: acc, onBack, onTransfer, onGuardian, theme = "parent",
+  account: acc, onBack, onTransfer, onGuardian, theme = "parent", extraRows = [],
 }: {
   account: Account; onBack: () => void; onTransfer: () => void; onGuardian: () => void;
-  theme?: keyof typeof THEME;
+  theme?: keyof typeof THEME; extraRows?: TxnRow[];
 }) {
   const t = THEME[theme];
 
@@ -48,7 +53,7 @@ export default function History({
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const allRows = TRANSACTIONS[acc.account] ?? [];
+  const allRows = [...extraRows, ...(TRANSACTIONS[acc.account] ?? [])];
 
   const filteredRows = allRows
     .filter((row) => {
@@ -128,7 +133,7 @@ export default function History({
       ) : (
         groups.map((g) => (
           <div key={g.date} className="px-1">
-            <p className="text-[13px] font-bold text-gray-900 pt-6 pb-1">{g.date}</p>
+            <p className="text-[13px] font-bold text-gray-900 pt-6 pb-1">{fmtDate(g.date)}</p>
             {g.items.map((row, i) => {
               const globalIdx = filteredRows.indexOf(row);
               return (
@@ -271,7 +276,7 @@ export default function History({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-gray-500">날짜 · 시각</span>
-                <span className="text-[13px] font-semibold text-gray-900">{selectedRow.date} · {selectedRow.time}</span>
+                <span className="text-[13px] font-semibold text-gray-900">{fmtDate(selectedRow.date)} · {selectedRow.time}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-gray-500">거래 구분</span>

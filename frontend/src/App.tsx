@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import { parentTabs, parentIcons, RoleToggle } from "./shared/ui";
-import { MY_ACCOUNTS, parseAmt, type Role } from "./shared/data";
+import { MY_ACCOUNTS, parseAmt, type Role, type TxnRow } from "./shared/data";
 import Transfer from "./screens/Transfer";
 import Guardian from "./screens/Guardian";
 import ParentHome from "./screens/ParentHome";
@@ -42,16 +42,24 @@ export default function App() {
   const [balanceOverrides, setBalanceOverrides] = useState<Record<number, string>>({});
   const [closedAccounts, setClosedAccounts] = useState<Set<number>>(new Set());
   const [transferFromIdx, setTransferFromIdx] = useState(0);
+  const [extraTxns, setExtraTxns] = useState<Record<string, TxnRow[]>>({});
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
     balance: i in balanceOverrides ? balanceOverrides[i] : a.balance,
   }));
 
-  const handleTransferSuccess = (fromIdx: number, amount: number) => {
-    const current = parseAmt(liveAccounts[fromIdx].balance);
+  const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string) => {
+    const acc = liveAccounts[fromIdx];
+    const current = parseAmt(acc.balance);
     const next = Math.max(0, current - amount);
     setBalanceOverrides((prev) => ({ ...prev, [fromIdx]: next.toLocaleString("ko-KR") }));
+
+    const now = new Date();
+    const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+    const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const row: TxnRow = { date, time, name: recipientName, memo: "이체", amount: -amount, balance: next };
+    setExtraTxns((prev) => ({ ...prev, [acc.account]: [row, ...(prev[acc.account] ?? [])] }));
   };
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
@@ -123,6 +131,7 @@ export default function App() {
                 onBack={() => setPage("home")}
                 onTransfer={() => setPage("transfer")}
                 onGuardian={() => setPage("guardian")}
+                extraRows={extraTxns[liveAccounts[accountIdx].account] ?? []}
               />
             )}
             {page === "home" && tab === "홈" && (

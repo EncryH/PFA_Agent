@@ -137,7 +137,7 @@ const TITLES: Record<TransferStep, string> = {
 
 export default function Transfer({
   onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false }, onSuccess, defaultFromIdx = 0,
-}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals; onSuccess?: (fromIdx: number, amount: number) => void; defaultFromIdx?: number }) {
+}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals; onSuccess?: (fromIdx: number, amount: number, recipientName: string) => void; defaultFromIdx?: number }) {
   const [step, setStep] = useState<TransferStep>("input");
   const [account, setAccount] = useState("");
   const [bank, setBank]       = useState("");
@@ -305,7 +305,7 @@ export default function Transfer({
 
   // 송금 성공 시 잔액 차감 콜백
   useEffect(() => {
-    if (step === "success") onSuccess?.(fromIdx, parseAmt(amt));
+    if (step === "success") onSuccess?.(fromIdx, parseAmt(amt), name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
