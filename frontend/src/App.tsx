@@ -127,7 +127,7 @@ export default function App() {
             )}
             {page === "home" && tab === "홈" && (
               <ParentHome
-                onTransfer={() => setPage("transfer")}
+                onTransfer={(i) => { setTransferFromIdx(i); setPage("transfer"); }}
                 onGuardian={() => setPage("guardian")}
                 onAccount={(i) => {
                   setBehaviorSignals((s) => ({ ...s, historyVisits: s.historyVisits + 1 }));

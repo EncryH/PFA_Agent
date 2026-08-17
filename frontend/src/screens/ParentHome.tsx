@@ -72,7 +72,7 @@ export default function ParentHome({
   onTransfer, onGuardian, onAccount, onVerify,
   onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS,
 }: {
-  onTransfer: () => void;
+  onTransfer: (fromIdx: number) => void;
   onGuardian: () => void;
   onAccount: (i: number) => void;
   onVerify: () => void;
@@ -108,7 +108,7 @@ export default function ParentHome({
                 <p className="text-[18px] font-bold text-gray-900">{acc.balance}원</p>
               </div>
             </button>
-            <button onClick={onTransfer} className="shrink-0 ml-2 text-[13px] text-gray-900 bg-blue-50 rounded-md px-4 py-1.5 font-medium active:scale-95 hover:bg-blue-100 transition-all">
+            <button onClick={() => onTransfer(i)} className="shrink-0 ml-2 text-[13px] text-gray-900 bg-blue-50 rounded-md px-4 py-1.5 font-medium active:scale-95 hover:bg-blue-100 transition-all">
               송금
             </button>
           </div>
