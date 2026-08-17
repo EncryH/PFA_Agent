@@ -136,8 +136,8 @@ const TITLES: Record<TransferStep, string> = {
 };
 
 export default function Transfer({
-  onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false }, onSuccess,
-}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals; onSuccess?: (fromIdx: number, amount: number) => void }) {
+  onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false }, onSuccess, defaultFromIdx = 0,
+}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals; onSuccess?: (fromIdx: number, amount: number) => void; defaultFromIdx?: number }) {
   const [step, setStep] = useState<TransferStep>("input");
   const [account, setAccount] = useState("");
   const [bank, setBank]       = useState("");
@@ -145,7 +145,7 @@ export default function Transfer({
   const [amt, setAmt]         = useState("");
   const [bankOpen, setBankOpen] = useState(false);
   const [bankTab, setBankTab] = useState<"은행" | "증권사">("은행");
-  const [fromIdx, setFromIdx] = useState(0);   // 출금 계좌 (탭하면 다음 계좌로 순환)
+  const [fromIdx, setFromIdx] = useState(defaultFromIdx);   // 출금 계좌 (탭하면 다음 계좌로 순환)
 
   // 키패드 입력 — 원본 숫자열을 다루고 표시만 콤마를 넣는다
   const pressKey = (k: string) => {
@@ -172,6 +172,8 @@ export default function Transfer({
   const sessionStartRef = useRef<number>(Date.now());
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const behaviorSignalsRef = useRef(behaviorSignals);
+  behaviorSignalsRef.current = behaviorSignals; // 렌더마다 갱신 — 클로저 stale 방지
   const time = nowTime();
 
   // ── 실시간 위험 미리보기 (금액 입력 중) ──
@@ -255,7 +257,7 @@ export default function Transfer({
     };
 
     fetchRiskScore({
-      behavior: { ...behaviorSignals, backPresses, sessionSeconds: sessionSec },
+      behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec },
       transaction: {
         amount: parseAmt(amt),
         isKnownRecipient: !!known,

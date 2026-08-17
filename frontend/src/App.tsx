@@ -41,6 +41,7 @@ export default function App() {
   const [behaviorSignals, setBehaviorSignals] = useState<BehaviorSignals>(INITIAL_SIGNALS);
   const [balanceOverrides, setBalanceOverrides] = useState<Record<number, string>>({});
   const [closedAccounts, setClosedAccounts] = useState<Set<number>>(new Set());
+  const [transferFromIdx, setTransferFromIdx] = useState(0);
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
@@ -93,14 +94,14 @@ export default function App() {
           </header>
 
           <main className="flex-1 px-3 pb-4">
-            {page === "transfer" && <Transfer onExit={() => setPage("home")} behaviorSignals={behaviorSignals} accounts={liveAccounts} onSuccess={handleTransferSuccess} />}
+            {page === "transfer" && <Transfer onExit={() => setPage("home")} behaviorSignals={behaviorSignals} accounts={liveAccounts} onSuccess={handleTransferSuccess} defaultFromIdx={transferFromIdx} />}
             {page === "guardian" && <Guardian appRole="parent" onExit={() => setPage("home")} />}
             {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
             {page === "savings"  && (
               <SavingsDetail
                 account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => setPage("transfer")}
+                onTransfer={() => { setTransferFromIdx(savingsIdx); setPage("transfer"); }}
                 isClosed={closedAccounts.has(savingsIdx)}
                 onEarlyClosure={(amount) => {
                   setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }));
