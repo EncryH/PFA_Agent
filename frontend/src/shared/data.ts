@@ -7,6 +7,7 @@ export type TransferStep =
   | "input"      // 어디로 보낼까요 — 최근 계좌 고르거나 직접 입력으로 진입
   | "account"    // 어떤 계좌로 보낼까요 — 계좌번호 + 은행
   | "amount"     // 얼마를 보낼까요 — 금액
+  | "confirm"    // 마지막 확인 — 실제 은행처럼 보내기 직전에 한 번 더 보여준다
   | "checking" | "success" | "db-warning" | "ai-chat" | "hold" | "already-sent";
 
 // 본인 명의 계좌 — 여기로 보내는 건 사기가 될 수 없으므로 항상 무마찰 통과
@@ -102,6 +103,41 @@ export const TRANSACTIONS: Record<string, { date: string; time: string; name: st
     { date: "03.15", time: "05:00", name: "이자",          memo: "예금이자", amount:    244_000, balance: 33_506_000 },
     { date: "12.15", time: "11:20", name: "정기예금 예치", memo: "신규",     amount: 33_262_000, balance: 33_262_000 },
   ],
+};
+
+// ─── 알림 기록 ────────────────────────────────────────────────────────────
+// 알림함은 '지금 상태'가 아니라 '지나간 사건'을 보여준다.
+// 연결을 해제해도 연결됐던 알림은 남아야 하므로 로그로 쌓는다.
+// 실서비스에서는 감사 로그(조치내역 5년 보존)가 들어갈 자리.
+
+export type NoticeEvent = {
+  type: "paired" | "unpaired" | "level-changed";
+  at: string;
+  /** level-changed 일 때만 — 바뀐 전후 보호 단계 */
+  from?: number;
+  to?: number;
+};
+
+const NOTICE_KEY = "ansimNotices";
+
+export const readNotices = (): NoticeEvent[] => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(NOTICE_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+};
+
+export const pushNotice = (
+  type: NoticeEvent["type"],
+  at = new Date().toISOString(),
+  extra: Pick<NoticeEvent, "from" | "to"> = {},
+) => {
+  const list = readNotices();
+  list.push({ type, at, ...extra });
+  localStorage.setItem(NOTICE_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event("ansim-notice"));
 };
 
 /** 데모용 예금주 조회 — 실제로는 금융결제원 조회. 같은 계좌번호면 항상 같은 이름이 나온다. */

@@ -13,6 +13,7 @@ import History from "./History";
 import Transfer from "./Transfer";
 import Guardian from "./Guardian";
 import NotificationShade from "../shared/NotificationShade";
+import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
 
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
@@ -26,6 +27,8 @@ export default function ChildApp() {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [response, setResponse] = useState<AlertResponse>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [protectionLevel] = useProtectionLevel();
+  const protection = PROTECTION_LEVELS[protectionLevel];
   const [alert, setAlert] = useState<DemoAlert | null>(() => {
     const stored = localStorage.getItem("ansimAlert");
     return stored ? { ...DEMO_ALERT, ...JSON.parse(stored) } : DEMO_ALERT;
@@ -65,6 +68,7 @@ export default function ChildApp() {
     setResponse(r);
     setPage("home");
     localStorage.removeItem("ansimAlert");
+    window.dispatchEvent(new Event("ansim-alert"));
   };
 
   return (
@@ -219,7 +223,7 @@ export default function ChildApp() {
                   <p className="text-[14px] font-bold text-gray-900">어머니와 연결됨</p>
                   <span className="w-2 h-2 rounded-full bg-green-500" />
                 </div>
-                <p className="text-[12px] text-gray-400 mt-0.5">Lv.2 공동확인 · 이번 주 위험 1건</p>
+                <p className="text-[12px] text-gray-400 mt-0.5">Lv.{protectionLevel} {protection.name} · 현재 보호 중</p>
               </div>
               <span className="text-[12px] font-semibold text-[var(--ac-500)]">자세히</span>
             </button>
@@ -357,20 +361,18 @@ export default function ChildApp() {
             <div className="bg-white border border-gray-100 rounded-2xl p-5">
               <p className="text-[13px] font-bold text-gray-400 mb-4">안심동행 권한 레벨</p>
               <div className="flex flex-col gap-3">
-                {[
-                  { lv: "Lv.0", name: "관심",      desc: "위험 이벤트 알림만" },
-                  { lv: "Lv.1", name: "지연",      desc: "고위험 24시간 쿨다운" },
-                  { lv: "Lv.2", name: "공동확인",  desc: "기준 금액 이상 가족 확인 필요", active: true },
-                  { lv: "Lv.3", name: "피해 대응", desc: "사기 발생 시 긴급 모드" },
-                ].map((item) => (
-                  <div key={item.lv} className={`flex items-center gap-3 p-3 rounded-xl ${item.active ? "bg-blue-50 border border-blue-200" : "bg-gray-50"}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${item.active ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>{item.lv}</div>
+                {PROTECTION_LEVELS.map((item) => {
+                  const active = protectionLevel === item.level;
+                  return (
+                  <div key={item.level} className={`flex items-center gap-3 p-3 rounded-xl ${active ? "bg-blue-50 border border-blue-200" : "bg-gray-50"}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${active ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>Lv.{item.level}</div>
                     <div>
-                      <p className={`text-[13px] font-bold ${item.active ? "text-gray-900" : "text-gray-700"}`}>{item.name}{item.active && " (현재)"}</p>
+                      <p className={`text-[13px] font-bold ${active ? "text-gray-900" : "text-gray-700"}`}>{item.name}{active && " (현재)"}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5">{item.desc}</p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <p className="text-[11px] text-gray-400 text-center mt-3">권한은 부모님이 설정하고 언제든 회수 가능해요</p>
             </div>

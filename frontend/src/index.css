@@ -83,6 +83,15 @@ body {
   to   { opacity: 1; }
 }
 
+/* 알림 종을 살짝 흔든다 — 마우스를 올렸을 때만 */
+@keyframes bell-swing {
+  0%, 100% { transform: rotate(0); }
+  20%  { transform: rotate(12deg); }
+  40%  { transform: rotate(-9deg); }
+  60%  { transform: rotate(5deg); }
+  80%  { transform: rotate(-3deg); }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -104,9 +113,10 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #93c5fd transparent;
 }
+/* 알림함은 앱 안의 페이지다 — 오른쪽에서 밀려 들어온다 */
 @keyframes notification-shade-in {
-  from { transform: translateY(-105%); opacity: 0.65; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes notification-backdrop-in {
@@ -115,8 +125,8 @@ body {
 }
 
 @keyframes notification-shade-out {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-105%); opacity: 0.65; }
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
 }
 
 @keyframes notification-backdrop-out {

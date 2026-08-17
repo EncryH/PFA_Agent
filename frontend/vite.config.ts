@@ -12,7 +12,7 @@ function backendApi(apiKey: string): Plugin {
     configureServer(server) {
       // vite.config 는 .vite-temp 로 번들되므로 상대 경로가 깨진다.
       // 프로젝트 root(frontend/) 기준으로 절대 경로를 만든다.
-      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/intent.js')).href
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/agents/intent-analysis/agent.js')).href
 
       server.middlewares.use('/api/intent', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
@@ -33,8 +33,8 @@ function backendApi(apiKey: string): Plugin {
 
           // backend/ 수정 후에는 dev 서버를 재시작해야 반영된다.
           // (Node ESM 캐시는 프로세스 단위라 쿼리 무효화로는 중첩 import 까지 못 지운다)
-          const { handleIntent } = await import(handlerPath)
-          const result = await handleIntent(body, apiKey)
+          const { runIntentAnalysisAgent } = await import(handlerPath)
+          const result = await runIntentAnalysisAgent(body, { apiKey })
 
           res.statusCode = 200
           res.end(JSON.stringify(result))

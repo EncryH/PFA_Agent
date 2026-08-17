@@ -17,13 +17,14 @@ import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
 import NotificationShade from "./shared/NotificationShade";
 
-type ParentPage = "home" | "guardian" | "transfer" | "history";
+type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history";
 
 export default function App() {
   const [role, setRole] = useState<Role>("parent");
   const [tab, setTab]   = useState<typeof parentTabs[number]>("홈");
   const [page, setPage] = useState<ParentPage>("home");
   const [accountIdx, setAccountIdx] = useState(0);   // 거래내역을 보는 계좌
+  const [resumeIntentChatId, setResumeIntentChatId] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [largeText, setLargeText] = useState(() => localStorage.getItem("ansimLargeText") === "true");
 
@@ -51,16 +52,22 @@ export default function App() {
               <svg viewBox="0 0 24 24" fill="#2563eb" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
               <span className="text-[17px] font-bold text-gray-900 tracking-tight">한결은행</span>
             </button>
-            <div className="flex gap-2 items-center">
-              {!largeText && <button className="text-gray-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg></button>}
-              <button onClick={() => setShowNotifications(true)} className="text-gray-400 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg></button>
+            <div className="flex gap-1 items-center">
+              {!largeText && (
+                <button aria-label="검색" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 transition-transform duration-200 group-hover:scale-110"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>
+                </button>
+              )}
+              <button onClick={() => setShowNotifications(true)} aria-label="알림" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 origin-top group-hover:[animation:bell-swing_.6s_ease-in-out]"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
+              </button>
               <button
                 type="button"
                 role="switch"
                 aria-checked={largeText}
                 aria-label={largeText ? "일반 홈으로 전환" : "쉬운 홈으로 전환"}
                 onClick={toggleLargeText}
-                className="flex items-center rounded-full border border-blue-100 bg-white p-0.5 text-[12px] font-bold shadow-sm active:scale-95 transition-transform"
+                className="ml-1 flex items-center rounded-full border border-blue-100 bg-white p-0.5 text-[12px] font-bold shadow-sm hover:shadow-md hover:border-blue-300 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
               >
                 <span className={`rounded-full px-2.5 py-1 transition-colors ${largeText ? "bg-blue-600 text-white" : "text-blue-600"}`}>쉬운</span>
                 <span className={`rounded-full px-2.5 py-1 transition-colors ${largeText ? "text-gray-500" : "bg-blue-600 text-white"}`}>홈</span>
@@ -69,19 +76,39 @@ export default function App() {
           </header>
 
           <main className="flex-1 px-3 pb-4">
-            {page === "transfer" && <Transfer onExit={() => setPage("home")} />}
-            {page === "guardian" && <Guardian appRole="parent" onExit={() => setPage("home")} />}
+            {(page === "transfer" || page === "emergency") && (
+              <Transfer
+                onExit={() => setPage("home")}
+                initialStep={page === "emergency" ? "already-sent" : "input"}
+                resumeSessionId={resumeIntentChatId}
+                onResumeHandled={() => setResumeIntentChatId(null)}
+              />
+            )}
+            {page === "guardian" && (
+              <Guardian
+                appRole="parent"
+                onExit={() => setPage("home")}
+                onResumeIntentChat={(id) => {
+                  setResumeIntentChatId(id);
+                  setPage("transfer");
+                }}
+                onOpenEmergency={() => {
+                  setResumeIntentChatId(null);
+                  setPage("emergency");
+                }}
+              />
+            )}
             {page === "history" && (
               <History
                 account={MY_ACCOUNTS[accountIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => setPage("transfer")}
+                onTransfer={() => { setResumeIntentChatId(null); setPage("transfer"); }}
                 onGuardian={() => setPage("guardian")}
               />
             )}
             {page === "home" && tab === "홈" && (
               <ParentHome
-                onTransfer={() => setPage("transfer")}
+                onTransfer={() => { setResumeIntentChatId(null); setPage("transfer"); }}
                 onGuardian={() => setPage("guardian")}
                 onAccount={(i) => { setAccountIdx(i); setPage("history"); }}
                 largeText={largeText}
@@ -107,8 +134,9 @@ export default function App() {
     <button
       type="button"
       onClick={toggleRole}
-      className="fixed left-[calc(50%+235px)] top-5 z-[90] rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg active:scale-95 transition-all max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24"
+      className="group fixed left-[calc(50%+235px)] top-5 z-[90] flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:shadow-xl hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24"
     >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
       {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
     </button>
     </div>

@@ -8,6 +8,10 @@ export type TransferContext = {
   recipientName: string;
   account: string;
   bank: string;
+  isFirstTransfer?: boolean;
+  patternRiskScore?: number;
+  reportedAccount?: boolean;
+  callInProgress?: boolean;
 };
 
 export type Verdict = {
@@ -19,6 +23,23 @@ export type Verdict = {
   done: boolean;
   risk: { score: number; labels: string[]; level: "LOW" | "MEDIUM" | "HIGH" };
   intent: { purpose: string; requester: string; channel: string };
+  analysis?: {
+    version: string;
+    suspected_fraud_type: { code: string; label: string; source: string };
+    impersonation: string;
+    interaction_direction: string;
+    attack_stage: string;
+    requested_actions: string[];
+    answer_contradictions: string[];
+    missing_information: string[];
+    evidence_phrases: string[];
+    retrieval: {
+      method: string;
+      fraud_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
+      normal_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
+    };
+    official_content: { status: string; items: unknown[] };
+  };
   /** LLM 장애로 사전 정의 시나리오를 쓴 경우 */
   fallback: boolean;
 };

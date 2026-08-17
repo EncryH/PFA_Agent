@@ -3,12 +3,38 @@
 // MVP 페어링: 부모 앱이 만든 1회용 코드를 자녀 앱에서 검증하면 양쪽에 연결 상태를 반영한다.
 
 import { useEffect, useState } from "react";
+import { pushNotice, readNotices } from "../shared/data";
+import {
+  deleteIntentChatSession,
+  INTENT_CHAT_EVENT,
+  readIntentChatSessions,
+  type IntentChatSession,
+} from "../shared/intentChat";
+import { PROTECTION_LEVELS, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
 
-type Step = "intro" | "select" | "code" | "done";
+type Step = "intro" | "select" | "code" | "done" | "permissions";
+
+type PendingAlert = {
+  amount: number;
+  account: string;
+  bank?: string;
+  signals?: string[];
+  time?: string;
+};
+
+const readPendingAlert = (): PendingAlert | null => {
+  try {
+    const stored = localStorage.getItem("ansimAlert");
+    return stored ? JSON.parse(stored) as PendingAlert : null;
+  } catch {
+    return null;
+  }
+};
 
 const DEMO_PAIR_CODE = "3827";
 const PAIR_CODE_KEY = "ansimPairCode";
 const PAIRED_KEY = "ansimPaired";
+const PAIRED_AT_KEY = "ansimPairedAt";   // 연결 시각 — 알림함에 그대로 표시된다
 const PAIRED_EVENT = "ansim-paired";
 
 const LAYERS = [
@@ -27,12 +53,34 @@ const PROMISES = [
   { t: "언제든 그만두실 수 있어요",             d: "보호 단계를 낮추거나 연결을 해제하는 것은 부모님 뜻대로예요" },
 ];
 
-export default function Guardian({ onExit, appRole }: { onExit: () => void; appRole: "parent" | "child" }) {
+export default function Guardian({
+  onExit, appRole, onResumeIntentChat, onOpenEmergency,
+}: {
+  onExit: () => void;
+  appRole: "parent" | "child";
+  onResumeIntentChat?: (id: string) => void;
+  onOpenEmergency?: () => void;
+}) {
   const [step, setStep] = useState<Step>("intro");
   const [pairRole, setPairRole] = useState<"parent" | "child" | null>(null);
   const [code, setCode] = useState(["", "", "", ""]);
   const [codeError, setCodeError] = useState("");
   const [isPaired, setIsPaired] = useState(() => localStorage.getItem(PAIRED_KEY) === "true");
+  const [intentChats, setIntentChats] = useState<IntentChatSession[]>(() => readIntentChatSessions());
+  const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
+  const [pendingAlert, setPendingAlert] = useState<PendingAlert | null>(readPendingAlert);
+  const [protectionLevel, setProtectionLevel] = useProtectionLevel();
+  const protection = PROTECTION_LEVELS[protectionLevel];
+  // 보호 단계는 되돌리기 어려운 설정이라 저장 전에 한 번 더 묻는다
+  const [pendingLevel, setPendingLevel] = useState<ProtectionLevel | null>(null);
+
+  const confirmLevelChange = () => {
+    if (pendingLevel === null) return;
+    const previous = protectionLevel;
+    setProtectionLevel(pendingLevel);
+    pushNotice("level-changed", new Date().toISOString(), { from: previous, to: pendingLevel });
+    setPendingLevel(null);
+  };
 
   useEffect(() => {
     const syncPairing = () => {
@@ -48,6 +96,26 @@ export default function Guardian({ onExit, appRole }: { onExit: () => void; appR
       window.removeEventListener("storage", syncPairing);
     };
   }, [pairRole]);
+
+  useEffect(() => {
+    const syncChats = () => setIntentChats(readIntentChatSessions());
+    window.addEventListener(INTENT_CHAT_EVENT, syncChats);
+    window.addEventListener("storage", syncChats);
+    return () => {
+      window.removeEventListener(INTENT_CHAT_EVENT, syncChats);
+      window.removeEventListener("storage", syncChats);
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncAlert = () => setPendingAlert(readPendingAlert());
+    window.addEventListener("ansim-alert", syncAlert);
+    window.addEventListener("storage", syncAlert);
+    return () => {
+      window.removeEventListener("ansim-alert", syncAlert);
+      window.removeEventListener("storage", syncAlert);
+    };
+  }, []);
 
   const selectRole = (role: "parent" | "child") => {
     setPairRole(role);
@@ -67,7 +135,9 @@ export default function Guardian({ onExit, appRole }: { onExit: () => void; appR
     }
 
     localStorage.setItem(PAIRED_KEY, "true");
+    localStorage.setItem(PAIRED_AT_KEY, new Date().toISOString());
     localStorage.removeItem(PAIR_CODE_KEY);
+    pushNotice("paired");
     setIsPaired(true);
     setCodeError("");
     setStep("done");
@@ -78,15 +148,35 @@ export default function Guardian({ onExit, appRole }: { onExit: () => void; appR
     const target = appRole === "parent" ? "자녀와의 안심동행 연결" : "부모님과의 안심동행 연결";
     if (!window.confirm(`${target}을 해제할까요?\n해제 후에는 위험 거래 알림이 전달되지 않아요.`)) return;
 
+    // 이전 버전에서 연결한 세션은 완료 알림 로그가 없을 수 있다.
+    // 해제 전에 누락된 연결 기록을 복원해 두 알림이 모두 남게 한다.
+    const notices = readNotices();
+    if (notices.at(-1)?.type !== "paired") {
+      const pairedAt = localStorage.getItem(PAIRED_AT_KEY)
+        ?? new Date(Date.now() - 1000).toISOString();
+      pushNotice("paired", pairedAt);
+    }
+
     localStorage.removeItem(PAIRED_KEY);
+    localStorage.removeItem(PAIRED_AT_KEY);
     localStorage.removeItem(PAIR_CODE_KEY);
+    pushNotice("unpaired");
     setIsPaired(false);
     setPairRole(null);
     setStep("intro");
     window.dispatchEvent(new Event(PAIRED_EVENT));
   };
 
-  const goBack = () => (step === "select" ? setStep("intro") : onExit());
+  const goBack = () => {
+    if (step === "select" || step === "permissions") setStep("intro");
+    else onExit();
+  };
+
+  const deleteChat = (id: string) => {
+    if (!window.confirm("이 상담 기록을 삭제할까요?\n삭제한 대화는 복구할 수 없어요.")) return;
+    deleteIntentChatSession(id);
+    setOpenChatMenuId(null);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -97,78 +187,263 @@ export default function Guardian({ onExit, appRole }: { onExit: () => void; appR
         <p className="text-[17px] font-bold text-gray-900">안심동행 AI</p>
       </div>
 
-      {/* 홈 광고 배너와 같은 톤 — 색은 theme-parent / theme-child 가 결정한다 */}
-      <div className="bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-[var(--ac-band-to)] border border-[var(--ac-band-border)] rounded-2xl p-4 flex items-center gap-4">
-        <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.9" className="w-14 h-14 shrink-0"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
-        <div>
-          <p className="text-[17px] font-bold text-[var(--ac-band-text)]">부모님 금융을 가족이 함께 지켜요</p>
-          <p className="text-[12px] text-[var(--ac-band-sub)] mt-1">AI가 이상 거래를 감지하고 가족에게 알려드려요</p>
+      {/* 연결 전 안내에서만 노출한다. 연결 후에는 상태 카드가 같은 역할을 한다. */}
+      {!isPaired && (
+        <div className="bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-[var(--ac-band-to)] border border-[var(--ac-band-border)] rounded-2xl p-4 flex items-center gap-4">
+          <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.9" className="w-14 h-14 shrink-0"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
+          <div>
+            <p className="text-[17px] font-bold text-[var(--ac-band-text)]">부모님 금융을 가족이 함께 지켜요</p>
+            <p className="text-[12px] text-[var(--ac-band-sub)] mt-1">AI가 이상 거래를 감지하고 가족에게 알려드려요</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {step === "intro" && isPaired && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[12px] font-semibold text-[var(--ac-500)]">안심동행 연결 중</p>
-                <p className="text-[18px] font-bold text-gray-900 mt-1">
-                  {appRole === "parent" ? "딸 김지혜님" : "어머니 김영순님"}
+                <p className="text-[15px] font-bold text-gray-900">안심동행 연결 정보</p>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  {appRole === "parent" ? "딸 김지혜님과 함께 지키고 있어요." : "어머니 김영순님의 금융을 함께 지켜요."}
                 </p>
               </div>
-              <span className="flex items-center gap-1.5 text-[12px] font-semibold text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-green-500" />연결됨
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-semibold text-green-600">
+                <span className="h-2 w-2 rounded-full bg-green-500" />연결됨
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[14px] font-bold text-gray-900">Lv.2 공동확인</p>
-                <p className="text-[11px] text-gray-400 mt-1">현재 보호 단계</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-[14px] font-bold text-gray-900">2026.08.15</p>
-                <p className="text-[11px] text-gray-400 mt-1">연동일</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl p-5">
-            <p className="text-[14px] font-bold text-gray-900 mb-3">은행 간 연결 정보</p>
-            <div className="flex items-center justify-between text-[13px]">
-              <div><p className="font-semibold text-gray-900">김영순</p><p className="text-[11px] text-gray-400 mt-0.5">한결은행 · 부모</p></div>
-              <span className="text-[var(--ac-500)] font-bold">연결</span>
-              <div className="text-right"><p className="font-semibold text-gray-900">김지혜</p><p className="text-[11px] text-gray-400 mt-0.5">나눔은행 · 자녀</p></div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-start gap-2">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="w-4 h-4 shrink-0 mt-0.5"><path d="M20 6L9 17l-5-5" /></svg>
-              <p className="text-[12px] text-gray-500">자녀에게는 잔액과 전체 거래내역을 공개하지 않고, 위험 상황에 필요한 최소 정보만 전달해요.</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[14px] font-bold text-gray-900">주간 안심 리포트</p>
-              <p className="text-[11px] text-gray-400">08.09 ~ 08.15</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {[["127건", "정상 거래", "text-gray-900"], ["1건", "위험 탐지", "text-red-500"], ["0건", "피해 발생", "text-green-600"]].map(([value, label, color]) => (
-                <div key={label} className="bg-gray-50 rounded-xl p-3">
-                  <p className={`text-[17px] font-bold ${color}`}>{value}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{label}</p>
+            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl bg-gray-50 px-4 py-4 text-center">
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-bold text-gray-900">김영순</p>
+                <p className="mt-1 text-[11px] text-gray-400">한결은행</p>
+                <p className="mt-0.5 text-[10px] font-semibold text-gray-500">부모</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center">
+                  <span className="h-px w-4 bg-[var(--ac-200)]" />
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--ac-50)] text-[var(--ac-500)]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></svg>
+                  </span>
+                  <span className="h-px w-4 bg-[var(--ac-200)]" />
                 </div>
-              ))}
+                <p className="mt-1 text-[9px] font-semibold text-[var(--ac-500)]">안심동행</p>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-bold text-gray-900">김지혜</p>
+                <p className="mt-1 text-[11px] text-gray-400">나눔은행</p>
+                <p className="mt-0.5 text-[10px] font-semibold text-gray-500">자녀</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+              <div className="rounded-xl border border-gray-100 px-3 py-3">
+                <p className="text-[13px] font-bold text-gray-900">Lv.{protectionLevel} {protection.name}</p>
+                <p className="mt-1 text-[10px] text-gray-400">현재 보호 단계</p>
+              </div>
+              <div className="rounded-xl border border-gray-100 px-3 py-3">
+                <p className="text-[13px] font-bold text-gray-900">2026.08.15</p>
+                <p className="mt-1 text-[10px] text-gray-400">연동일</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 border-t border-gray-100 pt-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="mt-0.5 h-4 w-4 shrink-0"><path d="M20 6L9 17l-5-5" /></svg>
+              <p className="text-[11px] leading-relaxed text-gray-500">자녀에게는 잔액과 전체 거래내역을 공개하지 않고, 위험 확인에 필요한 정보만 전달해요.</p>
             </div>
           </div>
 
-          <button className="w-full py-3.5 rounded-xl text-[14px] font-semibold text-gray-900 bg-white border border-gray-200 active:scale-[0.98] transition-all">
+          {appRole === "parent" && pendingAlert && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[14px] font-bold text-gray-900">확인 대기 중인 송금</p>
+                  <p className="mt-1 text-[11px] text-gray-500">자녀의 확인을 기다리고 있어요.</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-amber-700">가족 확인 중</span>
+              </div>
+              <div className="mt-3 rounded-xl bg-white/80 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[12px] text-gray-500">송금 금액</span>
+                  <span className="text-[15px] font-bold text-gray-900">{Number(pendingAlert.amount).toLocaleString()}원</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-[12px] text-gray-500">받는 계좌</span>
+                  <span className="truncate text-[12px] font-semibold text-gray-700">{pendingAlert.account}</span>
+                </div>
+              </div>
+              {pendingAlert.signals && pendingAlert.signals.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {pendingAlert.signals.slice(0, 3).map((signal) => (
+                    <span key={signal} className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700">{signal}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {appRole === "parent" && intentChats.length > 0 && (
+            <div className="bg-white rounded-2xl p-5">
+              <div className="mb-3">
+                <p className="text-[14px] font-bold text-gray-900">AI 상담 기록</p>
+                <p className="mt-1 text-[11px] text-gray-400">보류한 송금 상담을 눌러서 이어갈 수 있어요.</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {intentChats.map((chat) => (
+                  <div key={chat.id} className="group relative w-full rounded-xl border border-gray-100 bg-gray-50 hover:border-[var(--ac-200)] hover:bg-[var(--ac-50)] transition-all">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenChatMenuId(null);
+                        onResumeIntentChat?.(chat.id);
+                      }}
+                      className="w-full p-3 text-left active:scale-[0.99] transition-transform"
+                    >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50">
+                        <img src="/ansim-ai-profile.png" alt="" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-[13px] font-bold text-gray-900">
+                            {chat.fraudTypeLabel || "위험 송금 상담"}
+                          </p>
+                          <span className="mr-7 shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">송금 보류</span>
+                        </div>
+                        <p className="mt-1 truncate text-[12px] text-gray-500">
+                          {chat.transfer.name || "받는 분"} · {Number(chat.transfer.amount.replace(/,/g, "")).toLocaleString()}원
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <p className="truncate text-[11px] text-gray-400">{chat.riskLabels.slice(0, 2).join(" · ")}</p>
+                          <span className="shrink-0 text-[11px] font-semibold text-[var(--ac-500)] group-hover:translate-x-0.5 transition-transform">이어서 대화하기 ›</span>
+                        </div>
+                      </div>
+                    </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label={`${chat.fraudTypeLabel || "위험 송금 상담"} 메뉴`}
+                      aria-expanded={openChatMenuId === chat.id}
+                      onClick={() => setOpenChatMenuId((current) => current === chat.id ? null : chat.id)}
+                      className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-white hover:text-gray-700 active:scale-90 transition-all"
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
+                        <circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" />
+                      </svg>
+                    </button>
+
+                    {openChatMenuId === chat.id && (
+                      <div className="absolute right-10 top-1.5 z-20 min-w-28 origin-top-right overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => deleteChat(chat.id)}
+                          className="w-full rounded-lg px-3 py-2 text-left text-[12px] font-semibold text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+                        >
+                          채팅 삭제
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button onClick={() => setStep("permissions")} className="w-full py-3.5 rounded-xl text-[14px] font-semibold text-gray-900 bg-white border border-gray-200 active:scale-[0.98] transition-all">
             보호 단계 및 권한 관리
           </button>
+          {appRole === "parent" && (
+            <button onClick={onOpenEmergency} className="w-full rounded-xl border border-red-200 bg-red-50 py-3.5 text-[14px] font-semibold text-red-600 active:scale-[0.98] transition-all">
+              이미 송금했어요 · 긴급 대응
+            </button>
+          )}
           <button onClick={disconnectFamily} className="w-full py-3.5 rounded-xl text-[14px] font-semibold text-red-500 bg-white border border-red-100 active:scale-[0.98] transition-all">
             {appRole === "parent" ? "자녀 연결 해제" : "부모님 연결 해제"}
           </button>
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             연결을 해제해도 은행 계좌와 거래내역에는 영향을 주지 않아요.
           </p>
+        </div>
+      )}
+
+      {step === "permissions" && isPaired && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-2xl bg-white p-5">
+            <p className="text-[16px] font-bold text-gray-900">보호 단계를 선택해 주세요</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
+              {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "보호 단계는 부모님만 변경할 수 있어요."}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {PROTECTION_LEVELS.map((item) => {
+              const active = protectionLevel === item.level;
+              return (
+                <button
+                  key={item.level}
+                  type="button"
+                  disabled={appRole !== "parent"}
+                  onClick={() => { if (item.level !== protectionLevel) setPendingLevel(item.level); }}
+                  className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all ${active ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-gray-100 bg-white"} ${appRole === "parent" ? "active:scale-[0.99]" : "cursor-default"}`}
+                >
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--ac-500)] text-white" : "bg-gray-100 text-gray-500"}`}>Lv.{item.level}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 text-[14px] font-bold text-gray-900">
+                      {item.name}
+                      {active && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-[var(--ac-500)]">현재</span>}
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-gray-500">{item.desc}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
+            <p className="text-[11px] leading-relaxed text-green-800">어떤 단계를 선택해도 자녀에게 잔액과 전체 거래내역은 공개되지 않으며, 최종 결정권은 부모님에게 있어요.</p>
+          </div>
+
+          {/* 변경 재확인 — 보호 강도가 바뀌면 위험 판정 결과가 달라지므로 한 번 더 묻는다 */}
+          {pendingLevel !== null && (
+            <div className="fixed inset-0 z-[95] flex items-center justify-center px-6">
+              <button
+                aria-label="취소"
+                onClick={() => setPendingLevel(null)}
+                className="absolute inset-0 bg-black/40"
+                style={{ animation: "fade-in .2s ease-out" }}
+              />
+              <div className="relative w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl">
+                <p className="text-[17px] font-bold text-gray-900">보호 단계를 바꿀까요?</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
+                  <span className="font-semibold text-gray-400">Lv.{protectionLevel} {protection.name}</span>
+                  {" → "}
+                  <span className="font-bold text-[var(--ac-600)]">Lv.{pendingLevel} {PROTECTION_LEVELS[pendingLevel].name}</span>
+                </p>
+                <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
+                  {PROTECTION_LEVELS[pendingLevel].desc}
+                </p>
+                <p className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5 text-[11px] leading-relaxed text-gray-500">
+                  변경 사실은 부모님과 자녀 앱 알림에 함께 남아요.
+                </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setPendingLevel(null)}
+                    className="rounded-xl border border-gray-200 py-3 text-[15px] font-semibold text-gray-600 active:scale-[0.98] transition-all"
+                  >
+                    아니오
+                  </button>
+                  <button
+                    onClick={confirmLevelChange}
+                    className="rounded-xl bg-[var(--ac-500)] py-3 text-[15px] font-bold text-white active:scale-[0.98] transition-all"
+                  >
+                    네, 바꿀게요
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

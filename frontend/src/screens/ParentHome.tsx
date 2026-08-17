@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MY_ACCOUNTS } from "../shared/data";
 import { BankLogo } from "../shared/ui";
+import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
 
 const PRODUCTS = [
   { title: "안심 정기예금",     desc: "연 3.5% · 12개월" },
@@ -33,6 +34,8 @@ export default function ParentHome({
   largeText: boolean;
 }) {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
+  const [protectionLevel] = useProtectionLevel();
+  const protection = PROTECTION_LEVELS[protectionLevel];
 
   useEffect(() => {
     const syncPairing = () => setPaired(localStorage.getItem("ansimPaired") === "true");
@@ -130,7 +133,7 @@ export default function ParentHome({
               <p className="text-[14px] font-bold text-gray-900">딸 지혜와 연결됨</p>
               <span className="w-2 h-2 rounded-full bg-green-500" />
             </div>
-            <p className="text-[12px] text-gray-400 mt-0.5">Lv.2 공동확인 · 현재 보호 중</p>
+            <p className="text-[12px] text-gray-400 mt-0.5">Lv.{protectionLevel} {protection.name} · 현재 보호 중</p>
           </div>
           <span className="text-[12px] font-semibold text-blue-600">자세히</span>
         </button>

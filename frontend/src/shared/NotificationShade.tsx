@@ -1,10 +1,33 @@
+// 알림함 — 은행 앱 안의 페이지다. (폰 알림창이 아니다)
+// 오른쪽에서 밀려 들어오고, 뒤로가기로 나간다.
+
 import { useCallback, useEffect, useRef, useState } from "react";
+import { readNotices } from "./data";
+import { PROTECTION_LEVELS } from "./protection";
 
 type NotificationShadeProps = {
   role: "parent" | "child";
   hasRiskAlert?: boolean;
   onClose: () => void;
   onOpenRiskAlert?: () => void;
+};
+
+type Notice = {
+  icon: "shield" | "mail" | "family" | "money" | "gift" | "unlink";
+  title: string;
+  body: string;
+  date: string;
+  accent?: boolean;          // 위험 알림은 제목을 강조한다
+  onClick?: () => void;
+};
+
+const ICONS: Record<Notice["icon"], React.ReactNode> = {
+  shield: <path d="M12 2l8 3.5v6c0 4.6-3.4 8.9-8 10.5-4.6-1.6-8-5.9-8-10.5v-6L12 2z" />,
+  mail:   <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>,
+  family: <><circle cx="8" cy="9" r="3" /><circle cx="16" cy="9" r="3" /><path d="M3 19c0-2.5 2.2-4.5 5-4.5S13 16.5 13 19M13 19c0-2.5 2.2-4.5 5-4.5s3 1.4 3 4.5" /></>,
+  money:  <><circle cx="12" cy="12" r="9" /><path d="M9 9h6M9 12h6M12 12v5" /></>,
+  gift:   <><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M3 12h18M12 8v13M12 8c-1.5-3-6-3-6 0h6zm0 0c1.5-3 6-3 6 0h-6z" /></>,
+  unlink: <><path d="M9.5 14.5l-2 2a3.5 3.5 0 01-5-5l2-2M14.5 9.5l2-2a3.5 3.5 0 015 5l-2 2" /><path d="M3 3l18 18" /></>,
 };
 
 export default function NotificationShade({ role, hasRiskAlert = false, onClose, onOpenRiskAlert }: NotificationShadeProps) {
@@ -28,55 +51,134 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
     };
   }, [requestClose]);
 
-  const now = new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+  const bankName = role === "parent" ? "한결은행" : "나눔은행";
+
+  // 연결·해제 기록 — 지나간 사건이므로 지금 연결 상태와 무관하게 남는다. 최신순.
+  const stamp = (iso: string) =>
+    new Intl.DateTimeFormat("ko-KR", {
+      month: "long", day: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+    }).format(new Date(iso));
+
+  const family = role === "parent" ? "따님" : "어머니";
+
+  // 보호 단계는 부모가 정하지만, 바뀐 사실은 양쪽 앱에 똑같이 남는다.
+  const levelName = (level?: number) => PROTECTION_LEVELS[level ?? 2]?.name ?? "";
+
+  const pairingNotices: Notice[] = readNotices()
+    .slice()
+    .reverse()
+    .map((e) => {
+      if (e.type === "level-changed") {
+        return {
+          icon: "shield" as const,
+          title: "안심동행 보호 단계가 바뀌었어요",
+          body: role === "parent"
+            ? `Lv.${e.from} ${levelName(e.from)} → Lv.${e.to} ${levelName(e.to)} 로 변경했어요.`
+            : `어머니가 Lv.${e.from} ${levelName(e.from)} → Lv.${e.to} ${levelName(e.to)} 로 바꾸셨어요.`,
+          date: stamp(e.at),
+        };
+      }
+      return e.type === "paired"
+        ? {
+            icon: "family" as const,
+            title: `${family}과 안심동행이 연결됐어요`,
+            body: role === "parent"
+              ? "이제 위험한 송금이 있으면 따님이 함께 확인해드려요."
+              : "어머니 계좌에 위험한 거래가 생기면 알려드려요.",
+            date: stamp(e.at),
+          }
+        : {
+            icon: "unlink" as const,
+            title: `${family}과 안심동행 연결이 해제됐어요`,
+            body: "이제 위험 거래 알림이 전달되지 않아요. 계좌와 거래내역은 그대로예요.",
+            date: stamp(e.at),
+          };
+    });
+
+  const fresh: Notice[] =
+    role === "child" && hasRiskAlert
+      ? [{
+          icon: "shield",
+          title: "어머니의 위험 송금을 확인해주세요",
+          body: "평소와 다른 300만원 송금이 잠시 보류됐어요.",
+          date: "방금",
+          accent: true,
+          onClick: () => requestClose(onOpenRiskAlert ?? onClose),
+        }]
+      : [];
+
+  const earlier: Notice[] = [
+    ...pairingNotices,
+    ...(role === "parent"
+      ? [
+          { icon: "money" as const, title: "한결은행 입출금통장(4567)",   body: "입금 1,012,000원 | 국민연금공단",              date: "8월 3일" },
+          { icon: "gift"  as const, title: "안심 정기예금 금리가 올랐어요",  body: "연 3.5%로 12개월 예치하실 수 있어요.",        date: "7월 28일" },
+        ]
+      : [
+          { icon: "money" as const, title: "자유입출금(4608)",              body: "입금 3,150,000원 | 급여",                    date: "8월 1일" },
+          { icon: "gift"  as const, title: "나눔 적금 이벤트가 시작됐어요",   body: "매주 저축할 때마다 추가 금리를 드려요.",      date: "7월 25일" },
+        ]),
+  ];
+
+  const row = (n: Notice, i: number) => {
+    const Tag = n.onClick ? "button" : "div";
+    return (
+      <Tag
+        key={i}
+        {...(n.onClick ? { onClick: n.onClick } : {})}
+        className={`flex w-full items-start gap-3.5 px-5 py-5 text-left ${n.onClick ? "active:bg-black/5 transition-colors" : ""}`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke={n.accent ? "#dc2626" : "currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+          className={`mt-0.5 h-6 w-6 shrink-0 ${n.accent ? "" : "text-gray-800"}`}>
+          {ICONS[n.icon]}
+        </svg>
+        <span className="min-w-0 flex-1">
+          <span className={`block text-[16px] font-bold leading-snug ${n.accent ? "text-red-600" : "text-gray-900"}`}>{n.title}</span>
+          <span className="mt-1 block text-[14px] leading-snug text-gray-600">{n.body}</span>
+          <span className="mt-1.5 block text-[13px] text-gray-400">{n.date}</span>
+        </span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className="mt-1 h-4 w-4 shrink-0 text-gray-300"><path d="M9 6l6 6-6 6" /></svg>
+      </Tag>
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-center" role="dialog" aria-label="알림창" aria-modal="true">
-      <button aria-label="알림창 닫기" onClick={() => requestClose()} className={`absolute inset-0 bg-black/30 ${closing ? "notification-backdrop-out" : "notification-backdrop"}`} />
-      <section className={`${closing ? "notification-shade-out" : "notification-shade"} relative flex h-dvh max-h-dvh w-full max-w-[430px] flex-col self-start overflow-hidden bg-[#f4f6fa]/95 px-4 pb-4 pt-3 shadow-2xl backdrop-blur-xl`}>
-        <div className="mb-4 flex items-center justify-between px-1 text-[12px] font-semibold text-gray-700">
-          <span>{now}</span>
-          <div className="flex items-center gap-2">
-            <span>5G</span>
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M2 8.8a15.8 15.8 0 0120 0l-1.7 2.1a13.1 13.1 0 00-16.6 0L2 8.8zm3.4 4.1a10.4 10.4 0 0113.2 0L16.9 15a7.7 7.7 0 00-9.8 0l-1.7-2.1zm3.5 4.2a4.9 4.9 0 016.2 0L12 21l-3.1-3.9z" /></svg>
-            <span className="h-3.5 w-6 rounded-[3px] border border-gray-700 p-[1px]"><span className="block h-full w-4 rounded-[1px] bg-gray-700" /></span>
-          </div>
+    <div className="fixed inset-0 z-[100] flex justify-center" role="dialog" aria-label="알림" aria-modal="true">
+      <button
+        aria-label="알림 닫기"
+        onClick={() => requestClose()}
+        className={`absolute inset-0 bg-black/25 ${closing ? "notification-backdrop-out" : "notification-backdrop"}`}
+      />
+
+      <div className="absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden">
+      <section className={`${closing ? "notification-shade-out" : "notification-shade"} relative flex h-dvh max-h-dvh w-full flex-col overflow-hidden bg-white shadow-2xl`}>
+        {/* 헤더 */}
+        <div className="relative flex shrink-0 items-center justify-center border-b border-gray-100 px-4 py-4">
+          <button aria-label="뒤로" onClick={() => requestClose()} className="absolute left-3 rounded-full p-1.5 text-gray-700 active:scale-90 transition-transform">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <p className="text-[17px] font-bold text-gray-900">알림</p>
         </div>
 
-        <div className="mb-3 px-1">
-          <div><p className="text-[27px] font-bold tracking-tight text-gray-900">알림</p><p className="text-[12px] text-gray-500">오늘</p></div>
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pb-6">
-          {role === "child" && hasRiskAlert && (
-            <button onClick={() => requestClose(onOpenRiskAlert ?? onClose)} className="w-full rounded-2xl border border-red-100 bg-white/95 p-4 text-left shadow-sm active:scale-[0.98] transition-transform">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500 text-[18px] text-white">!</span>
-                <div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="text-[13px] font-bold text-gray-900">안심동행 AI</p><span className="text-[10px] text-gray-400">지금</span></div><p className="mt-1 text-[13px] font-semibold text-red-600">어머니의 위험 송금을 확인해주세요</p><p className="mt-0.5 text-[12px] text-gray-500">평소와 다른 300만원 송금이 잠시 보류됐어요.</p></div>
-              </div>
-            </button>
+        <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${role === "parent" ? "bg-[#fafbfe]" : "bg-[#fbfcf9]"}`}>
+          {fresh.length > 0 && (
+            <>
+              <p className="px-5 pt-6 pb-1 text-[17px] font-bold text-gray-900">새 알림</p>
+              <div className="divide-y divide-gray-100 bg-white">{fresh.map(row)}</div>
+            </>
           )}
 
-          <div className="rounded-2xl bg-white/95 p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[16px] font-bold text-white ${role === "parent" ? "bg-blue-500" : "bg-emerald-500"}`}>은</span>
-              <div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="text-[13px] font-bold text-gray-900">{role === "parent" ? "한결은행" : "나눔은행"}</p><span className="text-[10px] text-gray-400">10분 전</span></div><p className="mt-1 text-[12px] text-gray-600">로그인과 계좌 상태가 안전하게 확인됐어요.</p></div>
-            </div>
-          </div>
+          <p className="px-5 pt-6 pb-1 text-[17px] font-bold text-gray-900">이전 알림</p>
+          <div className="divide-y divide-gray-100 bg-white">{earlier.map(row)}</div>
 
-          <div className="rounded-2xl bg-white/95 p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500 text-[16px] font-bold text-white">AI</span>
-              <div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="text-[13px] font-bold text-gray-900">안심동행 AI</p><span className="text-[10px] text-gray-400">어제</span></div><p className="mt-1 text-[12px] text-gray-600">이번 주 금융 보호 리포트가 도착했어요.</p></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="shrink-0 border-t border-gray-200/70 pt-3">
-          <button aria-label="알림창 닫기" onClick={() => requestClose()} className="mx-auto block h-1.5 w-28 rounded-full bg-gray-400/70" />
-          <p className="mt-2 text-center text-[11px] text-gray-400">아래 막대를 누르면 닫혀요</p>
+          <p className="px-5 py-8 text-center text-[13px] text-gray-400">
+            최근 3개월 알림만 보여드려요 · {bankName}
+          </p>
         </div>
       </section>
+      </div>
     </div>
   );
 }
