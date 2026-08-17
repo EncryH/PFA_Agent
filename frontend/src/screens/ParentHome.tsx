@@ -70,7 +70,7 @@ const SPENDING_TOTAL = SPENDING_BREAKDOWN.reduce((s, x) => s + x.amount, 0);
 
 export default function ParentHome({
   onTransfer, onGuardian, onAccount, onVerify,
-  onAllAccounts, onMonthlyDetail,
+  onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS,
 }: {
   onTransfer: () => void;
   onGuardian: () => void;
@@ -78,6 +78,7 @@ export default function ParentHome({
   onVerify: () => void;
   onAllAccounts?: () => void;
   onMonthlyDetail?: () => void;
+  accounts?: typeof MY_ACCOUNTS;
 }) {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [spendingOpen, setSpendingOpen] = useState(false);
@@ -96,7 +97,7 @@ export default function ParentHome({
   return (
     <>
       <div className="bg-white rounded-2xl p-5 flex flex-col gap-4 hover:shadow-lg transition-all duration-200">
-        {MY_ACCOUNTS.map((acc, i) => (
+        {accounts.map((acc, i) => (
           <div key={acc.name} className="group flex items-center justify-between rounded-xl -mx-2 px-2 -my-2 py-2 hover:bg-blue-50/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
             <button onClick={() => onAccount(i)} className="flex items-center gap-3 flex-1 min-w-0 text-left active:scale-[0.98] transition-transform">
               <span className="transition-transform duration-200 group-hover:scale-105">

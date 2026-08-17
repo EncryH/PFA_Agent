@@ -9,8 +9,8 @@ const fmt = (n: number) => n.toLocaleString("ko-KR");
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. FinancialTab — 자산 현황, 계좌별 바 차트, 월별 지출
 // ═══════════════════════════════════════════════════════════════════════════════
-export function FinancialTab({ onAccount }: { onAccount: (i: number) => void }) {
-  const balances = MY_ACCOUNTS.map((a) => parseAmt(a.balance));
+export function FinancialTab({ onAccount, accounts = MY_ACCOUNTS }: { onAccount: (i: number) => void; accounts?: typeof MY_ACCOUNTS }) {
+  const balances = accounts.map((a) => parseAmt(a.balance));
   const total = balances.reduce((s, b) => s + b, 0);
   const maxBalance = Math.max(...balances);
 
@@ -34,7 +34,7 @@ export function FinancialTab({ onAccount }: { onAccount: (i: number) => void }) 
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-4">계좌별 자산</p>
         <div className="flex flex-col gap-4">
-          {MY_ACCOUNTS.map((acc, i) => {
+          {accounts.map((acc, i) => {
             const bal = balances[i];
             const pct = maxBalance > 0 ? (bal / maxBalance) * 100 : 0;
             return (
@@ -63,7 +63,7 @@ export function FinancialTab({ onAccount }: { onAccount: (i: number) => void }) 
         <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
           <span className="text-[12px] text-gray-400">전체 계좌 비중</span>
           <span className="text-[12px] text-gray-500">
-            {MY_ACCOUNTS.map((a, i) => `${a.bank.replace(/은행|뱅크/, "")} ${Math.round((balances[i] / total) * 100)}%`).join(" · ")}
+            {accounts.map((a, i) => `${a.bank.replace(/은행|뱅크/, "")} ${Math.round((balances[i] / total) * 100)}%`).join(" · ")}
           </span>
         </div>
       </div>

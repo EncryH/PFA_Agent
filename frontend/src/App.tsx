@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import { parentTabs, parentIcons, RoleToggle } from "./shared/ui";
-import { MY_ACCOUNTS, type Role } from "./shared/data";
+import { MY_ACCOUNTS, parseAmt, type Role } from "./shared/data";
 import Transfer from "./screens/Transfer";
 import Guardian from "./screens/Guardian";
 import ParentHome from "./screens/ParentHome";
@@ -39,6 +39,18 @@ export default function App() {
   const [msgIdx, setMsgIdx] = useState(0);
   const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
   const [behaviorSignals, setBehaviorSignals] = useState<BehaviorSignals>(INITIAL_SIGNALS);
+  const [balanceOverrides, setBalanceOverrides] = useState<Record<number, string>>({});
+
+  const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
+    ...a,
+    balance: i in balanceOverrides ? balanceOverrides[i] : a.balance,
+  }));
+
+  const handleTransferSuccess = (fromIdx: number, amount: number) => {
+    const current = parseAmt(liveAccounts[fromIdx].balance);
+    const next = Math.max(0, current - amount);
+    setBalanceOverrides((prev) => ({ ...prev, [fromIdx]: next.toLocaleString("ko-KR") }));
+  };
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
 
@@ -80,12 +92,12 @@ export default function App() {
           </header>
 
           <main className="flex-1 px-3 pb-4">
-            {page === "transfer" && <Transfer onExit={() => setPage("home")} behaviorSignals={behaviorSignals} />}
+            {page === "transfer" && <Transfer onExit={() => setPage("home")} behaviorSignals={behaviorSignals} accounts={liveAccounts} onSuccess={handleTransferSuccess} />}
             {page === "guardian" && <Guardian appRole="parent" onExit={() => setPage("home")} />}
             {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
             {page === "savings"  && (
               <SavingsDetail
-                account={MY_ACCOUNTS[savingsIdx]}
+                account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
                 onTransfer={() => setPage("transfer")}
                 onEarlyClosure={() => setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }))}
@@ -93,7 +105,7 @@ export default function App() {
             )}
             {page === "history" && (
               <History
-                account={MY_ACCOUNTS[accountIdx]}
+                account={liveAccounts[accountIdx]}
                 onBack={() => setPage("home")}
                 onTransfer={() => setPage("transfer")}
                 onGuardian={() => setPage("guardian")}
@@ -115,10 +127,12 @@ export default function App() {
                 onVerify={() => setPage("verify")}
                 onAllAccounts={() => setTab("금융")}
                 onMonthlyDetail={() => setTab("금융")}
+                accounts={liveAccounts}
               />
             )}
             {page === "home" && tab === "금융" && (
               <FinancialTab
+                accounts={liveAccounts}
                 onAccount={(i) => {
                   setBehaviorSignals((s) => ({ ...s, historyVisits: s.historyVisits + 1 }));
                   const name = MY_ACCOUNTS[i].name;

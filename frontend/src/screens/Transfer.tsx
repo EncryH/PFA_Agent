@@ -136,8 +136,8 @@ const TITLES: Record<TransferStep, string> = {
 };
 
 export default function Transfer({
-  onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false },
-}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals }) {
+  onExit, accounts = MY_ACCOUNTS, behaviorSignals = { historyVisits: 0, verifyVisited: false }, onSuccess,
+}: { onExit: () => void; accounts?: typeof MY_ACCOUNTS; behaviorSignals?: BehaviorSignals; onSuccess?: (fromIdx: number, amount: number) => void }) {
   const [step, setStep] = useState<TransferStep>("input");
   const [account, setAccount] = useState("");
   const [bank, setBank]       = useState("");
@@ -291,6 +291,12 @@ export default function Transfer({
     const t = setTimeout(() => setFreezeSecsLeft((s) => (s !== null ? s - 1 : null)), 1000);
     return () => clearTimeout(t);
   }, [freezeSecsLeft]);
+
+  // 송금 성공 시 잔액 차감 콜백
+  useEffect(() => {
+    if (step === "success") onSuccess?.(fromIdx, parseAmt(amt));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // hold 화면 도달 시 자녀 탭에 알림 공유
   useEffect(() => {
