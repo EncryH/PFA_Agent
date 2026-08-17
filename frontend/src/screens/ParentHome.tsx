@@ -209,8 +209,8 @@ export default function ParentHome({
             onClick={() => setSpendingOpen(false)}
           />
           <div
-            className="absolute bottom-0 bg-white rounded-t-3xl px-5 pt-5 pb-8"
-            style={{ left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
           >
             <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
             <p className="text-[18px] font-bold text-gray-900 mb-1">9월 이용 금액</p>
@@ -242,8 +242,8 @@ export default function ParentHome({
             onClick={() => setSelectedProduct(null)}
           />
           <div
-            className="absolute bottom-0 bg-white rounded-t-3xl px-5 pt-5 pb-8"
-            style={{ left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
           >
             <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
             <p className="text-[20px] font-bold text-gray-900">{selectedProduct.title}</p>
