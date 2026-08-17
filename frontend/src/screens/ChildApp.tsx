@@ -14,6 +14,9 @@ import Transfer from "./Transfer";
 import Guardian from "./Guardian";
 import NotificationShade from "../shared/NotificationShade";
 import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
+import {
+  markGuardianLogViewed, openGuardianLogEntry, recordGuardianDecision,
+} from "../shared/guardianLog";
 
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
@@ -64,8 +67,29 @@ export default function ChildApp() {
   const signals: string[] = a?.signals?.length ? a.signals : DEMO_ALERT.signals;
   const conversation = a?.conversation?.length ? a.conversation : DEMO_ALERT.conversation;
 
+  // 알림을 처리하면 ansimAlert 는 지워지므로, 판단 이력은 별도 로그로 남긴다
+  // (기록 목록은 안심동행 AI 페이지 = Guardian 에서 보여준다)
+  const alertId = String(a?._ts ?? "demo-alert");
+
+  useEffect(() => {
+    if (!alert) return;
+    openGuardianLogEntry({
+      id: alertId,
+      raisedAt: a?._ts ? new Date(a._ts).toISOString() : new Date().toISOString(),
+      amount, account, bank: a?.bank ?? "", risk: a?.risk ?? "HIGH",
+      signals, fraudTypeLabel: a?.fraudTypeLabel ?? "", conversation,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertId, !!alert]);
+
+  // 상세 화면에 들어오면 '대화를 열어봤다'로 기록한다
+  useEffect(() => {
+    if (page === "alert-detail") markGuardianLogViewed(alertId);
+  }, [page, alertId]);
+
   const respond = (r: Exclude<AlertResponse, null>) => {
     setResponse(r);
+    recordGuardianDecision(alertId, r);
     setPage("home");
     localStorage.removeItem("ansimAlert");
     window.dispatchEvent(new Event("ansim-alert"));

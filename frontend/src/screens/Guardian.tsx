@@ -11,6 +11,7 @@ import {
   type IntentChatSession,
 } from "../shared/intentChat";
 import { PROTECTION_LEVELS, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
+import { fmtLogTime, useGuardianLog } from "../shared/guardianLog";
 
 type Step = "intro" | "select" | "code" | "done" | "permissions";
 
@@ -67,6 +68,9 @@ export default function Guardian({
   const [codeError, setCodeError] = useState("");
   const [isPaired, setIsPaired] = useState(() => localStorage.getItem(PAIRED_KEY) === "true");
   const [intentChats, setIntentChats] = useState<IntentChatSession[]>(() => readIntentChatSessions());
+  const guardianLog = useGuardianLog();
+  const [openLogId, setOpenLogId] = useState<string | null>(null);
+  const openLog = guardianLog.find((entry) => entry.id === openLogId) ?? null;
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const [pendingAlert, setPendingAlert] = useState<PendingAlert | null>(readPendingAlert);
   const [protectionLevel, setProtectionLevel] = useProtectionLevel();
@@ -279,6 +283,105 @@ export default function Guardian({
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 자녀 쪽 기록 — 무엇을 보고 어떻게 판단했는지 남긴다.
+              알림은 처리하면 사라지지만 판단 이력은 남아야 한다.
+              실서비스에서는 조치내역 보존(5년) 요건이 적용되는 자리. */}
+          {appRole === "child" && (
+            <div className="bg-white rounded-2xl p-5">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[14px] font-bold text-gray-900">확인 기록</p>
+                  <p className="mt-1 text-[11px] text-gray-400">어머니의 위험 거래를 확인하고 판단한 이력이에요.</p>
+                </div>
+                <span className="shrink-0 text-[12px] text-gray-400">{guardianLog.length}건</span>
+              </div>
+
+              {guardianLog.length === 0 ? (
+                <div className="rounded-xl bg-gray-50 py-8 text-center">
+                  <p className="text-[13px] text-gray-400">아직 확인한 기록이 없어요</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {guardianLog.map((entry) => {
+                    const decided = entry.decision !== null;
+                    const held = entry.decision === "held";
+                    const hasChat = entry.conversation.length > 0;
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => hasChat && setOpenLogId(entry.id)}
+                        disabled={!hasChat}
+                        className={`w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left transition-all ${
+                          hasChat ? "hover:border-[var(--ac-200)] hover:bg-[var(--ac-50)] active:scale-[0.99]" : "cursor-default"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-gray-900">
+                              {entry.fraudTypeLabel || "위험 송금 확인"}
+                            </p>
+                            <p className="mt-1 truncate text-[12px] text-gray-500">
+                              {entry.amount.toLocaleString()}원 · {entry.account}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            !decided ? "bg-gray-200 text-gray-600"
+                              : held ? "bg-amber-50 text-amber-700"
+                              : "bg-green-50 text-green-700"
+                          }`}>
+                            {!decided ? "판단 대기" : held ? "보류함" : "승인함"}
+                          </span>
+                        </div>
+
+                        {entry.signals.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {entry.signals.slice(0, 3).map((signal) => (
+                              <span key={signal} className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                                {signal}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="mt-2.5 flex flex-col gap-1 border-t border-gray-200 pt-2.5">
+                          {[
+                            ["위험 감지", fmtLogTime(entry.raisedAt)],
+                            ["AI 대화 확인", entry.viewedAt ? fmtLogTime(entry.viewedAt) : "열어보지 않음"],
+                            ["내 판단", entry.decidedAt ? `${held ? "보류" : "승인"} · ${fmtLogTime(entry.decidedAt)}` : "미처리"],
+                          ].map(([label, value]) => {
+                            const empty = value === "열어보지 않음" || value === "미처리";
+                            return (
+                              <div key={label} className="flex items-center justify-between gap-3">
+                                <span className="shrink-0 text-[11px] text-gray-400">{label}</span>
+                                <span className={`truncate text-[11px] font-medium ${empty ? "text-gray-300" : "text-gray-700"}`}>
+                                  {value}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {hasChat && (
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <p className="text-[10px] text-gray-400">
+                              부모님과 AI의 대화 {entry.conversation.length}개가 함께 보관됐어요
+                            </p>
+                            <span className="shrink-0 text-[11px] font-semibold text-[var(--ac-500)]">대화 보기 ›</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="mt-3 text-center text-[10px] text-gray-400">
+                잔액과 거래내역은 기록에도 남지 않아요
+              </p>
             </div>
           )}
 
@@ -568,6 +671,100 @@ export default function Guardian({
           <button onClick={onExit} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
             홈으로 돌아가기
           </button>
+        </div>
+      )}
+
+      {/* ── 확인 기록 상세 — 부모님과 AI가 나눈 대화 전문 ──
+           판단의 근거였던 대화를 나중에도 그대로 다시 볼 수 있어야 감사 기록이 된다. */}
+      {openLog && (
+        <div className="fixed inset-0 z-50">
+          <button
+            aria-label="닫기"
+            onClick={() => setOpenLogId(null)}
+            className="absolute inset-0 bg-black/40"
+            style={{ animation: "fade-in .2s ease-out" }}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 mx-auto flex max-h-[85vh] w-full flex-col rounded-t-3xl bg-white"
+            style={{ maxWidth: 430, animation: "sheet-up .28s cubic-bezier(.32,.72,0,1)" }}
+          >
+            <div className="shrink-0 px-5 pt-4 pb-3">
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-200" />
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[17px] font-bold text-gray-900">
+                    {openLog.fraudTypeLabel || "위험 송금 확인"}
+                  </p>
+                  <p className="mt-1 truncate text-[13px] text-gray-400">
+                    {openLog.amount.toLocaleString()}원 · {openLog.account}
+                  </p>
+                </div>
+                <button onClick={() => setOpenLogId(null)} className="shrink-0 text-gray-400 active:scale-90 transition-transform">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-6 w-6">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {openLog.signals.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {openLog.signals.map((signal) => (
+                    <span key={signal} className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600">
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto border-t border-gray-100 bg-[#fafbfe] px-4 py-4">
+              <p className="mb-3 text-[12px] font-bold text-gray-400">부모님과 AI가 나눈 대화</p>
+              <div className="flex flex-col gap-2.5">
+                {openLog.conversation.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {msg.role === "ai" && (
+                      <div className="mr-2 mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50">
+                        <img src="/ansim-ai-profile.png" alt="" className="h-full w-full object-cover" />
+                      </div>
+                    )}
+                    <div className={`max-w-[78%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
+                      msg.role === "ai"
+                        ? "rounded-tl-sm bg-white text-gray-800 border border-gray-100"
+                        : "rounded-tr-sm bg-gray-200 text-gray-800"
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-gray-100 px-5 py-4">
+              <div className="flex flex-col gap-1.5">
+                {[
+                  ["위험 감지", fmtLogTime(openLog.raisedAt)],
+                  ["AI 대화 확인", openLog.viewedAt ? fmtLogTime(openLog.viewedAt) : "열어보지 않음"],
+                  ["내 판단", openLog.decidedAt
+                    ? `${openLog.decision === "held" ? "보류" : "승인"} · ${fmtLogTime(openLog.decidedAt)}`
+                    : "미처리"],
+                ].map(([label, value]) => {
+                  const empty = value === "열어보지 않음" || value === "미처리";
+                  return (
+                    <div key={label} className="flex items-center justify-between gap-3">
+                      <span className="shrink-0 text-[12px] text-gray-400">{label}</span>
+                      <span className={`truncate text-[12px] font-medium ${empty ? "text-gray-300" : "text-gray-700"}`}>{value}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => setOpenLogId(null)}
+                className="mt-4 w-full rounded-xl bg-[var(--ac-500)] py-3.5 text-[15px] font-bold text-white active:scale-[0.98] transition-transform"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
