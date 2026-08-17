@@ -49,17 +49,38 @@ export default function App() {
     balance: i in balanceOverrides ? balanceOverrides[i] : a.balance,
   }));
 
-  const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string) => {
+  const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string, toAccount: string) => {
     const acc = liveAccounts[fromIdx];
     const current = parseAmt(acc.balance);
     const next = Math.max(0, current - amount);
-    setBalanceOverrides((prev) => ({ ...prev, [fromIdx]: next.toLocaleString("ko-KR") }));
 
     const now = new Date();
     const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
     const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
-    const row: TxnRow = { date, time, name: recipientName, memo: "이체", amount: -amount, balance: next };
-    setExtraTxns((prev) => ({ ...prev, [acc.account]: [row, ...(prev[acc.account] ?? [])] }));
+    const outRow: TxnRow = { date, time, name: recipientName, memo: "이체", amount: -amount, balance: next };
+
+    const cleanTo = toAccount.replace(/\D/g, "");
+    const toIdx = liveAccounts.findIndex((m, i) => i !== fromIdx && cleanTo.length >= 8 && cleanTo.includes(m.account.slice(0, 8)));
+
+    setBalanceOverrides((prev) => {
+      const updated = { ...prev, [fromIdx]: next.toLocaleString("ko-KR") };
+      if (toIdx !== -1) {
+        const toCurrent = parseAmt(liveAccounts[toIdx].balance);
+        updated[toIdx] = (toCurrent + amount).toLocaleString("ko-KR");
+      }
+      return updated;
+    });
+
+    setExtraTxns((prev) => {
+      const updated = { ...prev, [acc.account]: [outRow, ...(prev[acc.account] ?? [])] };
+      if (toIdx !== -1) {
+        const toAcc = liveAccounts[toIdx];
+        const toNext = parseAmt(toAcc.balance) + amount;
+        const inRow: TxnRow = { date, time, name: `${acc.name}에서 이체`, memo: "이체", amount, balance: toNext };
+        updated[toAcc.account] = [inRow, ...(prev[toAcc.account] ?? [])];
+      }
+      return updated;
+    });
   };
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
@@ -114,14 +135,19 @@ export default function App() {
                 onEarlyClosure={(amount) => {
                   setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: s.savingsEarlyClose + 1 }));
                   setClosedAccounts((prev) => new Set(prev).add(savingsIdx));
-                  setBalanceOverrides((prev) => {
-                    const mainCurrent = parseAmt(liveAccounts[0].balance);
-                    return {
-                      ...prev,
-                      [savingsIdx]: "0",
-                      [0]: (mainCurrent + amount).toLocaleString("ko-KR"),
-                    };
-                  });
+                  const mainCurrent = parseAmt(liveAccounts[0].balance);
+                  const mainNext = mainCurrent + amount;
+                  setBalanceOverrides((prev) => ({
+                    ...prev,
+                    [savingsIdx]: "0",
+                    [0]: mainNext.toLocaleString("ko-KR"),
+                  }));
+
+                  const now = new Date();
+                  const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+                  const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+                  const row: TxnRow = { date, time, name: `${liveAccounts[savingsIdx].name} 해지`, memo: "해지입금", amount, balance: mainNext };
+                  setExtraTxns((prev) => ({ ...prev, [liveAccounts[0].account]: [row, ...(prev[liveAccounts[0].account] ?? [])] }));
                 }}
               />
             )}
