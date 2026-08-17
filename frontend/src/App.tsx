@@ -17,8 +17,10 @@ import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
 import Verify from "./screens/Verify";
 import IncomingCall from "./screens/IncomingCall";
+import IncomingMessage from "./screens/IncomingMessage";
 import NotificationShade from "./shared/NotificationShade";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
+import { DEMO_MESSAGES } from "./shared/messages";
 
 type ParentPage = "home" | "guardian" | "transfer" | "history" | "verify";
 
@@ -30,16 +32,25 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [demoIdx, setDemoIdx] = useState(0);
   const [activeCall, setActiveCall] = useState<typeof DEMO_SCENARIOS[number] | null>(null);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
 
   const triggerDemoCall = () => {
-    if (activeCall) return; // 이미 전화 중이면 무시
+    if (activeCall) return;
     setActiveCall(DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length]);
     setDemoIdx((i) => (i + 1) % DEMO_SCENARIOS.length);
   };
 
+  const triggerDemoMessage = () => {
+    if (activeMessage) return;
+    setActiveMessage(DEMO_MESSAGES[msgIdx % DEMO_MESSAGES.length]);
+    setMsgIdx((i) => (i + 1) % DEMO_MESSAGES.length);
+  };
+
   const scenarioLabel = DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length].label;
+  const messageLabel  = DEMO_MESSAGES[msgIdx % DEMO_MESSAGES.length].sender;
 
   return (
     <>
@@ -101,46 +112,75 @@ export default function App() {
 
         {role === "parent" && showNotifications && <NotificationShade role="parent" onClose={() => setShowNotifications(false)} />}
 
-        {/* 수신 전화 화면 — 앱 컨테이너 위를 완전히 덮는다 */}
-        {activeCall && <IncomingCall call={activeCall} onDismiss={() => setActiveCall(null)} />}
+        {/* 수신 전화 / 수신 문자 배너 */}
+        {activeCall    && <IncomingCall    call={activeCall}       onDismiss={() => setActiveCall(null)} />}
+        {activeMessage && <IncomingMessage message={activeMessage} onDismiss={() => setActiveMessage(null)} />}
       </div>
 
-      {/* ── 앱 외부 전화 시뮬레이션 버튼 (데스크톱 뷰 기준 앱 오른쪽) ── */}
+      {/* ── 앱 외부 시뮬레이션 버튼 (데스크톱 뷰 기준 앱 오른쪽) ── */}
       <div
-        className="fixed z-50 flex flex-col items-center gap-2"
+        className="fixed z-50 flex flex-col items-center gap-5"
         style={{ left: 'calc(50% + 232px)', top: '50%', transform: 'translateY(-50%)' }}
       >
-        {/* 울리는 링 효과 */}
-        <div className="relative flex items-center justify-center">
+        {/* 전화 수신 버튼 */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative flex items-center justify-center">
+            {!activeCall && (
+              <>
+                <div className="absolute w-20 h-20 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '1.4s' }} />
+                <div className="absolute w-16 h-16 rounded-full bg-green-500/15 animate-ping" style={{ animationDuration: '1.4s', animationDelay: '0.2s' }} />
+              </>
+            )}
+            <button
+              onClick={triggerDemoCall}
+              disabled={!!activeCall}
+              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-90 ${
+                activeCall ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 hover:scale-105'
+              }`}
+              style={{ boxShadow: activeCall ? 'none' : '0 4px 24px rgba(34,197,94,0.5)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="white" style={{ width: 26, height: 26 }}>
+                <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+              </svg>
+            </button>
+          </div>
           {!activeCall && (
-            <>
-              <div className="absolute w-20 h-20 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '1.4s' }} />
-              <div className="absolute w-16 h-16 rounded-full bg-green-500/15 animate-ping" style={{ animationDuration: '1.4s', animationDelay: '0.2s' }} />
-            </>
+            <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl px-3 py-1.5 text-center" style={{ minWidth: 88 }}>
+              <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest">전화</p>
+              <p className="text-white text-[11px] font-semibold mt-0.5 leading-tight">{scenarioLabel}</p>
+            </div>
           )}
-          <button
-            onClick={triggerDemoCall}
-            disabled={!!activeCall}
-            className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-90 ${
-              activeCall
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600 hover:scale-105'
-            }`}
-            style={{ boxShadow: activeCall ? 'none' : '0 4px 24px rgba(34,197,94,0.5)' }}
-          >
-            <svg viewBox="0 0 24 24" fill="white" style={{ width: 26, height: 26 }}>
-              <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
-            </svg>
-          </button>
         </div>
 
-        {/* 다음 시나리오 레이블 */}
-        {!activeCall && (
-          <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl px-3 py-1.5 text-center" style={{ minWidth: 90 }}>
-            <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest">다음 시나리오</p>
-            <p className="text-white text-[11px] font-semibold mt-0.5 leading-tight">{scenarioLabel}</p>
+        {/* 문자 수신 버튼 */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative flex items-center justify-center">
+            {!activeMessage && (
+              <>
+                <div className="absolute w-20 h-20 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '1.8s' }} />
+                <div className="absolute w-16 h-16 rounded-full bg-blue-500/15 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.3s' }} />
+              </>
+            )}
+            <button
+              onClick={triggerDemoMessage}
+              disabled={!!activeMessage}
+              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-90 ${
+                activeMessage ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'
+              }`}
+              style={{ boxShadow: activeMessage ? 'none' : '0 4px 24px rgba(59,130,246,0.5)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="white" style={{ width: 26, height: 26 }}>
+                <path d="M20 2H4a2 2 0 00-2 2v16l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
+              </svg>
+            </button>
           </div>
-        )}
+          {!activeMessage && (
+            <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl px-3 py-1.5 text-center" style={{ minWidth: 88 }}>
+              <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest">문자</p>
+              <p className="text-white text-[11px] font-semibold mt-0.5 leading-tight">{messageLabel}</p>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
