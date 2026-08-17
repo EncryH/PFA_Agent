@@ -104,7 +104,7 @@ export default function App() {
                 onTransfer={() => { setTransferFromIdx(savingsIdx); setPage("transfer"); }}
                 isClosed={closedAccounts.has(savingsIdx)}
                 onEarlyClosure={(amount) => {
-                  setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: true }));
+                  setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: s.savingsEarlyClose + 1 }));
                   setClosedAccounts((prev) => new Set(prev).add(savingsIdx));
                   setBalanceOverrides((prev) => {
                     const mainCurrent = parseAmt(liveAccounts[0].balance);

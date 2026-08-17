@@ -3,11 +3,11 @@
 export interface BehaviorSignals {
   historyVisits: number       // 잔액/거래내역 조회 횟수 (세션 내 누적)
   verifyVisited: boolean      // 상대방 검증 탭 방문 여부
-  savingsEarlyClose: boolean  // 적금/예금 중도해지 시도 여부
+  savingsEarlyClose: number   // 적금·예금 중도해지 횟수 (0 = 없음)
 }
 
 export const INITIAL_SIGNALS: BehaviorSignals = {
   historyVisits: 0,
   verifyVisited: false,
-  savingsEarlyClose: false,
+  savingsEarlyClose: 0,
 }

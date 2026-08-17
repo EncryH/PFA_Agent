@@ -294,6 +294,15 @@ export default function Transfer({
     return () => clearTimeout(t);
   }, [freezeSecsLeft]);
 
+  // D등급 카운트다운 종료 → 자동 홀드 (우회 불가)
+  useEffect(() => {
+    if (freezeSecsLeft !== 0 || riskResult?.grade !== "D") return;
+    setRiskLabels((prev) => prev.length ? prev : (riskResult?.reasons ?? []));
+    const t = setTimeout(() => setStep("hold"), 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freezeSecsLeft]);
+
   // 송금 성공 시 잔액 차감 콜백
   useEffect(() => {
     if (step === "success") onSuccess?.(fromIdx, parseAmt(amt));
@@ -665,7 +674,7 @@ export default function Transfer({
           <RiskGradeCard
             result={riskResult}
             freezeSecsLeft={freezeSecsLeft}
-            onSkipFreeze={() => setFreezeSecsLeft(0)}
+            onSkipFreeze={() => { setRiskLabels((prev) => prev.length ? prev : (riskResult?.reasons ?? [])); setStep("hold"); }}
             onProceed={() => {
               if (riskResult.grade === "A" || riskResult.grade === "B") {
                 setStep("success");

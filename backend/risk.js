@@ -9,10 +9,14 @@ export function scoreRisk(payload) {
   let transactionScore = 0
 
   // ── 행동 감지 ──────────────────────────────────────────────────
-  // 적금 중도해지 — 단독으로도 강한 경보 신호 (보이스피싱 전형 패턴)
-  if (behavior.savingsEarlyClose) {
-    behaviorScore += 35
-    reasons.push('적금 중도 해지 후 즉시 이체')
+  // 적금·예금 중도해지 — 해지 횟수에 따라 점수 누적 (보이스피싱 전형 패턴)
+  const closureCount = Number(behavior.savingsEarlyClose ?? 0)
+  if (closureCount >= 2) {
+    behaviorScore += 80
+    reasons.push('예·적금 복수 중도해지 후 즉시 이체')
+  } else if (closureCount === 1) {
+    behaviorScore += 55
+    reasons.push('적금·예금 중도해지 직후 이체 시도 — 보이스피싱 전형 패턴')
   }
 
   const visits = Number(behavior.historyVisits ?? 0)
