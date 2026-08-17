@@ -41,3 +41,38 @@ export async function runAgentLayer(layer, input = {}, dependencies = {}) {
   if (!runner) throw new Error(`지원하지 않는 안심동행 단계입니다: ${layer}`);
   return runner(input, dependencies);
 }
+
+/**
+ * 등급 경계 — 계층별 점수를 합산한 뒤 적용하는 정책값.
+ * 각 에이전트는 점수만 내고, 등급으로 바꾸는 책임은 여기에만 둔다.
+ */
+const GRADES = Object.freeze([
+  { min: 76, grade: "D", gradeLabel: "위험", gradeColor: "danger"  },
+  { min: 51, grade: "C", gradeLabel: "경계", gradeColor: "warning" },
+  { min: 26, grade: "B", gradeLabel: "주의", gradeColor: "caution" },
+  { min:  0, grade: "A", gradeLabel: "안전", gradeColor: "safe"    },
+]);
+
+/**
+ * 2층 행동 감지 + 3층 거래 검사를 합산해 A~D 등급을 산출한다.
+ *
+ * 두 계층은 각자 점수와 근거만 내고, 결합과 판정은 이 함수가 담당한다.
+ * 4층 의도 분석은 여기서 호출하지 않는다 — 대화가 필요하므로 별도 흐름이다.
+ */
+export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
+  const behaviorResult = runBehaviorDetectionAgent(behavior);
+  const transactionResult = runTransactionRiskAgent(transaction);
+
+  const score = Math.min(100, behaviorResult.score + transactionResult.score);
+  const { grade, gradeLabel, gradeColor } = GRADES.find(({ min }) => score >= min);
+
+  return {
+    score,
+    grade,
+    gradeLabel,
+    gradeColor,
+    behaviorScore: behaviorResult.score,
+    transactionScore: transactionResult.score,
+    reasons: [...behaviorResult.reasons, ...transactionResult.reasons],
+  };
+}
