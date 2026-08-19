@@ -120,7 +120,11 @@ test("의도 분석은 개인정보를 마스킹하고 근거·유형·점수를
     assert.equal(result.analysis.impersonation, "bank");
     assert.equal(result.analysis.attack_stage, "money_request");
     assert.deepEqual(result.analysis.evidence_phrases, ["보증금을 보내래요"]);
-    assert.equal(result.analysis.official_content.status, "not_configured");
+    // 사기 유형이 확정되면 그 유형에 맞는 금감원 사례·영상이 붙는다
+    assert.equal(result.analysis.official_content.status, "curated");
+    assert.equal(result.analysis.official_content.fraud_type, "loan_advance_fee");
+    const kinds = result.analysis.official_content.items.map((item) => item.kind);
+    assert.deepEqual(kinds, ["video", "case_board"]);
     assert.ok(result.analysis.retrieval.fraud_evidence.length > 0);
     assert.ok(result.analysis.retrieval.normal_evidence.length > 0);
     assert.equal(result.risk.level, "HIGH");

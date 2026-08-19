@@ -14,6 +14,28 @@ export type TransferContext = {
   callInProgress?: boolean;
 };
 
+/** 사기 유형별로 미리 큐레이션한 공식 자료 — 금감원 사례·영상 */
+export type OfficialContentItem =
+  | {
+      kind: "video";
+      headline: string;
+      title: string;
+      duration: string;
+      source: string;
+      videoId: string;
+      thumbnailUrl: string;
+      embedUrl: string;
+      watchUrl: string;
+    }
+  | { kind: "case_board"; title: string; source: string; url: string };
+
+export type OfficialContent = {
+  status: "curated" | "not_applicable" | "not_configured";
+  curated_at?: string;
+  fraud_type?: string;
+  items: OfficialContentItem[];
+};
+
 export type Verdict = {
   /** 다음에 보여줄 AI 메시지 */
   message: string;
@@ -38,7 +60,7 @@ export type Verdict = {
       fraud_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
       normal_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
     };
-    official_content: { status: string; items: unknown[] };
+    official_content: OfficialContent;
   };
   /** LLM 장애로 사전 정의 시나리오를 쓴 경우 */
   fallback: boolean;

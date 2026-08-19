@@ -6,6 +6,9 @@
 
 const BASE = process.argv[2] || "http://localhost:5173";
 
+// 판정 규칙과 같은 상한을 쓴다 (signals.js MAX_TURNS)
+const MAX_TURNS = 4;
+
 const u = (text) => ({ role: "user", text });
 const a = (text) => ({ role: "ai", text });
 
@@ -93,8 +96,11 @@ for (const c of CASES) {
   let messages = [];
   let last = null;
 
-  for (let i = 0; i < c.turns.length; i++) {
-    messages = [...messages, ...c.turns[i]];
+  // 결론이 날 때까지 대화를 끝까지 이어간다.
+  // 규칙상 최소 질문 수를 채워야 판정이 나오므로, 대본이 끝나면
+  // 새 정보를 주지 않는 중립 답변("네")으로 남은 턴을 채운다.
+  for (let i = 0; i < MAX_TURNS; i++) {
+    messages = [...messages, ...(c.turns[i] ?? [u("네")])];
     last = await post({
       transfer: { amount: c.amount, account: "356-0912-4421", bank: "기업은행" },
       messages,

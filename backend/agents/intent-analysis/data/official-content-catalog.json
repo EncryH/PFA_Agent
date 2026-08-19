@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "curated_at": "2026-08-17",
+  "sources": [
+    {
+      "key": "fss_phishing_keeper",
+      "name": "금융감독원 보이스피싱지킴이",
+      "base": "https://www.fss.or.kr",
+      "boards": {
+        "damage_cases": "/fss/bbs/B0000059/list.do?menuNo=200359",
+        "experience_hall": "/fss/bbs/B0000203/list.do?menuNo=200686",
+        "prevention_best": "/fss/cvpl/voicePrevntCase/list.do?menuNo=200360",
+        "content_library": "/fss/bbs/B0000062/list.do?menuNo=200658"
+      },
+      "license": "공공저작물 — 출처 표시 후 이용",
+      "refresh": "주 1회 오프라인 스크립트로 갱신"
+    },
+    {
+      "key": "fss_youtube",
+      "name": "금융감독원 공식 유튜브",
+      "api": "YouTube Data API v3 playlistItems.list (1 unit/call)",
+      "license": "iframe 임베드만 허용 — 재호스팅 금지"
+    }
+  ],
+  "byFraudType": {
+    "institution_impersonation": {
+      "headline": "검찰·금감원을 사칭한 실제 통화예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "보이스피싱 상습범, 바로 이 목소리를 들어보세요",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "기관사칭 피해사례 보기"
+    },
+    "loan_advance_fee": {
+      "headline": "대출을 미끼로 먼저 돈을 받아간 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "대출을 빙자한 사기범의 실제 통화",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "대출 사기 피해사례 보기"
+    },
+    "refund_advance_fee": {
+      "headline": "환급·당첨금을 미끼로 한 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "환급을 빙자한 사기범의 실제 통화",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "환급 사기 피해사례 보기"
+    },
+    "family_or_acquaintance_impersonation": {
+      "headline": "가족을 사칭한 메신저피싱 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "가족을 사칭한 메신저피싱",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "메신저피싱 피해사례 보기"
+    },
+    "smishing": {
+      "headline": "문자와 링크로 시작된 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "문자 한 통에서 시작되는 스미싱",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "content_library",
+      "caseLabel": "스미싱 예방 자료 보기"
+    },
+    "malicious_app": {
+      "headline": "원격제어 앱을 설치하게 만든 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "원격제어 앱을 이용한 보이스피싱",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "악성 앱 피해사례 보기"
+    },
+    "personal_information_phishing": {
+      "headline": "개인정보를 먼저 빼낸 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "개인정보를 노린 보이스피싱",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "개인정보 피싱 사례 보기"
+    },
+    "investment_fraud": {
+      "headline": "수익을 보장한다며 접근한 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "리딩방·투자 사기의 실제 수법",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "content_library",
+      "caseLabel": "투자 사기 예방 자료 보기"
+    },
+    "job_or_mission_fraud": {
+      "headline": "부업·미션을 미끼로 한 사례예요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "부업을 가장한 미션형 사기",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "content_library",
+      "caseLabel": "부업 사기 예방 자료 보기"
+    },
+    "other": {
+      "headline": "비슷한 사기 사례를 확인해 보세요",
+      "video": {
+        "id": "gtNpL6hU8hw",
+        "title": "보이스피싱 사기범의 실제 목소리",
+        "duration": "2:14",
+        "source": "금융감독원"
+      },
+      "caseBoard": "damage_cases",
+      "caseLabel": "피해사례 보기"
+    }
+  }
+}

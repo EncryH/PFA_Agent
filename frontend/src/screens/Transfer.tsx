@@ -6,7 +6,7 @@
 // 자녀 앱과는 localStorage("ansimAlert") 로만 연결된다.
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { takeTurn, FIRST_QUESTION, type ChatMessage } from "../api/guardian";
+import { takeTurn, FIRST_QUESTION, type ChatMessage, type OfficialContent } from "../api/guardian";
 import { BankAvatar, BankLogo, PageHeader, RECIPIENT_ICONS, shortBank } from "../shared/ui";
 import {
   MY_ACCOUNTS, KNOWN_RECIPIENTS, BLACKLISTED_ACCOUNTS, BANKS, BROKERAGES, DEMO_ALERT, lookupHolder,
@@ -190,6 +190,10 @@ export default function Transfer({
   const [riskLabels, setRiskLabels] = useState<string[]>([]);
   const [fraudTypeLabel, setFraudTypeLabel] = useState("");
   const [analysisHold, setAnalysisHold] = useState(false);
+  // 사기 유형이 확정되면 금감원 사례·영상을 함께 보여준다 (서버가 유형별로 미리 매핑)
+  const [official, setOfficial] = useState<OfficialContent | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
+  const [resumeNotice, setResumeNotice] = useState(false);   // 저장한 상담을 다시 연 상태
   const [intentSessionId, setIntentSessionId] = useState<string | null>(null);
   const [goldenChecks, setGoldenChecks] = useState([false, false, false]);
 
@@ -250,16 +254,20 @@ export default function Transfer({
     setName(session.transfer.name);
     setAmt(session.transfer.amount);
     setFromIdx(Math.min(session.transfer.fromIdx, accounts.length - 1));
-    setMessages([
-      ...session.messages,
-      { role: "ai", text: "이어서 확인해 드릴게요. 궁금한 점이나 달라진 상황을 말씀해 주세요." },
-    ]);
+    // 이어보기 안내는 대화 기록이 아니라 시스템 알림이다.
+    // 메시지로 넣으면 결론·공식 자료보다 뒤에 붙어 순서가 뒤집힌다.
+    setMessages(session.messages);
+    setResumeNotice(true);
     setTurnCount(session.turnCount);
     setRiskLabels(session.riskLabels);
     setFraudTypeLabel(session.fraudTypeLabel);
     setFallback(session.fallback);
-    setChatDone(false);
-    setAnalysisHold(false);
+    // 분석이 끝난 상담이면 결론·공식 자료를 그대로 되살린다.
+    // 대화를 이어가더라도 앞서 안내받은 내용이 사라지면 안 된다.
+    setChatDone(session.analysisDone ?? false);
+    setAnalysisHold(session.analysisHold ?? false);
+    setOfficial(session.official ?? null);
+    setPlayingVideo(null);
     setInput("");
     setStep("ai-chat");
   }, [resumeSessionId, accounts.length, onResumeHandled]);
@@ -395,7 +403,7 @@ export default function Transfer({
     setStep("input");
     setAccount(""); setBank(""); setName(""); setAmt(""); setBankOpen(false);
     setMessages([]); setInput(""); setTurnCount(0); setChatDone(false);
-    setIsTyping(false); setFallback(false); setRiskLabels([]); setFraudTypeLabel(""); setAnalysisHold(false);
+    setIsTyping(false); setFallback(false); setRiskLabels([]); setFraudTypeLabel(""); setAnalysisHold(false); setOfficial(null); setPlayingVideo(null); setResumeNotice(false);
     setIntentSessionId(null);
     setGoldenChecks([false, false, false]);
     setBackPresses(0); setRiskResult(null); setCheckPhase("analyzing"); setAnalyzeStep(0);
@@ -419,6 +427,9 @@ export default function Transfer({
       riskLabels,
       fraudTypeLabel,
       fallback,
+      analysisDone: chatDone,
+      analysisHold,
+      official,
     };
     saveIntentChatSession(session);
     setIntentSessionId(session.id);
@@ -473,6 +484,7 @@ export default function Transfer({
     setInput("");
     setTurnCount(turn);
     setIsTyping(true);
+    setResumeNotice(false);   // 새 답변이 들어오면 이어보기 안내는 내린다
 
     const verdict = await takeTurn(
       {
@@ -491,6 +503,7 @@ export default function Transfer({
     if (suspectedType && !["none", "unknown"].includes(suspectedType.code)) {
       setFraudTypeLabel(suspectedType.label);
     }
+    setOfficial(verdict.analysis?.official_content ?? null);
     setMessages((p) => [...p, { role: "ai", text: verdict.message }]);
 
     // 4단계 의도 분석 결과까지만 표시한다. 5단계 가족 확인은 이후 별도로 연결한다.
@@ -1012,6 +1025,77 @@ export default function Transfer({
                   {[0, 150, 300].map((d) => <div key={d} className="w-2 h-2 rounded-full bg-[var(--ac-300)] animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
                 </div>
               </div>
+            )}
+            {/* 공식 사례·영상 — 금감원 자료. 사기 유형이 확정됐을 때만 붙는다 */}
+            {chatDone && analysisHold && official?.status === "curated" && (
+              <div className="ml-10 mr-2 rounded-2xl border border-gray-100 bg-white p-4">
+                <div className="flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" fill="var(--ac-500)" className="h-[18px] w-[18px]"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm6 3.5v7l6-3.5-6-3.5z" /></svg>
+                  <p className="text-[14px] font-bold text-gray-900">실제로 있었던 일</p>
+                  <span className="ml-auto text-[11px] text-gray-400">금융감독원</span>
+                </div>
+
+                {official.items.map((item) =>
+                  item.kind === "video" ? (
+                    <div key={item.videoId}>
+                      <p className="mt-2 text-[12px] leading-relaxed text-gray-500">{item.headline}</p>
+
+                      {playingVideo === item.videoId ? (
+                        // 앱을 벗어나지 않고 그 자리에서 본다
+                        <div className="mt-3 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16 / 9" }}>
+                          <iframe
+                            src={`${item.embedUrl}&autoplay=1`}
+                            title={item.title}
+                            allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+                            allowFullScreen
+                            className="h-full w-full border-0"
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setPlayingVideo(item.videoId)}
+                          className="group mt-3 w-full text-left active:scale-[0.99] transition-transform"
+                        >
+                          {/* 유튜브 카드처럼 16:9 전체 폭 — 고령 사용자가 보기 쉽게 크게 */}
+                          <span className="relative block w-full overflow-hidden rounded-xl bg-gray-900" style={{ aspectRatio: "16 / 9" }}>
+                            <img
+                              src={item.thumbnailUrl}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = "none"; }}
+                            />
+                            <span className="absolute inset-0 bg-black/15" />
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/65 shadow-lg transition-transform duration-200 group-hover:scale-110">
+                                <svg viewBox="0 0 24 24" fill="white" className="ml-1 h-7 w-7"><path d="M8 5v14l11-7z" /></svg>
+                              </span>
+                            </span>
+                            <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                              {item.duration}
+                            </span>
+                          </span>
+                          <span className="mt-2.5 block text-[15px] font-bold leading-snug text-gray-900">{item.title}</span>
+                          <span className="mt-1 block text-[12px] text-gray-400">{item.source} 공식 영상</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <a
+                      key={item.url} href={item.url} target="_blank" rel="noreferrer"
+                      className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-[14px] font-semibold text-gray-700 active:scale-[0.99] transition-transform"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></svg>
+                      {item.title}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ml-auto h-4 w-4 text-gray-300"><path d="M9 6l6 6-6 6" /></svg>
+                    </a>
+                  )
+                )}
+              </div>
+            )}
+            {resumeNotice && (
+              <p className="mx-2 rounded-xl bg-gray-50 px-4 py-2.5 text-center text-[12px] leading-relaxed text-gray-500">
+                저장해 두신 상담이에요. 궁금한 점이나 달라진 상황을 말씀해 주세요.
+              </p>
             )}
             <div ref={chatEndRef} />
           </div>

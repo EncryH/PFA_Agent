@@ -1,3 +1,5 @@
+import type { OfficialContent } from "../api/guardian";
+
 export type StoredChatMessage = { role: "ai" | "user"; text: string };
 
 export type IntentChatSession = {
@@ -17,6 +19,14 @@ export type IntentChatSession = {
   riskLabels: string[];
   fraudTypeLabel: string;
   fallback: boolean;
+  /**
+   * 분석이 끝난 상담이면 결론과 함께 보여준 공식 자료(사례·영상)까지 남긴다.
+   * 상담 기록은 '무엇을 안내받았는지'가 그대로 보존돼야 나중에 다시 확인할 수 있다.
+   * 예전 스키마로 저장된 상담에는 없을 수 있으므로 선택 항목이다.
+   */
+  analysisDone?: boolean;
+  analysisHold?: boolean;
+  official?: OfficialContent | null;
 };
 
 const STORAGE_KEY = "ansimIntentChatsV1";
