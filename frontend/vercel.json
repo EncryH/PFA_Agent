@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/intent.js": {
+      "includeFiles": "../backend/agents/intent-analysis/data/processed/runtime/**",
+      "maxDuration": 30
+    }
+  }
+}

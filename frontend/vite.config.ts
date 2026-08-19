@@ -49,45 +49,13 @@ function backendApi(apiKey: string): Plugin {
 }
 
 // 더치트 mock API — POST /api/thecheat/check { query: string }
-// 실제 더치트 API는 기관 발급 전용이므로 MVP용 임의 데이터셋으로 대체한다.
+// 데이터·조회 로직은 backend/thecheat.js 에 있다 — Vercel 서버리스 함수(frontend/api/thecheat/check.js)와
+// 같은 모듈을 쓰기 때문에, dev 서버 프록시인 여기서는 그 모듈을 불러다 감싸기만 한다.
 function thecheatMockApi(): Plugin {
-  type Entry = { reportCount: number; scamTypes: string[]; lastReported: string }
-  const BLACKLIST: Record<string, Entry> = {
-    "01012345678": { reportCount: 14, scamTypes: ["기관사칭", "보이스피싱"], lastReported: "2025-11-03" },
-    "01098765432": { reportCount: 6,  scamTypes: ["대출사기"],              lastReported: "2025-10-28" },
-    "07012341234": { reportCount: 29, scamTypes: ["보이스피싱", "기관사칭"], lastReported: "2025-11-15" },
-    "01055556666": { reportCount: 3,  scamTypes: ["스미싱"],                lastReported: "2025-09-14" },
-    "01099990000": { reportCount: 11, scamTypes: ["투자사기"],              lastReported: "2025-11-01" },
-    "1104421783":  { reportCount: 7,  scamTypes: ["보이스피싱"],            lastReported: "2025-10-10" },
-    "1566XXXX":    { reportCount: 2,  scamTypes: ["기관사칭"],              lastReported: "2025-08-22" },
-    "kb-safe.com":      { reportCount: 31, scamTypes: ["피싱사이트"],       lastReported: "2025-11-20" },
-    "shinhan-auth.net": { reportCount: 18, scamTypes: ["피싱사이트"],       lastReported: "2025-11-12" },
-    "hana-secure.co":   { reportCount: 9,  scamTypes: ["피싱사이트"],       lastReported: "2025-10-30" },
-    "woori-verify.com": { reportCount: 24, scamTypes: ["피싱사이트"],       lastReported: "2025-11-18" },
-    "bank-confirm.net": { reportCount: 15, scamTypes: ["피싱사이트", "스미싱"], lastReported: "2025-11-05" },
-    "secure-login.kr":  { reportCount: 42, scamTypes: ["피싱사이트"],       lastReported: "2025-11-22" },
-    "kbstar-verify.com":{ reportCount: 8,  scamTypes: ["피싱사이트"],       lastReported: "2025-10-15" },
-  }
-
-  function lookup(query: string): Entry | null {
-    const clean = query.replace(/[-\s]/g, "")
-    // 숫자번호: 6자리 이상일 때만 매칭 (짧은 입력의 오탐 방지)
-    if (/^\d+$/.test(clean) && clean.length >= 6) {
-      return BLACKLIST[clean] ?? null
-    }
-    // 도메인: 점(.)이 포함된 경우에만 매칭
-    if (query.includes(".")) {
-      const lower = query.toLowerCase()
-      for (const [k, v] of Object.entries(BLACKLIST)) {
-        if (k.includes(".") && lower.includes(k)) return v
-      }
-    }
-    return null
-  }
-
   return {
     name: 'thecheat-mock-api',
     configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/thecheat.js')).href
       server.middlewares.use('/api/thecheat/check', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         if (req.method !== 'POST') {
@@ -98,7 +66,8 @@ function thecheatMockApi(): Plugin {
           const chunks: Buffer[] = []
           for await (const c of req) chunks.push(c as Buffer)
           const { query } = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
-          const hit = lookup(String(query ?? ''))
+          const { lookupThecheat } = await import(handlerPath)
+          const hit = lookupThecheat(String(query ?? ''))
           res.statusCode = 200
           res.end(JSON.stringify({
             data: hit
@@ -145,10 +114,12 @@ function riskScoreApi(): Plugin {
 // 주식 시세 프록시 — GET /api/stocks?symbols=005930.KS,^KS11,...
 // Yahoo Finance 차트 API는 CORS 헤더가 없어 브라우저에서 직접 호출이 막힌다.
 // 그래서 개발 서버(Node)가 대신 호출해 결과만 같은 origin 으로 돌려준다. API 키 불필요.
+// 실제 조회 로직은 backend/stocks.js — Vercel 서버리스 함수(frontend/api/stocks.js)와 공유한다.
 function stockQuoteApi(): Plugin {
   return {
     name: 'ansim-stock-quote-api',
     configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/stocks.js')).href
       server.middlewares.use('/api/stocks', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         try {
@@ -160,26 +131,10 @@ function stockQuoteApi(): Plugin {
             return res.end(JSON.stringify({ error: 'symbols query param required' }))
           }
 
-          const quotes = await Promise.all(symbols.map(async (symbol) => {
-            try {
-              const r = await fetch(
-                `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
-                { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' } },
-              )
-              if (!r.ok) throw new Error(`upstream ${r.status}`)
-              const data = await r.json() as any
-              const meta = data?.chart?.result?.[0]?.meta
-              const price = meta?.regularMarketPrice
-              const prevClose = meta?.chartPreviousClose ?? meta?.previousClose
-              if (typeof price !== 'number' || typeof prevClose !== 'number') throw new Error('no data')
-              return { symbol, ok: true, price, changePct: ((price - prevClose) / prevClose) * 100 }
-            } catch (e) {
-              return { symbol, ok: false, error: (e as Error).message }
-            }
-          }))
-
+          const { fetchStockQuotes } = await import(handlerPath)
+          const result = await fetchStockQuotes(symbols)
           res.statusCode = 200
-          res.end(JSON.stringify({ quotes, fetchedAt: Date.now() }))
+          res.end(JSON.stringify(result))
         } catch (e) {
           console.error('[ansim-stock-quote-api]', e)
           res.statusCode = 502
