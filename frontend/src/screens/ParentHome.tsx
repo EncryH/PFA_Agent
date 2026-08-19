@@ -30,6 +30,9 @@ type ProductDetail = {
   desc: string;
   details: { label: string; value: string }[];
   tagline: string;
+  /** deposit·savings = 신청하면 입출금 계좌에서 즉시 이체돼요. loan = 심사 신청만 접수돼요. */
+  kind: "deposit" | "savings" | "loan";
+  minAmount?: number;
 };
 
 const PRODUCT_DETAILS: Record<string, ProductDetail> = {
@@ -42,6 +45,8 @@ const PRODUCT_DETAILS: Record<string, ProductDetail> = {
       { label: "최소금액", value: "100만원" },
     ],
     tagline: "예치금을 안전하게 운용하세요",
+    kind: "deposit",
+    minAmount: 1_000_000,
   },
   "내일채움 적금": {
     title: "내일채움 적금",
@@ -52,6 +57,8 @@ const PRODUCT_DETAILS: Record<string, ProductDetail> = {
       { label: "납입금액", value: "월 30만원부터" },
     ],
     tagline: "매월 꾸준히 모아가세요",
+    kind: "savings",
+    minAmount: 300_000,
   },
   "안심 신용대출": {
     title: "안심 신용대출",
@@ -62,6 +69,7 @@ const PRODUCT_DETAILS: Record<string, ProductDetail> = {
       { label: "상환방식", value: "원리금균등" },
     ],
     tagline: "급할 때 빠르게 신청하세요",
+    kind: "loan",
   },
   "주택청약종합저축": {
     title: "주택청약종합저축",
@@ -72,6 +80,8 @@ const PRODUCT_DETAILS: Record<string, ProductDetail> = {
       { label: "최소납입", value: "월 2만원부터" },
     ],
     tagline: "내 집 마련의 첫걸음",
+    kind: "savings",
+    minAmount: 20_000,
   },
 };
 
@@ -83,23 +93,43 @@ const SPENDING_BREAKDOWN = [
 const SPENDING_TOTAL = SPENDING_BREAKDOWN.reduce((s, x) => s + x.amount, 0);
 
 export default function ParentHome({
-  onTransfer, onGuardian, onAccount, onVerify,
+  onTransfer, onGuardian, onAccount, onVerify, onLimitIncrease,
   onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS, largeText,
+  onSubscribe, openProductKey, onProductOpened,
 }: {
   onTransfer: (fromIdx: number) => void;
   onGuardian: () => void;
   onAccount: (i: number) => void;
   onVerify: () => void;
+  onLimitIncrease: () => void;
   onAllAccounts?: () => void;
   onMonthlyDetail?: () => void;
   accounts?: typeof MY_ACCOUNTS;
   largeText: boolean;
+  /** 예금·적금 신청 확정 시 입출금 계좌에서 실제로 돈을 빼는 건 App 이 담당한다. */
+  onSubscribe: (amount: number, productTitle: string) => void;
+  /** 검색에서 특정 상품을 바로 열 때 App 이 넘겨준다. */
+  openProductKey?: string | null;
+  onProductOpened?: () => void;
 }) {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [spendingOpen, setSpendingOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
+  const [applyStep, setApplyStep] = useState<"detail" | "amount" | "done">("detail");
+  const [applyAmount, setApplyAmount] = useState("");
+
+  useEffect(() => {
+    if (!openProductKey) return;
+    const product = PRODUCT_DETAILS[openProductKey];
+    if (product) {
+      setSelectedProduct(product);
+      setApplyStep("detail");
+      setApplyAmount(product.minAmount ? product.minAmount.toLocaleString("ko-KR") : "");
+    }
+    onProductOpened?.();
+  }, [openProductKey, onProductOpened]);
 
   useEffect(() => {
     const syncPairing = () => setPaired(localStorage.getItem("ansimPaired") === "true");
@@ -213,6 +243,20 @@ export default function ParentHome({
         <span className="text-[12px] font-semibold text-orange-500">검증하기</span>
       </button>
 
+      {/* 이체한도 상향 */}
+      <button onClick={onLimitIncrease} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
+        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-bold text-gray-900">이체한도 관리</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">1일 이체한도 상향하기</p>
+        </div>
+        <span className="text-[12px] font-semibold text-blue-500">관리하기</span>
+      </button>
+
       {paired && (
         <button onClick={onGuardian} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all">
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-[15px] font-bold text-green-700">지</div>
@@ -245,7 +289,12 @@ export default function ParentHome({
           {PRODUCTS.map((p) => (
             <button
               key={p.title}
-              onClick={() => setSelectedProduct(PRODUCT_DETAILS[p.title] ?? null)}
+              onClick={() => {
+                const product = PRODUCT_DETAILS[p.title] ?? null;
+                setSelectedProduct(product);
+                setApplyStep("detail");
+                setApplyAmount(product?.minAmount ? product.minAmount.toLocaleString("ko-KR") : "");
+              }}
               className="bg-blue-50/60 rounded-xl p-4 text-left active:scale-95 hover:bg-blue-100/60 hover:-translate-y-0.5 hover:shadow-md transition-all"
             >
               <p className="text-[14px] font-semibold text-gray-900">{p.title}</p>
@@ -288,36 +337,110 @@ export default function ParentHome({
         </div>
       )}
 
-      {/* ─── 금융상품 상세 바텀시트 ──────────────────────────────────────── */}
+      {/* ─── 금융상품 상세 바텀시트 (상세 → 금액 입력 → 완료) ────────────── */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50">
           <div
             className="absolute inset-0 bg-black/40"
             style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setSelectedProduct(null)}
+            onClick={() => { setSelectedProduct(null); setApplyStep("detail"); }}
           />
           <div
             className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
             style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
           >
             <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[20px] font-bold text-gray-900">{selectedProduct.title}</p>
-            <p className="text-[13px] text-gray-400 mt-1">{selectedProduct.desc}</p>
-            <p className="text-[14px] text-blue-600 font-semibold mt-3 mb-4">{selectedProduct.tagline}</p>
-            <div className="flex flex-col gap-3 bg-gray-50 rounded-2xl p-4 mb-5">
-              {selectedProduct.details.map((d) => (
-                <div key={d.label} className="flex items-center justify-between">
-                  <span className="text-[13px] text-gray-500">{d.label}</span>
-                  <span className="text-[13px] font-semibold text-gray-900">{d.value}</span>
+
+            {applyStep === "detail" && (
+              <>
+                <p className="text-[20px] font-bold text-gray-900">{selectedProduct.title}</p>
+                <p className="text-[13px] text-gray-400 mt-1">{selectedProduct.desc}</p>
+                <p className="text-[14px] text-blue-600 font-semibold mt-3 mb-4">{selectedProduct.tagline}</p>
+                <div className="flex flex-col gap-3 bg-gray-50 rounded-2xl p-4 mb-5">
+                  {selectedProduct.details.map((d) => (
+                    <div key={d.label} className="flex items-center justify-between">
+                      <span className="text-[13px] text-gray-500">{d.label}</span>
+                      <span className="text-[13px] font-semibold text-gray-900">{d.value}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setSelectedProduct(null)}
-              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 hover:bg-blue-600 active:scale-[0.98] transition-all"
-            >
-              신청하기
-            </button>
+                <button
+                  onClick={() => setApplyStep(selectedProduct.kind === "loan" ? "done" : "amount")}
+                  className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 hover:bg-blue-600 active:scale-[0.98] transition-all"
+                >
+                  신청하기
+                </button>
+              </>
+            )}
+
+            {applyStep === "amount" && (() => {
+              const amt = parseInt(applyAmount.replace(/,/g, ""), 10) || 0;
+              const belowMin = !!selectedProduct.minAmount && amt < selectedProduct.minAmount;
+              return (
+                <>
+                  <p className="text-[18px] font-bold text-gray-900">{selectedProduct.title} 가입</p>
+                  <p className="text-[13px] text-gray-400 mt-1">
+                    {selectedProduct.kind === "deposit" ? "예치할 금액을 입력하세요" : "첫 회차 납입 금액을 입력하세요"}
+                  </p>
+                  <div className="mt-6 mb-1">
+                    <input
+                      autoFocus
+                      type="text"
+                      inputMode="numeric"
+                      value={applyAmount}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "");
+                        setApplyAmount(digits ? parseInt(digits, 10).toLocaleString("ko-KR") : "");
+                      }}
+                      placeholder="0"
+                      className="w-full text-right text-[28px] font-black text-gray-900 outline-none border-b-2 border-gray-100 focus:border-blue-400 pb-2 transition-colors"
+                    />
+                    <p className="text-right text-[13px] text-gray-400 mt-1">원</p>
+                  </div>
+                  {selectedProduct.minAmount && (
+                    <p className={`text-[11px] text-center mb-4 ${belowMin && applyAmount ? "text-red-500" : "text-gray-400"}`}>
+                      최소 {selectedProduct.minAmount.toLocaleString()}원부터 가입 가능해요
+                    </p>
+                  )}
+                  <p className="text-[12px] text-gray-400 text-center mb-4">가입 즉시 입출금 계좌에서 이체돼요</p>
+                  <button
+                    onClick={() => { onSubscribe(amt, selectedProduct.title); setApplyStep("done"); }}
+                    disabled={!applyAmount || belowMin}
+                    className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 disabled:opacity-40 active:scale-[0.98] transition-all"
+                  >
+                    가입 확정
+                  </button>
+                  <button onClick={() => setApplyStep("detail")} className="w-full mt-2 py-2.5 text-[13px] text-gray-400 active:scale-95 transition-transform">
+                    이전으로
+                  </button>
+                </>
+              );
+            })()}
+
+            {applyStep === "done" && (
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg>
+                </div>
+                <div>
+                  <p className="text-[13px] text-green-600 font-semibold mb-1">
+                    {selectedProduct.kind === "loan" ? "신청 접수 완료" : "가입 완료"}
+                  </p>
+                  <p className="text-[20px] font-bold text-gray-900">{selectedProduct.title}</p>
+                  <p className="text-[13px] text-gray-400 mt-1">
+                    {selectedProduct.kind === "loan"
+                      ? "심사 후 결과를 알려드릴게요"
+                      : `${(parseInt(applyAmount.replace(/,/g, ""), 10) || 0).toLocaleString()}원이 입출금 계좌에서 이체됐어요`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setSelectedProduct(null); setApplyStep("detail"); }}
+                  className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 hover:bg-blue-600 active:scale-[0.98] transition-all"
+                >
+                  확인
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

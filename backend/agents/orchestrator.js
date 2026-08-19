@@ -59,11 +59,25 @@ const GRADES = Object.freeze([
  * 두 계층은 각자 점수와 근거만 내고, 결합과 판정은 이 함수가 담당한다.
  * 4층 의도 분석은 여기서 호출하지 않는다 — 대화가 필요하므로 별도 흐름이다.
  */
+// 한도를 올린 직후 큰 금액을 보내는 조합은 배점 합산 결과에 기대지 않고 항상 최고 등급으로 강제한다.
+// 가산점만으로는 다른 신호(등록된 수취인 등)와 상쇄돼 낮은 등급으로 새 나갈 수 있기 때문이다.
+const LIMIT_BUMP_ESCALATION_AMOUNT = 10_000_000;
+const LIMIT_BUMP_ESCALATION_REASON = "이체한도 상향 직후 고액 송금 — 최고 위험으로 강제 상향";
+
 export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
   const behaviorResult = runBehaviorDetectionAgent(behavior);
   const transactionResult = runTransactionRiskAgent(transaction);
 
-  const score = Math.min(100, behaviorResult.score + transactionResult.score);
+  let score = Math.min(100, behaviorResult.score + transactionResult.score);
+  const reasons = [...behaviorResult.reasons, ...transactionResult.reasons];
+
+  const limitBumps = Number(behavior.limitIncreased ?? 0);
+  const amount = Number(transaction.amount ?? 0);
+  if (limitBumps >= 1 && amount >= LIMIT_BUMP_ESCALATION_AMOUNT) {
+    score = 100;
+    reasons.push(LIMIT_BUMP_ESCALATION_REASON);
+  }
+
   const { grade, gradeLabel, gradeColor } = GRADES.find(({ min }) => score >= min);
 
   return {
@@ -73,6 +87,6 @@ export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
     gradeColor,
     behaviorScore: behaviorResult.score,
     transactionScore: transactionResult.score,
-    reasons: [...behaviorResult.reasons, ...transactionResult.reasons],
+    reasons,
   };
 }

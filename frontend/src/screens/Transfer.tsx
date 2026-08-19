@@ -139,7 +139,7 @@ const TITLES: Record<TransferStep, string> = {
 
 export default function Transfer({
   onExit, accounts = MY_ACCOUNTS, resumeSessionId = null, onResumeHandled, initialStep = "input",
-  behaviorSignals = { historyVisits: 0, verifyVisited: false, savingsEarlyClose: 0 },
+  behaviorSignals = { historyVisits: 0, verifyVisited: false, savingsEarlyClose: 0, limitIncreased: 0 },
   onSuccess, defaultFromIdx = 0,
 }: {
   onExit: () => void;
@@ -282,17 +282,10 @@ export default function Transfer({
   }, [account, step]);
 
   // 분석 완료 → 행동 감지 + 거래 검사 → 등급 카드 표시
+  // 2층 행동 감지·3층 거래 검사는 가족 연결과 무관하게 항상 돈다 — 본인을 지키는 안전장치라
+  // 가족이 아직 연결되지 않았다고 꺼지면 안 된다. 가족 연결이 필요한 건 5층(가족 확인) 알림뿐이다.
   useEffect(() => {
     if (step !== "checking") return;
-    // 가족 연결 전에는 안심동행 판정을 돌리지 않는다.
-    // 4층 의도 분석·5층 가족 확인이 성립하지 않으므로 평범한 은행 송금으로 처리한다.
-    if (!paired) {
-      const t = setTimeout(() => {
-        const result = runRisk(account, parseAmt(amt), name);
-        setStep(result === "db-warning" ? "db-warning" : "success");
-      }, 1800);
-      return () => clearTimeout(t);
-    }
 
     setCheckPhase("analyzing");
     setAnalyzeStep(0);
@@ -516,7 +509,7 @@ export default function Transfer({
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
       ) : (
-        <PageHeader title={step === "checking" && paired ? "거래 분석 중" : TITLES[step]} onBack={goBack} />
+        <PageHeader title={step === "checking" ? "거래 분석 중" : TITLES[step]} onBack={goBack} />
       )}
 
       {/* ── 1단계: 어디로 보낼까요 ── */}

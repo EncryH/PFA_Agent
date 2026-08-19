@@ -20,12 +20,16 @@ import SavingsDetail from "./screens/SavingsDetail";
 import IncomingCall from "./screens/IncomingCall";
 import IncomingMessage from "./screens/IncomingMessage";
 import NotificationShade from "./shared/NotificationShade";
+import SearchOverlay, { type SearchItem } from "./shared/SearchOverlay";
+import LimitIncrease from "./screens/LimitIncrease";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
 
-type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings";
+type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit";
+
+const DEFAULT_DAILY_LIMIT = 5_000_000;
 
 export default function App() {
   const [role, setRole] = useState<Role>("parent");
@@ -45,6 +49,9 @@ export default function App() {
   const [closedAccounts, setClosedAccounts] = useState<Set<number>>(new Set());
   const [transferFromIdx, setTransferFromIdx] = useState(0);
   const [extraTxns, setExtraTxns] = useState<Record<string, TxnRow[]>>({});
+  const [showSearch, setShowSearch] = useState(false);
+  const [dailyLimit, setDailyLimit] = useState(DEFAULT_DAILY_LIMIT);
+  const [openProductKey, setOpenProductKey] = useState<string | null>(null);
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
@@ -85,6 +92,20 @@ export default function App() {
     });
   };
 
+  // 예금·적금 가입 — 입출금 계좌(0번)에서 신청 금액만큼 즉시 이체된다.
+  const handleSubscribe = (amount: number, productTitle: string) => {
+    const acc = liveAccounts[0];
+    const current = parseAmt(acc.balance);
+    const next = Math.max(0, current - amount);
+    setBalanceOverrides((prev) => ({ ...prev, 0: next.toLocaleString("ko-KR") }));
+
+    const now = new Date();
+    const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+    const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const row: TxnRow = { date, time, name: productTitle, memo: "가입", amount: -amount, balance: next };
+    setExtraTxns((prev) => ({ ...prev, [acc.account]: [row, ...(prev[acc.account] ?? [])] }));
+  };
+
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
   const toggleLargeText = () => {
     setLargeText((current) => {
@@ -109,6 +130,23 @@ export default function App() {
   const scenarioLabel = DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length].label;
   const messageLabel  = DEMO_MESSAGES[msgIdx % DEMO_MESSAGES.length].sender;
 
+  const goHome = (targetTab: typeof parentTabs[number] = "홈") => { setTab(targetTab); setPage("home"); };
+
+  const searchItems: SearchItem[] = [
+    { label: "거래내역", desc: "한결은행 입출금통장 거래내역", keywords: ["내역", "이체", "입금", "출금"], onSelect: () => { setAccountIdx(0); setPage("history"); } },
+    { label: "송금", desc: "계좌이체 보내기", keywords: ["이체", "보내기"], onSelect: () => { setResumeIntentChatId(null); setTransferFromIdx(0); setPage("transfer"); } },
+    { label: "이체한도 상향", desc: "1일 이체한도 관리", keywords: ["한도", "상향", "이체한도"], onSelect: () => setPage("limit") },
+    { label: "상대방 검증", desc: "번호·링크·기관명 안전 여부 확인", keywords: ["검증", "사기", "확인"], onSelect: () => setPage("verify") },
+    { label: "안심 정기예금", desc: "연 3.5% · 12개월 · 가입 신청", keywords: ["예금", "신청", "가입"], onSelect: () => { goHome(); setOpenProductKey("안심 정기예금"); } },
+    { label: "내일채움 적금", desc: "월 30만원부터 · 가입 신청", keywords: ["적금", "신청", "가입"], onSelect: () => { goHome(); setOpenProductKey("내일채움 적금"); } },
+    { label: "안심 신용대출", desc: "최저 연 4.2% · 신청", keywords: ["대출", "신청"], onSelect: () => { goHome(); setOpenProductKey("안심 신용대출"); } },
+    { label: "주택청약종합저축", desc: "비과세 · 소득공제 · 가입 신청", keywords: ["청약", "신청", "가입"], onSelect: () => { goHome(); setOpenProductKey("주택청약종합저축"); } },
+    { label: "정기적금 조회", desc: "토스뱅크 정기적금", keywords: ["적금"], onSelect: () => { setSavingsIdx(1); setPage("savings"); } },
+    { label: "정기예금 조회", desc: "쏠편한 정기예금", keywords: ["예금"], onSelect: () => { setSavingsIdx(2); setPage("savings"); } },
+    { label: "주식", desc: "관심 종목·포트폴리오", keywords: ["주식", "투자", "종목"], onSelect: () => goHome("주식") },
+    { label: "안심동행 설정", desc: "가족 연동·권한 관리", keywords: ["가족", "설정", "권한"], onSelect: () => setPage("guardian") },
+  ];
+
   return (
     <>
       {/* ── 은행 앱 컨테이너 ── */}
@@ -126,7 +164,7 @@ export default function App() {
             </button>
             <div className="flex gap-1 items-center">
               {!largeText && (
-                <button aria-label="검색" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
+                <button onClick={() => setShowSearch(true)} aria-label="검색" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 transition-transform duration-200 group-hover:scale-110"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>
                 </button>
               )}
@@ -175,6 +213,16 @@ export default function App() {
               />
             )}
             {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
+            {page === "limit"    && (
+              <LimitIncrease
+                currentLimit={dailyLimit}
+                onBack={() => setPage("home")}
+                onIncreased={(limit) => {
+                  setDailyLimit(limit);
+                  setBehaviorSignals((s) => ({ ...s, limitIncreased: s.limitIncreased + 1 }));
+                }}
+              />
+            )}
             {page === "savings"  && (
               <SavingsDetail
                 account={liveAccounts[savingsIdx]}
@@ -224,9 +272,13 @@ export default function App() {
                   }
                 }}
                 onVerify={() => setPage("verify")}
+                onLimitIncrease={() => setPage("limit")}
                 onAllAccounts={() => setTab("금융")}
                 onMonthlyDetail={() => setTab("금융")}
                 accounts={liveAccounts}
+                onSubscribe={handleSubscribe}
+                openProductKey={openProductKey}
+                onProductOpened={() => setOpenProductKey(null)}
               />
             )}
             {page === "home" && tab === "금융" && (
@@ -263,6 +315,10 @@ export default function App() {
         <div className={role === "child" ? "contents" : "hidden"}>
           <ChildApp />
         </div>
+
+        {role === "parent" && showSearch && (
+          <SearchOverlay items={searchItems} onClose={() => setShowSearch(false)} />
+        )}
 
         {role === "parent" && showNotifications && (
           <NotificationShade

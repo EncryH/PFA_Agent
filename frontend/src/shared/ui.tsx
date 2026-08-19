@@ -3,7 +3,7 @@
 // 은행 브랜드 컬러 — 계좌 리스트 아바타에 사용
 export const BANK_COLOR: Record<string, string> = {
   한결은행:   "#2563eb",   // 데모용 가상 은행 — 부모 앱
-  나눔은행:   "#2A9D6E",   // 데모용 가상 은행 — 자녀 앱 (다른 은행임을 색으로 구분)
+  나눔은행:   "#0f7a56",   // 데모용 가상 은행 — 자녀 앱 (다른 은행임을 색으로 구분)
   국민은행:   "#FFB600",
   신한은행:   "#0046FF",
   우리은행:   "#0067AC",
@@ -61,7 +61,7 @@ export const RECIPIENT_ICONS: Record<string, React.ReactNode> = {
 /** 은행 로고 — 홈 화면과 송금 화면 '내 계좌'가 함께 쓴다 */
 export const BANK_LOGOS: Record<string, React.ReactNode> = {
   한결은행: <svg viewBox="0 0 24 24" fill="#2563eb" className="w-full h-full"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>,
-  나눔은행: <svg viewBox="0 0 24 24" fill="#2A9D6E" className="w-full h-full"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>,
+  나눔은행: <svg viewBox="0 0 24 24" fill="#0f7a56" className="w-full h-full"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>,
   토스뱅크: <svg viewBox="0 0 24 24" className="w-full h-full"><path d="M5 12h14M12 5v14" strokeWidth="3" stroke="#3182f6" fill="none" strokeLinecap="round" /></svg>,
   신한은행: <svg viewBox="0 0 24 24" className="w-full h-full"><text x="12" y="17" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#0046ff">S</text></svg>,
 };

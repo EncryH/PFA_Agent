@@ -13,6 +13,7 @@ import History from "./History";
 import Transfer from "./Transfer";
 import Guardian from "./Guardian";
 import NotificationShade from "../shared/NotificationShade";
+import SearchOverlay, { type SearchItem } from "../shared/SearchOverlay";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./TabPages";
 import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
 import {
@@ -41,6 +42,7 @@ export default function ChildApp() {
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [response, setResponse] = useState<AlertResponse>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [alert, setAlert] = useState<DemoAlert | null>(() => {
@@ -143,17 +145,30 @@ export default function ChildApp() {
     window.dispatchEvent(new Event("ansim-alert"));
   };
 
+  const goHome = (targetTab: Tab = "홈") => { setTab(targetTab); setPage("home"); };
+
+  const searchItems: SearchItem[] = [
+    { label: "거래내역", desc: "자유입출금 거래내역", keywords: ["내역", "이체", "입금", "출금"], onSelect: () => setPage("history") },
+    { label: "송금", desc: "계좌이체 보내기", keywords: ["이체", "보내기"], onSelect: () => setPage("transfer") },
+    { label: "비상금대출", desc: "급할 때 소액 대출", keywords: ["대출", "비상금"], onSelect: () => setPage("emergency-loan") },
+    { label: "생활 지원금", desc: "정부 지원금 조회", keywords: ["지원금", "복지"], onSelect: () => setPage("benefits") },
+    { label: "다른금융", desc: "다른 금융기관 계좌 연결", keywords: ["오픈뱅킹", "연결"], onSelect: () => setOtherFinanceOpen(true) },
+    { label: "주식", desc: "관심 종목·포트폴리오", keywords: ["주식", "투자", "종목"], onSelect: () => goHome("주식") },
+    { label: "안심동행 AI", desc: "어머니 금융 함께 지키기", keywords: ["가족", "보호", "안심"], onSelect: () => setPage("guardian") },
+    { label: "설정", desc: "내 정보·권한 레벨", keywords: ["설정", "권한"], onSelect: () => setPage("settings") },
+  ];
+
   return (
     <>
       {/* 헤더 색 = 계좌 박스 맨 위 색. 둘이 이어져 하나의 영역처럼 보인다 */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 bg-[#eff8f3]">
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 bg-[var(--ac-band-from)]">
         {/* 부모 앱 헤더와 동일한 구성 — 은행 이름과 로고 색만 다르다 */}
         <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
-          <svg viewBox="0 0 24 24" fill="#2A9D6E" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
+          <svg viewBox="0 0 24 24" fill="var(--ac-band-icon)" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
           <span className="text-[17px] font-bold text-gray-900 tracking-tight">나눔은행</span>
         </button>
         <div className="flex gap-2 items-center">
-          <button className="text-gray-400"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg></button>
+          <button onClick={() => setShowSearch(true)} aria-label="검색" className="text-gray-400 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg></button>
           <button onClick={() => setShowNotifications(true)} className="relative text-gray-400 active:scale-90 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
             {paired && alert && !response && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"><span className="text-[9px] font-bold text-white">1</span></div>}
@@ -168,7 +183,7 @@ export default function ChildApp() {
           <div className="flex flex-col gap-3 pt-3">
 
             {/* ── 나눔은행 계좌 (부모 앱과 다른 은행·다른 UI) ── */}
-            <div className="-mx-3 -mt-3 px-4 pt-4 pb-5 rounded-b-[28px] bg-gradient-to-b from-[#eff8f3] via-[#f4faf7] to-white">
+            <div className="-mx-3 -mt-3 px-4 pt-4 pb-5 rounded-b-[28px] bg-gradient-to-b from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-white">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-[15px] font-bold text-gray-900">나눔은행</span>
@@ -184,7 +199,7 @@ export default function ChildApp() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-8 h-8 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" fill="#2A9D6E" className="w-4 h-4"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
+                      <svg viewBox="0 0 24 24" fill="var(--ac-band-icon)" className="w-4 h-4"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
                     </span>
                     <span className="text-[16px] font-bold text-gray-900 truncate">{liveAccount.name}</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-4 h-4 text-gray-400 shrink-0"><path d="M6 9l6 6 6-6" /></svg>
@@ -214,14 +229,14 @@ export default function ChildApp() {
             {/* ── 안심동행 AI 배너 (기존 광고 자리) ── */}
             <div
               onClick={() => setPage("guardian")}
-              className="rounded-2xl p-6 border border-[#dcece4] bg-gradient-to-br from-[#eff8f3] via-[#f4faf7] to-white flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
+              className="rounded-2xl p-6 border border-[var(--ac-band-border)] bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-white flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
             >
               <div>
-                <p className="text-[14px] font-semibold text-[#3c7a63] mb-1">안심동행 AI</p>
-                <p className="text-[20px] text-[#1f4a3a] leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
-                <p className="text-[12px] text-[#4a8a72] mt-2">시작하기 &gt;</p>
+                <p className="text-[14px] font-semibold text-[var(--ac-band-sub)] mb-1">안심동행 AI</p>
+                <p className="text-[20px] text-[var(--ac-band-text)] leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
+                <p className="text-[12px] text-[var(--ac-band-sub)] mt-2">시작하기 &gt;</p>
               </div>
-              <svg viewBox="0 0 48 48" fill="#2A9D6E" fillOpacity="0.35" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
+              <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.35" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
             </div>
 
             {/* 서비스 전체 현황 — 부모 앱과 동일한 지표 */}
@@ -472,7 +487,7 @@ export default function ChildApp() {
               <p className="text-[17px] font-bold text-gray-900">비상금대출</p>
             </div>
 
-            <div className="bg-gradient-to-br from-[#2A9D6E] via-emerald-500 to-teal-400 rounded-2xl p-6">
+            <div className="bg-gradient-to-br from-[var(--ac-hero-from)] via-[var(--ac-hero-via)] to-[var(--ac-hero-to)] rounded-2xl p-6">
               <p className="text-white/70 text-[12px]">이용 가능 한도</p>
               <p className="text-white text-[30px] font-black">{(EMERGENCY_LIMIT - emergencyLoan).toLocaleString()}원</p>
               <p className="text-white/60 text-[12px] mt-1">한도 {EMERGENCY_LIMIT.toLocaleString()}원 · 연 5.9%</p>
@@ -486,7 +501,7 @@ export default function ChildApp() {
                 </div>
                 <button
                   onClick={repayEmergencyLoan}
-                  className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-[#2A9D6E] active:scale-[0.98] transition-all"
+                  className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
                 >
                   전액 상환하기
                 </button>
@@ -566,7 +581,7 @@ export default function ChildApp() {
             </div>
             <button
               onClick={() => { setOtherFinanceOpen(false); setComingSoon("계좌 연결"); }}
-              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[#2A9D6E] active:scale-[0.98] transition-all"
+              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
             >
               계좌 연결하기
             </button>
@@ -596,7 +611,7 @@ export default function ChildApp() {
             <p className="text-[12px] text-gray-400 text-center mb-4">{selectedBenefit.link}에서 신청할 수 있어요</p>
             <button
               onClick={() => setSelectedBenefit(null)}
-              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[#2A9D6E] active:scale-[0.98] transition-all"
+              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
             >
               확인
             </button>
@@ -638,6 +653,9 @@ export default function ChildApp() {
           </button>
         ))}
       </nav>
+      {showSearch && (
+        <SearchOverlay items={searchItems} onClose={() => setShowSearch(false)} />
+      )}
       {showNotifications && (
         <NotificationShade
           role="child"

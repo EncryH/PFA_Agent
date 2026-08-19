@@ -4,10 +4,12 @@ export interface BehaviorSignals {
   historyVisits: number       // 잔액/거래내역 조회 횟수 (세션 내 누적)
   verifyVisited: boolean      // 상대방 검증 탭 방문 여부
   savingsEarlyClose: number   // 적금·예금 중도해지 횟수 (0 = 없음)
+  limitIncreased: number      // 이체한도 상향 횟수 (0 = 없음) — 상향 직후 대이체는 전형적 보이스피싱 패턴
 }
 
 export const INITIAL_SIGNALS: BehaviorSignals = {
   historyVisits: 0,
   verifyVisited: false,
   savingsEarlyClose: 0,
+  limitIncreased: 0,
 }

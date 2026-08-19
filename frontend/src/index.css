@@ -50,26 +50,26 @@ body {
 }
 
 .theme-child {
-  --ac-50:  #ecfdf5;
-  --ac-100: #d1fae5;
-  --ac-200: #a7f3d0;
-  --ac-300: #6ee7b7;
-  --ac-400: #34d399;
-  --ac-500: #10b981;
-  --ac-600: #059669;
-  --ac-700: #047857;
+  --ac-50:  #dcece0;
+  --ac-100: #b9dbc4;
+  --ac-200: #8bc2a0;
+  --ac-300: #5aa47c;
+  --ac-400: #2f7d57;
+  --ac-500: #0b5c3e;
+  --ac-600: #084730;
+  --ac-700: #063524;
 
-  --ac-hero-from: #047857;
-  --ac-hero-via:  #10b981;
-  --ac-hero-to:   #2dd4bf;
+  --ac-hero-from: #063524;
+  --ac-hero-via:  #0b5c3e;
+  --ac-hero-to:   #0f6b52;
 
-  --ac-band-from:   #eff8f3;
-  --ac-band-via:    #f4faf7;
+  --ac-band-from:   #dcece0;
+  --ac-band-via:    #cfe4d6;
   --ac-band-to:     #ffffff;
-  --ac-band-border: #dcece4;
-  --ac-band-text:   #1f4a3a;
-  --ac-band-sub:    #3c7a63;
-  --ac-band-icon:   #2A9D6E;
+  --ac-band-border: #a9cdb8;
+  --ac-band-text:   #123c2a;
+  --ac-band-sub:    #2c5c43;
+  --ac-band-icon:   #0b5c3e;
 }
 
 /* 바텀시트 — 아래에서 위로 올라오는 은행 선택 */

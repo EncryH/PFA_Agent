@@ -23,7 +23,10 @@ export function runTransactionRiskAgent({
   let score = 0;
 
   const amt = Number(amount ?? 0);
-  if (amt >= 10_000_000) {
+  if (amt >= 30_000_000) {
+    score += 35;
+    reasons.push("고액 이체 (3천만원 이상)");
+  } else if (amt >= 10_000_000) {
     score += 25;
     reasons.push("고액 이체 (1천만원 이상)");
   } else if (amt >= 3_000_000) {

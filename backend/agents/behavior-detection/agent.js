@@ -15,6 +15,7 @@ export const metadata = Object.freeze({
  */
 export function runBehaviorDetectionAgent({
   savingsEarlyClose = 0,
+  limitIncreased = 0,
   historyVisits = 0,
   verifyVisited = false,
   sessionSeconds = 999,
@@ -30,6 +31,15 @@ export function runBehaviorDetectionAgent({
   } else if (closureCount === 1) {
     score += 55;
     reasons.push("적금·예금 중도해지 직후 이체 시도 — 보이스피싱 전형 패턴");
+  }
+
+  // 이체한도 상향 — 사기범이 안전장치(한도)를 먼저 풀게 만드는 전형적인 경로.
+  // 55점을 줘서 이 신호 하나만으로도 경계(C) 등급 문턱(51점)을 넘게 한다 —
+  // "확인" 한 번으로 통과되는 B등급으로 새 나가면 안 되는 신호이기 때문이다.
+  const limitBumpCount = Number(limitIncreased ?? 0);
+  if (limitBumpCount >= 1) {
+    score += 55;
+    reasons.push("이체한도 상향 직후 송금 시도 — 보이스피싱 전형 패턴");
   }
 
   // 잔액 반복 조회 — 통화 지시에 따라 자금을 확인하는 행동
