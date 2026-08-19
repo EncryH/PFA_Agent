@@ -142,6 +142,54 @@ function riskScoreApi(): Plugin {
   }
 }
 
+// 주식 시세 프록시 — GET /api/stocks?symbols=005930.KS,^KS11,...
+// Yahoo Finance 차트 API는 CORS 헤더가 없어 브라우저에서 직접 호출이 막힌다.
+// 그래서 개발 서버(Node)가 대신 호출해 결과만 같은 origin 으로 돌려준다. API 키 불필요.
+function stockQuoteApi(): Plugin {
+  return {
+    name: 'ansim-stock-quote-api',
+    configureServer(server) {
+      server.middlewares.use('/api/stocks', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        try {
+          const url = new URL(req.url ?? '', 'http://localhost')
+          const symbols = (url.searchParams.get('symbols') ?? '')
+            .split(',').map((s) => s.trim()).filter(Boolean)
+          if (!symbols.length) {
+            res.statusCode = 400
+            return res.end(JSON.stringify({ error: 'symbols query param required' }))
+          }
+
+          const quotes = await Promise.all(symbols.map(async (symbol) => {
+            try {
+              const r = await fetch(
+                `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
+                { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' } },
+              )
+              if (!r.ok) throw new Error(`upstream ${r.status}`)
+              const data = await r.json() as any
+              const meta = data?.chart?.result?.[0]?.meta
+              const price = meta?.regularMarketPrice
+              const prevClose = meta?.chartPreviousClose ?? meta?.previousClose
+              if (typeof price !== 'number' || typeof prevClose !== 'number') throw new Error('no data')
+              return { symbol, ok: true, price, changePct: ((price - prevClose) / prevClose) * 100 }
+            } catch (e) {
+              return { symbol, ok: false, error: (e as Error).message }
+            }
+          }))
+
+          res.statusCode = 200
+          res.end(JSON.stringify({ quotes, fetchedAt: Date.now() }))
+        } catch (e) {
+          console.error('[ansim-stock-quote-api]', e)
+          res.statusCode = 502
+          res.end(JSON.stringify({ error: (e as Error).message }))
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // 루트 .env (저장소 최상위) — GEMINI_API_KEY 등 서버 전용 키
   const env = loadEnv(mode, '..', '')
@@ -156,6 +204,7 @@ export default defineConfig(({ mode }) => {
       backendApi(env.GEMINI_API_KEY),
       thecheatMockApi(),
       riskScoreApi(),
+      stockQuoteApi(),
     ],
     // 사용하지 않는 envFrontend 변수를 최소한으로 참조해 lint 경고 방지
     define: {

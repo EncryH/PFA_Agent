@@ -2,7 +2,7 @@
 // 오른쪽에서 밀려 들어오고, 뒤로가기로 나간다.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { readNotices } from "./data";
+import { readNotices, TRANSACTIONS, MY_ACCOUNTS, CHILD_ACCOUNT, type TxnRow } from "./data";
 import { PROTECTION_LEVELS } from "./protection";
 
 type NotificationShadeProps = {
@@ -10,6 +10,8 @@ type NotificationShadeProps = {
   hasRiskAlert?: boolean;
   onClose: () => void;
   onOpenRiskAlert?: () => void;
+  /** 지금 세션에서 새로 생긴 거래 (송금·중도해지 등) — 저장된 내역보다 먼저 보여준다 */
+  extraTxns?: TxnRow[];
 };
 
 type Notice = {
@@ -30,7 +32,7 @@ const ICONS: Record<Notice["icon"], React.ReactNode> = {
   unlink: <><path d="M9.5 14.5l-2 2a3.5 3.5 0 01-5-5l2-2M14.5 9.5l2-2a3.5 3.5 0 015 5l-2 2" /><path d="M3 3l18 18" /></>,
 };
 
-export default function NotificationShade({ role, hasRiskAlert = false, onClose, onOpenRiskAlert }: NotificationShadeProps) {
+export default function NotificationShade({ role, hasRiskAlert = false, onClose, onOpenRiskAlert, extraTxns = [] }: NotificationShadeProps) {
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
   const closeTimer = useRef<number | null>(null);
@@ -109,18 +111,27 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
         }]
       : [];
 
-  const earlier: Notice[] = [
-    ...pairingNotices,
-    ...(role === "parent"
-      ? [
-          { icon: "money" as const, title: "한결은행 입출금통장(4567)",   body: "입금 1,012,000원 | 국민연금공단",              date: "8월 3일" },
-          { icon: "gift"  as const, title: "안심 정기예금 금리가 올랐어요",  body: "연 3.5%로 12개월 예치하실 수 있어요.",        date: "7월 28일" },
-        ]
-      : [
-          { icon: "money" as const, title: "자유입출금(4608)",              body: "입금 3,150,000원 | 급여",                    date: "8월 1일" },
-          { icon: "gift"  as const, title: "나눔 적금 이벤트가 시작됐어요",   body: "매주 저축할 때마다 추가 금리를 드려요.",      date: "7월 25일" },
-        ]),
-  ];
+  // 계좌의 입출금 내역도 알림처럼 보여준다 — 실제 은행 앱처럼 거래가 생길 때마다 알림이 쌓이는 걸 재현.
+  const txnDate = (mmdd: string) => {
+    const [m, d] = mmdd.split(".").map(Number);
+    return `${m}월 ${d}일`;
+  };
+
+  const account = role === "parent" ? MY_ACCOUNTS[0] : CHILD_ACCOUNT;
+  const accountLabel = `${account.name}(${account.account.slice(-4)})`;
+
+  const txnNotices: Notice[] = [...extraTxns, ...(TRANSACTIONS[account.account] ?? [])].map((t) => ({
+    icon: "money" as const,
+    title: accountLabel,
+    body: `${t.amount > 0 ? "입금" : "출금"} ${Math.abs(t.amount).toLocaleString()}원 | ${t.name}`,
+    date: txnDate(t.date),
+  }));
+
+  const marketingNotices: Notice[] = role === "parent"
+    ? [{ icon: "gift" as const, title: "안심 정기예금 금리가 올랐어요",  body: "연 3.5%로 12개월 예치하실 수 있어요.", date: "7월 28일" }]
+    : [{ icon: "gift" as const, title: "나눔 적금 이벤트가 시작됐어요",   body: "매주 저축할 때마다 추가 금리를 드려요.", date: "7월 25일" }];
+
+  const earlier: Notice[] = [...pairingNotices, ...txnNotices, ...marketingNotices];
 
   const row = (n: Notice, i: number) => {
     const Tag = n.onClick ? "button" : "div";

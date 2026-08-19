@@ -1,6 +1,7 @@
 // 하단 탭바 — 금융 / 상품 / 혜택 / 주식 탭 화면 모음.
 // 각 탭은 App.tsx 에서 page === "home" && tab === "X" 조건으로 렌더링된다.
 
+import { useEffect, useState } from "react";
 import { MY_ACCOUNTS, SAVINGS_INFO, parseAmt } from "../shared/data";
 import { BankLogo } from "../shared/ui";
 
@@ -27,7 +28,7 @@ export function FinancialTab({ onAccount, accounts = MY_ACCOUNTS }: { onAccount:
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[13px] text-gray-400">총 자산</p>
         <p className="text-[30px] font-bold text-gray-900 mt-1 tracking-tight">{fmt(total)}원</p>
-        <p className="text-[12px] text-gray-400 mt-0.5">{MY_ACCOUNTS.length}개 계좌</p>
+        <p className="text-[12px] text-gray-400 mt-0.5">{accounts.length}개 계좌</p>
       </div>
 
       {/* 계좌별 자산 바 차트 */}
@@ -110,9 +111,10 @@ const RECOMMEND = [
   { title: "ISA 절세 계좌",  desc: "비과세 · 소득공제",   tag: "절세" },
 ];
 
-export function ProductsTab({ onSavings }: { onSavings: (i: number) => void }) {
+export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: number) => void; showOwned?: boolean }) {
   return (
     <div className="flex flex-col gap-3">
+      {showOwned && (
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">내 상품</p>
         <div className="flex flex-col gap-3">
@@ -122,7 +124,7 @@ export function ProductsTab({ onSavings }: { onSavings: (i: number) => void }) {
             return (
               <button
                 key={acc.account}
-                onClick={() => onSavings(idx)}
+                onClick={() => onSavings?.(idx)}
                 className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3.5 text-left hover:bg-blue-50/60 active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-3">
@@ -143,6 +145,7 @@ export function ProductsTab({ onSavings }: { onSavings: (i: number) => void }) {
           })}
         </div>
       </div>
+      )}
 
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">추천 상품</p>
@@ -247,84 +250,344 @@ export function BenefitsTab() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4. StocksTab — 주가 지수, 빈 포트폴리오, 관심 종목
 // ═══════════════════════════════════════════════════════════════════════════════
+// 종목별 야후 파이낸스 심볼 + 시세 API가 실패했을 때 보여줄 기준값(대략 전날 종가 수준).
 const INDICES = [
-  { label: "KOSPI",   value: "2,641.42", change: "+0.73%", up: true  },
-  { label: "KOSDAQ",  value: "762.18",   change: "-0.14%", up: false },
-  { label: "USD/KRW", value: "1,327.50", change: "+0.22%", up: true  },
+  { label: "KOSPI",   symbol: "^KS11", decimals: 2, fallbackValue: "2,641.42", fallbackChange: "+0.73%", fallbackUp: true  },
+  { label: "KOSDAQ",  symbol: "^KQ11", decimals: 2, fallbackValue: "762.18",   fallbackChange: "-0.14%", fallbackUp: false },
+  { label: "USD/KRW", symbol: "KRW=X", decimals: 2, fallbackValue: "1,327.50", fallbackChange: "+0.22%", fallbackUp: true  },
 ];
 
 const WATCHLIST = [
-  { name: "삼성전자",  code: "005930", price: "71,200",  change: "+1.28%", up: true  },
-  { name: "SK하이닉스", code: "000660", price: "182,500", change: "+2.11%", up: true  },
-  { name: "NAVER",    code: "035420", price: "194,000", change: "-0.51%", up: false },
-  { name: "카카오",   code: "035720", price: "44,350",  change: "-1.34%", up: false },
+  { name: "삼성전자",   symbol: "005930.KS", code: "005930", fallbackPrice: "71,200",  fallbackChange: "+1.28%", fallbackUp: true  },
+  { name: "SK하이닉스", symbol: "000660.KS", code: "000660", fallbackPrice: "182,500", fallbackChange: "+2.11%", fallbackUp: true  },
+  { name: "NAVER",      symbol: "035420.KS", code: "035420", fallbackPrice: "194,000", fallbackChange: "-0.51%", fallbackUp: false },
+  { name: "카카오",     symbol: "035720.KS", code: "035720", fallbackPrice: "44,350",  fallbackChange: "-1.34%", fallbackUp: false },
 ];
 
-export function StocksTab() {
+// "종목 찾기"에서 검색할 수 있는 전체 종목 풀 — 관심 종목 4개 포함.
+const STOCK_UNIVERSE = [
+  { name: "삼성전자",         code: "005930", symbol: "005930.KS" },
+  { name: "SK하이닉스",       code: "000660", symbol: "000660.KS" },
+  { name: "NAVER",           code: "035420", symbol: "035420.KS" },
+  { name: "카카오",           code: "035720", symbol: "035720.KS" },
+  { name: "LG에너지솔루션",   code: "373220", symbol: "373220.KS" },
+  { name: "삼성바이오로직스", code: "207940", symbol: "207940.KS" },
+  { name: "현대차",           code: "005380", symbol: "005380.KS" },
+  { name: "기아",             code: "000270", symbol: "000270.KS" },
+  { name: "POSCO홀딩스",      code: "005490", symbol: "005490.KS" },
+  { name: "LG화학",           code: "051910", symbol: "051910.KS" },
+  { name: "셀트리온",         code: "068270", symbol: "068270.KS" },
+  { name: "KB금융",           code: "105560", symbol: "105560.KS" },
+  { name: "신한지주",         code: "055550", symbol: "055550.KS" },
+  { name: "삼성SDI",          code: "006400", symbol: "006400.KS" },
+  { name: "카카오뱅크",       code: "323410", symbol: "323410.KS" },
+  { name: "에코프로",         code: "086520", symbol: "086520.KQ" },
+];
+
+const STOCK_SYMBOLS = [...INDICES.map((i) => i.symbol), ...STOCK_UNIVERSE.map((s) => s.symbol)];
+const QUOTE_POLL_MS = 20_000;
+
+// 보유 종목 — 부모·자녀는 서로 다른 사람이므로 포트폴리오도 역할별로 분리해 저장한다.
+type Holding = { symbol: string; name: string; code: string; qty: number; avgPrice: number };
+const portfolioKey = (role: string) => `ansimPortfolio_${role}`;
+
+const loadPortfolio = (role: string): Holding[] => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(portfolioKey(role)) ?? "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+};
+
+type Quote = { symbol: string; ok: boolean; price?: number; changePct?: number };
+
+function useStockQuotes() {
+  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
+  const [status, setStatus] = useState<"loading" | "live" | "offline">("loading");
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchQuotes = async () => {
+      try {
+        const res = await fetch(`/api/stocks?symbols=${STOCK_SYMBOLS.map(encodeURIComponent).join(",")}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        if (cancelled) return;
+        const map: Record<string, Quote> = {};
+        for (const q of data.quotes ?? []) map[q.symbol] = q;
+        setQuotes(map);
+        setStatus("live");
+        setUpdatedAt(data.fetchedAt ?? Date.now());
+      } catch {
+        if (!cancelled) setStatus((s) => (s === "live" ? s : "offline"));
+      }
+    };
+
+    fetchQuotes();
+    const id = setInterval(fetchQuotes, QUOTE_POLL_MS);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  return { quotes, status, updatedAt };
+}
+
+const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
+
+export function StocksTab({ role = "parent" }: { role?: "parent" | "child" }) {
+  const { quotes, status, updatedAt } = useStockQuotes();
+  const [portfolio, setPortfolio] = useState<Holding[]>(() => loadPortfolio(role));
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [justAdded, setJustAdded] = useState<string | null>(null);
+
+  useEffect(() => { localStorage.setItem(portfolioKey(role), JSON.stringify(portfolio)); }, [role, portfolio]);
+
+  const priceOf = (symbol: string, fallback: number) => {
+    const q = quotes[symbol];
+    return q?.ok && q.price != null ? q.price : fallback;
+  };
+
+  const addToPortfolio = (stock: { name: string; code: string; symbol: string }) => {
+    const price = priceOf(stock.symbol, 0);
+    setPortfolio((prev) => {
+      const idx = prev.findIndex((h) => h.symbol === stock.symbol);
+      if (idx === -1) return [...prev, { symbol: stock.symbol, name: stock.name, code: stock.code, qty: 1, avgPrice: price }];
+      const next = [...prev];
+      const h = next[idx];
+      const qty = h.qty + 1;
+      next[idx] = { ...h, qty, avgPrice: Math.round((h.avgPrice * h.qty + price) / qty) };
+      return next;
+    });
+    setJustAdded(stock.symbol);
+    window.setTimeout(() => setJustAdded((s) => (s === stock.symbol ? null : s)), 1200);
+  };
+
+  const sellHolding = (symbol: string) => setPortfolio((prev) => prev.filter((h) => h.symbol !== symbol));
+
+  const filtered = STOCK_UNIVERSE.filter((s) => {
+    const q = query.trim();
+    return !q || s.name.includes(q) || s.code.includes(q);
+  });
+
+  const totalEval = portfolio.reduce((sum, h) => sum + priceOf(h.symbol, h.avgPrice) * h.qty, 0);
+  const totalCost = portfolio.reduce((sum, h) => sum + h.avgPrice * h.qty, 0);
+  const totalGain = totalEval - totalCost;
+  const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-1.5 px-1">
+        <span className={`w-1.5 h-1.5 rounded-full ${status === "live" ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`} />
+        <span className="text-[11px] text-gray-400">
+          {status === "live" && updatedAt
+            ? `${new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} 기준 실시간 시세`
+            : status === "loading"
+              ? "시세 불러오는 중…"
+              : "실시간 연결 안 됨 · 전날 종가 기준"}
+        </span>
+      </div>
+
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">시장 현황</p>
         <div className="flex justify-around">
-          {INDICES.map((idx, i) => (
-            <div
-              key={idx.label}
-              className={`${i > 0 ? "border-l border-gray-100 pl-4" : ""} flex-1 text-center`}
-            >
-              <p className="text-[11px] text-gray-400 mb-1">{idx.label}</p>
-              <p className="text-[15px] font-bold text-gray-900">{idx.value}</p>
-              <p className={`text-[12px] font-semibold mt-0.5 ${idx.up ? "text-red-500" : "text-blue-500"}`}>
-                {idx.change}
-              </p>
-            </div>
-          ))}
+          {INDICES.map((idx, i) => {
+            const q = quotes[idx.symbol];
+            const up = q?.ok ? (q.changePct ?? 0) >= 0 : idx.fallbackUp;
+            const value = q?.ok && q.price != null
+              ? q.price.toLocaleString("ko-KR", { minimumFractionDigits: idx.decimals, maximumFractionDigits: idx.decimals })
+              : idx.fallbackValue;
+            const change = q?.ok && q.changePct != null ? fmtPct(q.changePct) : idx.fallbackChange;
+            return (
+              <div
+                key={idx.label}
+                className={`${i > 0 ? "border-l border-gray-100 pl-4" : ""} flex-1 text-center`}
+              >
+                <p className="text-[11px] text-gray-400 mb-1">{idx.label}</p>
+                <p className="text-[15px] font-bold text-gray-900">{value}</p>
+                <p className={`text-[12px] font-semibold mt-0.5 ${up ? "text-red-500" : "text-blue-500"}`}>
+                  {change}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
-        <p className="text-[14px] font-bold text-gray-900 mb-1">내 포트폴리오</p>
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" className="w-7 h-7">
-              <rect x="4" y="14" width="3" height="7" rx="0.5" />
-              <rect x="8.5" y="11" width="3" height="10" rx="0.5" />
-              <rect x="13" y="8" width="3" height="13" rx="0.5" />
-              <rect x="17.5" y="5" width="3" height="16" rx="0.5" />
-            </svg>
-          </div>
-          <p className="text-[14px] font-semibold text-gray-500">보유 종목이 없어요</p>
-          <p className="text-[12px] text-gray-400 mt-1">관심 종목을 추가하고 투자를 시작해보세요</p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[14px] font-bold text-gray-900">내 포트폴리오</p>
           <button
-            className="mt-4 px-5 py-2 rounded-xl text-[13px] font-bold text-white active:scale-[0.98] transition-transform"
-            style={{ background: "var(--ac-500)" }}
+            onClick={() => setSearchOpen(true)}
+            className="text-[12px] font-bold active:scale-95 transition-transform"
+            style={{ color: "var(--ac-600)" }}
           >
-            종목 찾기
+            + 종목 찾기
           </button>
         </div>
+
+        {portfolio.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" className="w-7 h-7">
+                <rect x="4" y="14" width="3" height="7" rx="0.5" />
+                <rect x="8.5" y="11" width="3" height="10" rx="0.5" />
+                <rect x="13" y="8" width="3" height="13" rx="0.5" />
+                <rect x="17.5" y="5" width="3" height="16" rx="0.5" />
+              </svg>
+            </div>
+            <p className="text-[14px] font-semibold text-gray-500">보유 종목이 없어요</p>
+            <p className="text-[12px] text-gray-400 mt-1">관심 종목을 추가하고 투자를 시작해보세요</p>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="mt-4 px-5 py-2 rounded-xl text-[13px] font-bold text-white active:scale-[0.98] transition-transform"
+              style={{ background: "var(--ac-500)" }}
+            >
+              종목 찾기
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 mt-3">
+            <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] text-gray-400">평가금액</p>
+                <p className="text-[18px] font-black text-gray-900">{Math.round(totalEval).toLocaleString()}원</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-gray-400">평가손익</p>
+                <p className={`text-[14px] font-bold ${totalGain >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  {totalGain >= 0 ? "+" : ""}{Math.round(totalGain).toLocaleString()}원 ({fmtPct(totalGainPct)})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col divide-y divide-gray-50">
+              {portfolio.map((h) => {
+                const cur = priceOf(h.symbol, h.avgPrice);
+                const gain = (cur - h.avgPrice) * h.qty;
+                const gainPct = h.avgPrice > 0 ? ((cur - h.avgPrice) / h.avgPrice) * 100 : 0;
+                return (
+                  <div key={h.symbol} className="flex items-center justify-between py-3 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-gray-900 truncate">{h.name}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{h.qty}주 · 평균 {Math.round(h.avgPrice).toLocaleString()}원</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[14px] font-bold text-gray-900">{Math.round(cur * h.qty).toLocaleString()}원</p>
+                      <p className={`text-[12px] font-semibold mt-0.5 ${gain >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {gain >= 0 ? "+" : ""}{Math.round(gain).toLocaleString()}원 ({fmtPct(gainPct)})
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => sellHolding(h.symbol)}
+                      className="text-[11px] text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 active:scale-95 hover:bg-gray-50 transition-all shrink-0"
+                    >
+                      매도
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">관심 종목</p>
         <div className="flex flex-col gap-1">
-          {WATCHLIST.map((stock) => (
-            <div
-              key={stock.code}
-              className="flex items-center justify-between py-3 -mx-1 px-1 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <div>
-                <p className="text-[15px] font-semibold text-gray-900">{stock.name}</p>
-                <p className="text-[12px] text-gray-400 mt-0.5">{stock.code}</p>
+          {WATCHLIST.map((stock) => {
+            const q = quotes[stock.symbol];
+            const up = q?.ok ? (q.changePct ?? 0) >= 0 : stock.fallbackUp;
+            const price = q?.ok && q.price != null ? Math.round(q.price).toLocaleString("ko-KR") : stock.fallbackPrice;
+            const change = q?.ok && q.changePct != null ? fmtPct(q.changePct) : stock.fallbackChange;
+            const held = portfolio.find((h) => h.symbol === stock.symbol);
+            return (
+              <div
+                key={stock.code}
+                className="flex items-center justify-between py-3 -mx-1 px-1 rounded-xl hover:bg-gray-50 transition-all"
+              >
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-gray-900 truncate">{stock.name}{held ? ` · 보유 ${held.qty}주` : ""}</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">{stock.code}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <p className="text-[15px] font-bold text-gray-900">{price}원</p>
+                    <p className={`text-[13px] font-semibold mt-0.5 ${up ? "text-red-500" : "text-blue-500"}`}>
+                      {change}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => addToPortfolio(stock)}
+                    className={`text-[11px] font-bold rounded-lg px-2.5 py-1.5 active:scale-95 transition-all ${justAdded === stock.symbol ? "bg-emerald-500 text-white" : "text-white"}`}
+                    style={justAdded === stock.symbol ? undefined : { background: "var(--ac-500)" }}
+                  >
+                    {justAdded === stock.symbol ? "담김✓" : "담기"}
+                  </button>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-[15px] font-bold text-gray-900">{stock.price}원</p>
-                <p className={`text-[13px] font-semibold mt-0.5 ${stock.up ? "text-red-500" : "text-blue-500"}`}>
-                  {stock.change}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {/* ─── 종목 찾기 바텀시트 ────────────────────────────────────────────── */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            style={{ animation: "fade-in 180ms ease-out both" }}
+            onClick={() => setSearchOpen(false)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-6 flex flex-col"
+            style={{ maxWidth: 430, maxHeight: "82vh", animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+          >
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-4 shrink-0" />
+            <div className="flex items-center justify-between mb-3 shrink-0">
+              <p className="text-[18px] font-bold text-gray-900">종목 찾기</p>
+              <button onClick={() => setSearchOpen(false)} className="text-gray-400 active:scale-90 transition-transform">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="종목명 또는 코드 검색"
+              className="w-full bg-gray-50 rounded-xl px-4 py-3 text-[14px] text-gray-900 outline-none mb-2 shrink-0"
+            />
+            <div className="flex-1 overflow-y-auto flex flex-col -mx-1 px-1">
+              {filtered.length === 0 && (
+                <p className="text-center text-gray-400 text-[13px] py-10">검색 결과가 없어요</p>
+              )}
+              {filtered.map((s) => {
+                const q = quotes[s.symbol];
+                const held = portfolio.find((h) => h.symbol === s.symbol);
+                return (
+                  <div key={s.symbol} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-gray-900 truncate">{s.name}{held ? ` · 보유 ${held.qty}주` : ""}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        {s.code}{q?.ok && q.price != null ? ` · ${Math.round(q.price).toLocaleString()}원` : ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => addToPortfolio(s)}
+                      className={`text-[12px] font-bold rounded-lg px-3 py-1.5 active:scale-95 transition-all shrink-0 ${justAdded === s.symbol ? "bg-emerald-500 text-white" : "text-white"}`}
+                      style={justAdded === s.symbol ? undefined : { background: "var(--ac-500)" }}
+                    >
+                      {justAdded === s.symbol ? "담았어요 ✓" : "담기"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -247,7 +247,7 @@ export default function App() {
               <ProductsTab onSavings={(i) => { setSavingsIdx(i); setPage("savings"); }} />
             )}
             {page === "home" && tab === "혜택" && <BenefitsTab />}
-            {page === "home" && tab === "주식" && <StocksTab />}
+            {page === "home" && tab === "주식" && <StocksTab role="parent" />}
           </main>
 
           <nav className="parent-bottom-nav sticky bottom-0 bg-white rounded-[28px] flex justify-around py-2 pt-3 mt-4">
@@ -264,7 +264,13 @@ export default function App() {
           <ChildApp />
         </div>
 
-        {role === "parent" && showNotifications && <NotificationShade role="parent" onClose={() => setShowNotifications(false)} />}
+        {role === "parent" && showNotifications && (
+          <NotificationShade
+            role="parent"
+            onClose={() => setShowNotifications(false)}
+            extraTxns={extraTxns[liveAccounts[0].account] ?? []}
+          />
+        )}
 
         {/* 수신 전화 / 수신 문자 배너 */}
         {activeCall    && <IncomingCall    call={activeCall}       onDismiss={() => setActiveCall(null)} />}

@@ -19,7 +19,7 @@ export const MY_ACCOUNTS = [
 
 // 자녀(김지혜) 계좌 — 부모와 다른 은행이라는 걸 화면으로 보여주기 위한 데이터
 export const CHILD_ACCOUNT = {
-  name: "자유입출금", account: "35615324608", bank: "나눔은행", balance: "2,840,000",
+  name: "자유입출금", account: "35615324608", bank: "나눔은행", balance: "2,824,000",
 };
 
 export const KNOWN_RECIPIENTS = [
@@ -78,6 +78,9 @@ export const TRANSACTIONS: Record<string, TxnRow[]> = {
     { date: "07.22", time: "16:55", name: "약국",              memo: "체크카드", amount:    -18_600, balance: 21_499_200 },
     { date: "07.20", time: "09:00", name: "토스뱅크 정기적금", memo: "자동이체", amount: -1_000_000, balance: 21_517_800 },
     { date: "07.03", time: "08:30", name: "국민연금공단",      memo: "연금",     amount:  1_012_000, balance: 22_517_800 },
+    { date: "06.28", time: "11:15", name: "이마트",            memo: "체크카드", amount:    -67_200, balance: 21_505_800 },
+    { date: "06.24", time: "20:03", name: "배달의민족",        memo: "체크카드", amount:    -23_900, balance: 21_573_000 },
+    { date: "06.20", time: "14:40", name: "올리브영",          memo: "체크카드", amount:    -14_500, balance: 21_596_900 },
   ],
   // 토스뱅크 정기적금 — 매월 자동이체로만 쌓인다
   "1000751604": [
@@ -89,6 +92,8 @@ export const TRANSACTIONS: Record<string, TxnRow[]> = {
   ],
   // 나눔은행 자유입출금 (자녀 김지혜) — 급여가 들어오고 생활비가 나간다
   "35615324608": [
+    { date: "08.19", time: "13:10", name: "스타벅스",      memo: "체크카드", amount:    -6_800, balance:  2_824_000 },
+    { date: "08.18", time: "18:47", name: "다이소",        memo: "체크카드", amount:    -9_200, balance:  2_830_800 },
     { date: "08.17", time: "12:31", name: "카페",          memo: "체크카드", amount:    -5_500, balance:  2_840_000 },
     { date: "08.15", time: "19:04", name: "편의점",        memo: "체크카드", amount:   -12_800, balance:  2_845_500 },
     { date: "08.13", time: "09:00", name: "통신비",        memo: "자동이체", amount:   -55_000, balance:  2_858_300 },
