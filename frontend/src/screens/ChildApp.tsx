@@ -12,10 +12,11 @@ import { DEMO_ALERT, CHILD_ACCOUNT, fmtAccount, parseAmt, type DemoAlert, type T
 import History from "./History";
 import Transfer from "./Transfer";
 import Guardian from "./Guardian";
+import Verify from "./Verify";
 import NotificationShade from "../shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "../shared/SearchOverlay";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./TabPages";
-import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
+import { PROTECTION_LEVELS, getProtectionPolicy, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
 import {
   markGuardianLogViewed, openGuardianLogEntry, recordGuardianDecision,
 } from "../shared/guardianLog";
@@ -24,6 +25,98 @@ type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
 
 const EMERGENCY_LIMIT = 500_000;
+
+function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert, onOpen, onVerify }: {
+  paired: boolean;
+  protectionLevel: number;
+  protectionName: string;
+  hasPendingAlert: boolean;
+  onOpen: () => void;
+  onVerify: () => void;
+}) {
+  if (!paired) {
+    return (
+      <div
+        onClick={onOpen}
+        className="rounded-2xl p-6 border border-[var(--ac-band-border)] bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-white flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
+      >
+        <div>
+          <p className="text-[14px] font-semibold text-[var(--ac-band-sub)] mb-1">안심동행 AI</p>
+          <p className="text-[20px] text-[var(--ac-band-text)] leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
+          <p className="text-[12px] text-[var(--ac-band-sub)] mt-2">시작하기 &gt;</p>
+        </div>
+        <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.35" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={onOpen} className="rounded-2xl border border-[var(--ac-band-border)] bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-[var(--ac-band-to)] p-5 active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[15px] font-bold text-[var(--ac-band-text)]">안심동행 AI</p>
+        <span className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1">
+          <span className="w-2 h-2 rounded-full bg-[var(--ac-400)]" />
+          <span className="text-[12px] font-semibold text-[var(--ac-600)]">연결됨</span>
+        </span>
+      </div>
+      <p className="text-[12px] text-[var(--ac-band-sub)] mb-4">어머니 김영순님의 금융을 함께 지켜요.</p>
+      {!hasPendingAlert && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/80 px-3.5 py-3">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+          <div>
+            <p className="text-[12px] font-bold text-emerald-700">이번 주 이상 없어요</p>
+            <p className="text-[11px] text-emerald-600/80">어머니의 거래가 모두 정상이에요</p>
+          </div>
+        </div>
+      )}
+      <div className="rounded-xl border border-white/80 bg-white/55 p-4 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--ac-200)] hover:bg-white/90 hover:shadow-md active:translate-y-0 active:scale-[0.99]">
+        {[
+          ["김영순", "한결은행", "부모"],
+          ["김지혜", "나눔은행", "자녀"],
+        ].map(([name, bank, role], index) => (
+          <div key={name} className="contents">
+            {index === 1 && (
+              <div className="flex flex-col items-center px-4">
+                <div className="w-9 h-9 rounded-full bg-[var(--ac-100)] flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="var(--ac-500)" strokeWidth="2" strokeLinecap="round" /></svg>
+                </div>
+                <p className="text-[10px] text-[var(--ac-500)] font-medium mt-1">안심동행</p>
+              </div>
+            )}
+            <div className="flex flex-col items-center flex-1">
+              <div className="w-11 h-11 rounded-full bg-[var(--ac-100)] flex items-center justify-center mb-1.5">
+                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="8" r="4" stroke="var(--ac-500)" strokeWidth="1.8" /><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="var(--ac-500)" strokeWidth="1.8" strokeLinecap="round" /></svg>
+              </div>
+              <p className="text-[13px] font-bold text-[var(--ac-band-text)]">{name}</p>
+              <p className="text-[11px] text-[var(--ac-band-sub)]">{bank}</p>
+              <p className="text-[10px] text-[var(--ac-400)]">{role}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-[var(--ac-200)] flex items-center justify-between">
+        <span className="text-[12px] text-[var(--ac-band-sub)]">현재 보호 단계</span>
+        <span className="text-[12px] font-semibold text-[var(--ac-600)]">Lv.{protectionLevel} {protectionName}</span>
+      </div>
+      <button
+        type="button"
+        onClick={(event) => { event.preventDefault(); event.stopPropagation(); onVerify(); }}
+        className="group mt-3 w-full cursor-pointer flex items-center gap-3 rounded-xl border border-white/80 bg-white/60 px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--ac-200)] hover:bg-white/90 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
+      >
+        <div className="w-8 h-8 rounded-full bg-[var(--ac-100)] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
+          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4"><circle cx="11" cy="11" r="7" stroke="var(--ac-500)" strokeWidth="1.8" /><path d="M21 21l-4.35-4.35M11 8v3m0 3h.01" stroke="var(--ac-500)" strokeWidth="1.8" strokeLinecap="round" /></svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-[var(--ac-band-text)]">상대방 검증</p>
+          <p className="text-[11px] text-[var(--ac-band-sub)]">번호·링크·기관명 안전 여부 확인</p>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1"><path d="M9 18l6-6-6-6" stroke="var(--ac-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+    </div>
+  );
+}
 
 type LifeBenefit = { title: string; cond: string; amount: string; link: string };
 const LIFE_BENEFITS: LifeBenefit[] = [
@@ -37,7 +130,7 @@ export default function ChildApp() {
   // 자녀 앱도 은행 앱이므로 하단 탭은 부모 앱과 같다.
   // 안심동행 관련 화면(알림·설정)은 헤더 아이콘으로 들어간다.
   const [tab, setTab] = useState<Tab>("홈");
-  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "emergency-loan" | "benefits">("home");
+  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "emergency-loan" | "benefits">("home");
   // 페어링 완료 여부 — 완료 전에는 은행 앱만 보이고 안심동행 기능은 숨는다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [response, setResponse] = useState<AlertResponse>(null);
@@ -47,7 +140,7 @@ export default function ChildApp() {
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [alert, setAlert] = useState<DemoAlert | null>(() => {
     const stored = localStorage.getItem("ansimAlert");
-    return stored ? { ...DEMO_ALERT, ...JSON.parse(stored) } : DEMO_ALERT;
+    return stored ? { ...DEMO_ALERT, ...JSON.parse(stored) } : null;
   });
   const [comingSoon, setComingSoon] = useState<string | null>(null);
   const [otherFinanceOpen, setOtherFinanceOpen] = useState(false);
@@ -93,7 +186,13 @@ export default function ChildApp() {
       const stored = localStorage.getItem("ansimAlert");
       if (stored) {
         const data = JSON.parse(stored);
-        setAlert((prev) => ({ ...DEMO_ALERT, ...data, _ts: data._ts || (prev as any)?._ts }));
+        setAlert((prev) => {
+          const next = { ...DEMO_ALERT, ...data, _ts: data._ts || (prev as any)?._ts };
+          if (next._ts && next._ts !== (prev as any)?._ts) setResponse(null);
+          return next;
+        });
+      } else {
+        setAlert(null);
       }
     }, 1500);
     return () => clearInterval(id);
@@ -116,6 +215,8 @@ export default function ChildApp() {
   const time    = a?.time ?? DEMO_ALERT.time;
   const signals: string[] = a?.signals?.length ? a.signals : DEMO_ALERT.signals;
   const conversation = a?.conversation?.length ? a.conversation : DEMO_ALERT.conversation;
+  const requestLevel = (((a as typeof a & { protectionLevel?: ProtectionLevel })?.protectionLevel ?? 2) as ProtectionLevel);
+  const requestPolicy = getProtectionPolicy(requestLevel);
 
   // 알림을 처리하면 ansimAlert 는 지워지므로, 판단 이력은 별도 로그로 남긴다
   // (기록 목록은 안심동행 AI 페이지 = Guardian 에서 보여준다)
@@ -226,18 +327,14 @@ export default function ChildApp() {
 
             <p className="text-[17px] font-bold text-gray-900 px-1 pt-1">나눔서비스</p>
 
-            {/* ── 안심동행 AI 배너 (기존 광고 자리) ── */}
-            <div
-              onClick={() => setPage("guardian")}
-              className="rounded-2xl p-6 border border-[var(--ac-band-border)] bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-white flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
-            >
-              <div>
-                <p className="text-[14px] font-semibold text-[var(--ac-band-sub)] mb-1">안심동행 AI</p>
-                <p className="text-[20px] text-[var(--ac-band-text)] leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
-                <p className="text-[12px] text-[var(--ac-band-sub)] mt-2">시작하기 &gt;</p>
-              </div>
-              <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.35" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
-            </div>
+            <AnsimBanner
+              paired={paired}
+              protectionLevel={protectionLevel}
+              protectionName={protection.name}
+              hasPendingAlert={Boolean(alert) && !response}
+              onOpen={() => setPage("guardian")}
+              onVerify={() => setPage("verify")}
+            />
 
             {/* 서비스 전체 현황 — 부모 앱과 동일한 지표 */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
@@ -269,51 +366,19 @@ export default function ChildApp() {
 
             {/* ── 안심동행 기능 — 페어링 완료 후에만 나타난다 ── */}
             {paired && (<>
-            {alert && !response ? (
-              <button onClick={() => setPage("alert-detail")} className="w-full bg-red-50 border-2 border-red-200 rounded-2xl p-5 text-left active:scale-[0.98] hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="#ef4444" className="w-4 h-4"><path d="M12 2L2 21h20L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg></div>
-                    <span className="text-[13px] font-bold text-red-700">확인이 필요해요</span>
-                  </div>
-                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">HIGH</span>
-                </div>
-                <p className="text-[15px] font-bold text-gray-900 mb-1">어머니 위험 거래 감지</p>
-                <p className="text-[13px] text-gray-600">{amount.toLocaleString()}원 → {account}</p>
-                <p className="text-[12px] text-gray-400 mt-1">AI가 모순을 감지했어요</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-[12px] text-red-500 font-semibold">자세히 보기 →</p>
-                  <p className="text-[11px] text-gray-400">{time}</p>
-                </div>
-              </button>
-            ) : response ? (
+            {response ? (
               <div className={`rounded-2xl p-5 ${response === "held" ? "bg-amber-50 border border-amber-200" : "bg-green-50 border border-green-200"}`}>
                 <p className={`text-[14px] font-bold mb-1 ${response === "held" ? "text-amber-700" : "text-green-700"}`}>
                   {response === "held" ? "⏸ 보류 처리됨" : "✅ 승인 처리됨"}
                 </p>
-                <p className="text-[12px] text-gray-500">어머니의 송금이 {response === "held" ? "24시간 지연되었어요" : "승인되었어요"}.</p>
+                <p className="text-[12px] text-gray-500">
+                  {response === "held"
+                    ? "송금 보류 의견을 어머니께 전달했어요. 다시 확인하기 전에는 진행되지 않아요."
+                    : "승인 의견을 어머니께 전달했어요. 최종 송금은 어머니가 결정해요."}
+                </p>
               </div>
-            ) : (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-                <div className="flex items-center gap-2">
-                  <svg viewBox="0 0 24 24" fill="#22c55e" className="w-5 h-5"><path d="M20 6L9 17l-5-5" /></svg>
-                  <p className="text-[14px] font-bold text-green-700">이번 주 이상 없어요</p>
-                </div>
-                <p className="text-[12px] text-gray-400 mt-1">어머니의 거래가 모두 정상이에요 ✅</p>
-              </div>
-            )}
+            ) : null}
 
-            <button onClick={() => setPage("guardian")} className="w-full bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all">
-              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-[15px] font-bold text-green-700">영</div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-[14px] font-bold text-gray-900">어머니와 연결됨</p>
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
-                </div>
-                <p className="text-[12px] text-gray-400 mt-0.5">Lv.{protectionLevel} {protection.name} · 현재 보호 중</p>
-              </div>
-              <span className="text-[12px] font-semibold text-[var(--ac-500)]">자세히</span>
-            </button>
             </>)}
           </div>
         )}
@@ -340,7 +405,14 @@ export default function ChildApp() {
           />
         )}
         {page === "transfer" && <Transfer onExit={() => setPage("home")} accounts={[liveAccount]} onSuccess={handleTransferSuccess} />}
-        {page === "guardian" && <Guardian appRole="child" onExit={() => setPage("home")} />}
+        {page === "guardian" && (
+          <Guardian
+            appRole="child"
+            onExit={() => setPage("home")}
+            onOpenPendingRequest={() => setPage("alert-detail")}
+          />
+        )}
+        {page === "verify" && <Verify onBack={() => setPage("home")} />}
 
         {/* ── 위험 이벤트 상세 ── */}
         {page === "alert-detail" && alert && (
@@ -392,22 +464,28 @@ export default function ChildApp() {
               </div>
             </div>
 
-            {!response ? (
+            {!response && requestPolicy.allowFamilyDecision ? (
               <div className="flex flex-col gap-2">
                 <a href="tel:010-0000-0000" className="w-full py-3.5 rounded-xl text-[15px] font-semibold text-white bg-blue-500 active:scale-[0.98] transition-all text-center block">📞 어머니께 전화하기</a>
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => respond("approved")} className="py-3 rounded-xl text-[14px] font-semibold text-gray-900 border-2 border-blue-200 bg-blue-50 active:scale-[0.98] transition-all">✅ 승인</button>
                   <button onClick={() => respond("held")} className="py-3 rounded-xl text-[14px] font-semibold text-red-600 border-2 border-red-200 bg-red-50 active:scale-[0.98] transition-all">⏸ 보류</button>
                 </div>
-                <p className="text-[11px] text-gray-400 text-center">승인 시 어머니 최종 확인 후 송금 / 보류 시 24시간 지연</p>
+                <p className="text-[11px] text-gray-400 text-center">승인·보류는 자녀의 확인 의견이며, 최종 결정은 어머니가 해요.</p>
               </div>
-            ) : (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center">
-                <p className="text-[15px] font-bold text-green-700">{response === "held" ? "보류 처리 완료" : "승인 완료"}</p>
-                <p className="text-[12px] text-gray-500 mt-1">어머니께 결과가 전달되었어요</p>
+            ) : response ? (
+              <div className={`${response === "held" ? "border-amber-200 bg-amber-50" : "border-green-200 bg-green-50"} rounded-2xl border p-5 text-center`}>
+                <p className={`text-[15px] font-bold ${response === "held" ? "text-amber-700" : "text-green-700"}`}>{response === "held" ? "보류 의견 전달 완료" : "승인 의견 전달 완료"}</p>
+                <p className="text-[12px] text-gray-500 mt-1">최종 송금 여부는 어머니가 다시 확인해요.</p>
                 <button onClick={() => setPage("home")} className="mt-3 text-[13px] text-gray-900 font-medium">홈으로 돌아가기</button>
               </div>
-            )}
+            ) : !alert ? (
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
+                <p className="text-[14px] font-bold text-blue-700">확인용 알림이에요</p>
+                <p className="mt-1 text-[12px] text-gray-500">현재 보호 단계에서는 자녀가 송금을 승인하거나 보류할 수 없어요.</p>
+                <button onClick={() => setPage("home")} className="mt-3 text-[13px] font-medium text-gray-900">확인</button>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -467,6 +545,7 @@ export default function ChildApp() {
                     <div>
                       <p className={`text-[13px] font-bold ${active ? "text-gray-900" : "text-gray-700"}`}>{item.name}{active && " (현재)"}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5">{item.desc}</p>
+                      <p className="mt-1 text-[10px] leading-relaxed text-gray-400">권한: {item.permissions.join(" · ")}</p>
                     </div>
                   </div>
                   );

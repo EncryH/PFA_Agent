@@ -12,13 +12,73 @@ const PRODUCTS = [
   { title: "주택청약종합저축", desc: "비과세 · 소득공제" },
 ];
 
-function AnsimBanner({ paired, onClick }: { paired: boolean; onClick: () => void }) {
+function AnsimBanner({ paired, onClick, onVerify, protectionLevel, protectionName }: { paired: boolean; onClick: () => void; onVerify?: () => void; protectionLevel?: number; protectionName?: string }) {
+  if (paired) {
+    return (
+      <div onClick={onClick} className="mt-3 rounded-2xl bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 p-5 active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[15px] font-bold text-white">안심동행 AI</p>
+          <span className="flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1">
+            <span className="w-2 h-2 rounded-full bg-green-400" />
+            <span className="text-[12px] font-semibold text-white">연결됨</span>
+          </span>
+        </div>
+        <p className="text-[12px] text-white/70 mb-4">딸 김지혜님과 함께 지키고 있어요.</p>
+        <div className="rounded-xl border border-transparent bg-white/15 backdrop-blur-sm p-4 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/25 hover:shadow-lg active:translate-y-0 active:scale-[0.99]">
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-11 h-11 rounded-full bg-white/25 flex items-center justify-center mb-1.5">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="8" r="4" stroke="white" strokeWidth="1.8" /><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" /></svg>
+            </div>
+            <p className="text-[13px] font-bold text-white">김영순</p>
+            <p className="text-[11px] text-white/60">한결은행</p>
+            <p className="text-[10px] text-white/40">부모</p>
+          </div>
+          <div className="flex flex-col items-center px-4">
+            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="white" strokeWidth="2" strokeLinecap="round" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+            </div>
+            <p className="text-[10px] text-white/70 font-medium mt-1">안심동행</p>
+          </div>
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-11 h-11 rounded-full bg-white/25 flex items-center justify-center mb-1.5">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="8" r="4" stroke="white" strokeWidth="1.8" /><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" /></svg>
+            </div>
+            <p className="text-[13px] font-bold text-white">김지혜</p>
+            <p className="text-[11px] text-white/60">나눔은행</p>
+            <p className="text-[10px] text-white/40">자녀</p>
+          </div>
+        </div>
+        {protectionLevel !== undefined && protectionName && (
+          <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
+            <span className="text-[12px] text-white/60">현재 보호 단계</span>
+            <span className="text-[12px] font-semibold text-white">Lv.{protectionLevel} {protectionName}</span>
+          </div>
+        )}
+        {onVerify && (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onVerify(); }}
+            className="group mt-3 w-full cursor-pointer flex items-center gap-3 rounded-xl border border-transparent bg-white/15 backdrop-blur-sm px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/25 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4"><circle cx="11" cy="11" r="7" stroke="white" strokeWidth="1.8" /><path d="M21 21l-4.35-4.35" stroke="white" strokeWidth="1.8" strokeLinecap="round" /><path d="M11 8v3m0 3h.01" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-white">상대방 검증</p>
+              <p className="text-[11px] text-white/50">번호·링크·기관명 안전 여부 확인</p>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1"><path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <div onClick={onClick} className="mt-3 rounded-2xl p-6 bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 flex items-center justify-between active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
       <div>
         <p className="text-[14px] font-semibold text-white mb-1">안심동행 AI</p>
         <p className="text-[20px] text-white leading-snug">부모님 금융을<br />가족이 함께 지켜요</p>
-        <p className="text-[12px] text-white mt-2">{paired ? "연결 상태 보기" : "시작하기"} &gt;</p>
+        <p className="text-[12px] text-white mt-2">시작하기 &gt;</p>
       </div>
       <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-28 h-28"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
     </div>
@@ -166,7 +226,7 @@ export default function ParentHome({
           </div>
         </section>
 
-        <AnsimBanner paired={paired} onClick={onGuardian} />
+        <AnsimBanner paired={paired} onClick={onGuardian} onVerify={onVerify} protectionLevel={protectionLevel} protectionName={protection.name} />
 
         <section className="rounded-3xl bg-white p-5 shadow-sm">
           <h2 className="text-[20px] font-bold text-gray-900">금융상품</h2>
@@ -226,22 +286,20 @@ export default function ParentHome({
         </button>
       </div>
 
-      <AnsimBanner paired={paired} onClick={onGuardian} />
+      <AnsimBanner paired={paired} onClick={onGuardian} onVerify={onVerify} protectionLevel={protectionLevel} protectionName={protection.name} />
 
-      {/* 상대방 검증 버튼 */}
-      <button onClick={onVerify} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
-        <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
-            <path d="M11 8v3m0 3h.01" />
-          </svg>
+
+      <div className="mt-3 bg-white rounded-2xl p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+        <p className="text-[14px] font-bold text-gray-900 mb-3">안심동행 현황</p>
+        <div className="flex justify-around text-center">
+          {[["127건", "오늘 보호된 거래"], ["99.2%", "사기 탐지율"], ["1.2초", "평균 분석 속도"]].map(([v, l], i) => (
+            <div key={l} className={`${i > 0 ? "border-l border-gray-100 pl-4" : ""} flex-1`}>
+              <p className="text-[18px] font-bold text-gray-900">{v}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{l}</p>
+            </div>
+          ))}
         </div>
-        <div className="flex-1">
-          <p className="text-[14px] font-bold text-gray-900">상대방 검증</p>
-          <p className="text-[12px] text-gray-400 mt-0.5">번호·링크·기관명 안전 여부 확인</p>
-        </div>
-        <span className="text-[12px] font-semibold text-orange-500">검증하기</span>
-      </button>
+      </div>
 
       {/* 이체한도 상향 */}
       <button onClick={onLimitIncrease} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
@@ -256,32 +314,6 @@ export default function ParentHome({
         </div>
         <span className="text-[12px] font-semibold text-blue-500">관리하기</span>
       </button>
-
-      {paired && (
-        <button onClick={onGuardian} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-3 text-left hover:shadow-md active:scale-[0.98] transition-all">
-          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-[15px] font-bold text-green-700">지</div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-[14px] font-bold text-gray-900">딸 지혜와 연결됨</p>
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-            </div>
-            <p className="text-[12px] text-gray-400 mt-0.5">Lv.{protectionLevel} {protection.name} · 현재 보호 중</p>
-          </div>
-          <span className="text-[12px] font-semibold text-blue-600">자세히</span>
-        </button>
-      )}
-
-      <div className="mt-3 bg-white rounded-2xl p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-        <p className="text-[14px] font-bold text-gray-900 mb-3">안심동행 현황</p>
-        <div className="flex justify-around text-center">
-          {[["127건", "오늘 보호된 거래"], ["99.2%", "사기 탐지율"], ["1.2초", "평균 분석 속도"]].map(([v, l], i) => (
-            <div key={l} className={`${i > 0 ? "border-l border-gray-100 pl-4" : ""} flex-1`}>
-              <p className="text-[18px] font-bold text-gray-900">{v}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{l}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="mt-3 bg-white rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
         <p className="text-[16px] font-bold text-gray-900 mb-4">금융상품</p>

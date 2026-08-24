@@ -38,6 +38,7 @@ export default function App() {
   const [accountIdx, setAccountIdx] = useState(0);   // 거래내역을 보는 계좌
   const [savingsIdx, setSavingsIdx] = useState(1);
   const [resumeIntentChatId, setResumeIntentChatId] = useState<string | null>(null);
+  const [resumeIntentToHold, setResumeIntentToHold] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [largeText, setLargeText] = useState(() => localStorage.getItem("ansimLargeText") === "true");
   const [demoIdx, setDemoIdx] = useState(0);
@@ -191,7 +192,8 @@ export default function App() {
                 onExit={() => setPage("home")}
                 initialStep={page === "emergency" ? "already-sent" : "input"}
                 resumeSessionId={resumeIntentChatId}
-                onResumeHandled={() => setResumeIntentChatId(null)}
+                resumeToHold={resumeIntentToHold}
+                onResumeHandled={() => { setResumeIntentChatId(null); setResumeIntentToHold(false); }}
                 behaviorSignals={behaviorSignals}
                 accounts={liveAccounts}
                 onSuccess={handleTransferSuccess}
@@ -203,10 +205,17 @@ export default function App() {
                 appRole="parent"
                 onExit={() => setPage("home")}
                 onResumeIntentChat={(id) => {
+                  setResumeIntentToHold(false);
+                  setResumeIntentChatId(id);
+                  setPage("transfer");
+                }}
+                onOpenPendingConfirmation={(id) => {
+                  setResumeIntentToHold(true);
                   setResumeIntentChatId(id);
                   setPage("transfer");
                 }}
                 onOpenEmergency={() => {
+                  setResumeIntentToHold(false);
                   setResumeIntentChatId(null);
                   setPage("emergency");
                 }}
