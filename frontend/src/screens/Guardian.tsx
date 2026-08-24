@@ -12,6 +12,11 @@ import {
 } from "../shared/intentChat";
 import { PROTECTION_LEVELS, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
 import { fmtLogTime, useGuardianLog } from "../shared/guardianLog";
+import {
+  EMERGENCY_RECEIPT_EVENT,
+  readEmergencyReceipts,
+  type EmergencyReceipt,
+} from "../shared/emergencyReceipt";
 
 type Step = "intro" | "select" | "code" | "done" | "permissions";
 
@@ -21,6 +26,7 @@ type PendingAlert = {
   bank?: string;
   signals?: string[];
   time?: string;
+  sessionId?: string;
 };
 
 const readPendingAlert = (): PendingAlert | null => {
@@ -55,11 +61,13 @@ const PROMISES = [
 ];
 
 export default function Guardian({
-  onExit, appRole, onResumeIntentChat, onOpenEmergency,
+  onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest, onOpenEmergency,
 }: {
   onExit: () => void;
   appRole: "parent" | "child";
   onResumeIntentChat?: (id: string) => void;
+  onOpenPendingConfirmation?: (id: string) => void;
+  onOpenPendingRequest?: () => void;
   onOpenEmergency?: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
@@ -77,6 +85,9 @@ export default function Guardian({
   const protection = PROTECTION_LEVELS[protectionLevel];
   // 보호 단계는 되돌리기 어려운 설정이라 저장 전에 한 번 더 묻는다
   const [pendingLevel, setPendingLevel] = useState<ProtectionLevel | null>(null);
+  const [expandedLevel, setExpandedLevel] = useState<ProtectionLevel | null>(null);
+  const [emergencyReceipts, setEmergencyReceipts] = useState<EmergencyReceipt[]>(readEmergencyReceipts);
+  const [openEmergencyReceipt, setOpenEmergencyReceipt] = useState<EmergencyReceipt | null>(null);
 
   const confirmLevelChange = () => {
     if (pendingLevel === null) return;
@@ -108,6 +119,16 @@ export default function Guardian({
     return () => {
       window.removeEventListener(INTENT_CHAT_EVENT, syncChats);
       window.removeEventListener("storage", syncChats);
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncReceipts = () => setEmergencyReceipts(readEmergencyReceipts());
+    window.addEventListener(EMERGENCY_RECEIPT_EVENT, syncReceipts);
+    window.addEventListener("storage", syncReceipts);
+    return () => {
+      window.removeEventListener(EMERGENCY_RECEIPT_EVENT, syncReceipts);
+      window.removeEventListener("storage", syncReceipts);
     };
   }, []);
 
@@ -257,12 +278,25 @@ export default function Guardian({
             </div>
           </div>
 
-          {appRole === "parent" && pendingAlert && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          {pendingAlert && (
+            <button
+              type="button"
+              onClick={() => {
+                if (appRole === "child") {
+                  onOpenPendingRequest?.();
+                  return;
+                }
+                const sessionId = pendingAlert.sessionId ?? intentChats[0]?.id;
+                if (sessionId) onOpenPendingConfirmation?.(sessionId);
+              }}
+              className="group w-full cursor-pointer rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100/70 hover:shadow-md active:translate-y-0 active:scale-[0.99]"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[14px] font-bold text-gray-900">확인 대기 중인 송금</p>
-                  <p className="mt-1 text-[11px] text-gray-500">자녀의 확인을 기다리고 있어요.</p>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    {appRole === "parent" ? "자녀의 확인을 기다리고 있어요." : "부모님이 송금 확인을 요청했어요."}
+                  </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-amber-700">가족 확인 중</span>
               </div>
@@ -283,6 +317,43 @@ export default function Guardian({
                   ))}
                 </div>
               )}
+              <p className="mt-3 text-right text-[11px] font-semibold text-amber-700 transition-transform duration-200 group-hover:translate-x-1">
+                {appRole === "parent" ? "확인 요청 화면 보기 ›" : "송금 확인하기 ›"}
+              </p>
+            </button>
+          )}
+
+          {appRole === "parent" && emergencyReceipts.length > 0 && (
+            <div className="rounded-2xl bg-white p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[14px] font-bold text-gray-900">긴급 대응 접수 내역</p>
+                  <p className="mt-1 text-[11px] text-gray-400">접수 이후 기관별 처리 상태를 확인할 수 있어요.</p>
+                </div>
+                <span className="shrink-0 text-[11px] font-semibold text-gray-400">{emergencyReceipts.length}건</span>
+              </div>
+              <div className="mt-4 flex flex-col gap-2">
+                {emergencyReceipts.map((receipt) => (
+                  <button
+                    key={receipt.id}
+                    type="button"
+                    onClick={() => setOpenEmergencyReceipt(receipt)}
+                    className="group w-full rounded-xl border border-green-100 bg-green-50 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-green-200 hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-gray-900">긴급 대응 접수</p>
+                        <p className="mt-1 truncate text-[11px] text-gray-500">{receipt.id} · {new Date(receipt.createdAt).toLocaleDateString("ko-KR")}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">기관 확인 중</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-green-100 pt-3">
+                      <span className="text-[10px] text-gray-500">초기 대응 5개 완료</span>
+                      <span className="text-[11px] font-bold text-green-700 transition-transform group-hover:translate-x-0.5">상세 보기 ›</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -482,23 +553,63 @@ export default function Guardian({
           <div className="flex flex-col gap-2">
             {PROTECTION_LEVELS.map((item) => {
               const active = protectionLevel === item.level;
+              const expanded = expandedLevel === item.level;
               return (
-                <button
+                <div
                   key={item.level}
-                  type="button"
-                  disabled={appRole !== "parent"}
-                  onClick={() => { if (item.level !== protectionLevel) setPendingLevel(item.level); }}
-                  className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all ${active ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-gray-100 bg-white"} ${appRole === "parent" ? "active:scale-[0.99]" : "cursor-default"}`}
+                  className={`overflow-hidden rounded-2xl border transition-all duration-200 ${active ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-gray-100 bg-white"} ${expanded ? "shadow-sm" : ""}`}
                 >
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--ac-500)] text-white" : "bg-gray-100 text-gray-500"}`}>Lv.{item.level}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-[14px] font-bold text-gray-900">
-                      {item.name}
-                      {active && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-[var(--ac-500)]">현재</span>}
+                  <button
+                    type="button"
+                    disabled={appRole !== "parent"}
+                    onClick={() => { if (item.level !== protectionLevel) setPendingLevel(item.level); }}
+                    className={`flex w-full items-center gap-3 p-4 text-left transition-all ${appRole === "parent" ? "hover:bg-black/[0.02] active:scale-[0.99]" : "cursor-default"}`}
+                  >
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--ac-500)] text-white" : "bg-gray-100 text-gray-500"}`}>Lv.{item.level}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2 text-[14px] font-bold text-gray-900">
+                        {item.name}
+                        {active && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-[var(--ac-500)]">현재</span>}
+                      </span>
+                      <span className="mt-1 block text-[11px] leading-relaxed text-gray-500">{item.desc}</span>
+                      <span className="mt-1.5 block text-[10px] leading-relaxed text-gray-400">권한: {item.permissions.join(" · ")}</span>
                     </span>
-                    <span className="mt-1 block text-[11px] leading-relaxed text-gray-500">{item.desc}</span>
-                  </span>
-                </button>
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={`protection-detail-${item.level}`}
+                    onClick={() => setExpandedLevel(expanded ? null : item.level)}
+                    className="group flex w-full items-center justify-center gap-1.5 border-t border-gray-100/80 py-2.5 text-[11px] font-semibold text-gray-500 transition-colors hover:bg-white/70 hover:text-[var(--ac-600)]"
+                  >
+                    {expanded ? "상세 설명 접기" : "이 단계 자세히 보기"}
+                    <svg viewBox="0 0 24 24" fill="none" className={`h-4 w-4 transition-transform duration-200 ${expanded ? "rotate-180" : "group-hover:translate-y-0.5"}`}>
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+
+                  {expanded && (
+                    <div id={`protection-detail-${item.level}`} className="border-t border-gray-100 bg-white/80 px-4 pb-4 pt-4" style={{ animation: "fade-in .18s ease-out" }}>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-[13px] font-bold text-gray-900">이 단계에서는 이렇게 보호해요</p>
+                        <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-1 text-[9px] font-bold text-[var(--ac-600)]">Lv.{item.level} {item.name}</span>
+                      </div>
+                      <ol className="mt-3 flex flex-col gap-3">
+                        {item.detailSteps.map((detail, index) => (
+                          <li key={detail} className="flex items-start gap-3">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ac-500)] text-[11px] font-bold text-white">{index + 1}</span>
+                            <span className="pt-0.5 text-[12px] leading-relaxed text-gray-600">{detail}</span>
+                          </li>
+                        ))}
+                      </ol>
+                      <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
+                        <p className="text-[10px] font-bold text-amber-700">제한되는 권한</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-amber-800">{item.limit}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -671,6 +782,58 @@ export default function Guardian({
           <button onClick={onExit} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
             홈으로 돌아가기
           </button>
+        </div>
+      )}
+
+      {openEmergencyReceipt && (
+        <div className="fixed inset-0 z-50">
+          <button type="button" aria-label="접수 내역 닫기" onClick={() => setOpenEmergencyReceipt(null)} className="absolute inset-0 bg-black/40" />
+          <div className="absolute bottom-0 left-0 right-0 mx-auto max-h-[88vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-[#fafbfe] px-5 pb-8 pt-4 shadow-2xl" style={{ animation: "sheet-up .28s cubic-bezier(.32,.72,0,1)" }}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-gray-200" />
+            <div className="mt-5 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[18px] font-bold text-gray-950">긴급 대응 접수 내역</p>
+                <p className="mt-1 text-[11px] text-gray-400">{new Date(openEmergencyReceipt.createdAt).toLocaleString("ko-KR")}</p>
+              </div>
+              <span className="rounded-full bg-red-50 px-2 py-1 text-[9px] font-black text-red-600">MVP DEMO</span>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+              <div className="flex items-center justify-between gap-3"><span className="text-[11px] text-gray-500">가상 접수번호</span><span className="text-[12px] font-bold text-gray-900">{openEmergencyReceipt.id}</span></div>
+              <div className="mt-3 flex items-center justify-between gap-3"><span className="text-[11px] text-gray-500">현재 상태</span><span className="text-[11px] font-bold text-amber-700">기관 확인 중</span></div>
+            </div>
+
+            <div className="mt-3 rounded-2xl bg-white p-4">
+              <p className="text-[13px] font-bold text-gray-900">피해 거래 정보</p>
+              <div className="mt-3 flex flex-col gap-2 text-[11px]">
+                <div className="flex justify-between gap-3"><span className="text-gray-400">송금 금액</span><span className="font-semibold text-gray-800">{openEmergencyReceipt.amount}{openEmergencyReceipt.amount === "확인 필요" ? "" : "원"}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-400">수취 금융회사</span><span className="font-semibold text-gray-800">{openEmergencyReceipt.bank}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-400">수취 계좌</span><span className="max-w-[220px] truncate font-semibold text-gray-800">{openEmergencyReceipt.account}</span></div>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl bg-white p-4">
+              <p className="text-[13px] font-bold text-gray-900">기관별 처리 현황</p>
+              <div className="mt-3 flex flex-col gap-3">
+                {[
+                  ["은행 지급정지 요청", "접수 완료", true],
+                  ["112 피해 신고", "접수 완료", true],
+                  ["피해구제 신청서", "전자서명 완료", true],
+                  ["수취 금융회사 확인", "기관 확인 대기", false],
+                  ["피해구제 심사", "심사 대기", false],
+                ].map(([title, status, done]) => (
+                  <div key={String(title)} className="flex items-center gap-3">
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${done ? "bg-green-500 text-white" : "bg-amber-100 text-amber-700"}`}>{done ? "✓" : "•"}</span>
+                    <span className="flex-1 text-[11px] font-semibold text-gray-800">{title}</span>
+                    <span className={`text-[9px] font-bold ${done ? "text-green-600" : "text-amber-600"}`}>{status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2.5 text-[10px] leading-relaxed text-amber-700">접수 완료는 피해금 반환 완료를 의미하지 않아요. 은행과 경찰의 공식 연락을 계속 확인해 주세요.</p>
+            <button type="button" onClick={() => setOpenEmergencyReceipt(null)} className="mt-4 h-13 w-full rounded-xl bg-blue-600 text-[14px] font-bold text-white">확인</button>
+          </div>
         </div>
       )}
 
