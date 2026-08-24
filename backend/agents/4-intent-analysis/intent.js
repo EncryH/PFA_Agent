@@ -5,14 +5,14 @@
 // LLM 이 done 을 true 로 줘도 그건 '더 물을 게 없다'는 의견일 뿐이다.
 // 실제로 송금을 멈출지는 아래 규칙만이 결정한다.
 
-import { extractIntent } from "./gemini.js";
+import { extractIntent } from "./llm/gemini.js";
 import {
   extractRuleContradictions, extractRuleSignals, scoreSignals,
   MAX_TURNS, MIN_TURNS_BEFORE_VERDICT,
-} from "./signals.js";
-import { classifyFraudType } from "./fraud-types.js";
-import { retrieveIntentContext } from "./rag.js";
-import { retrieveOfficialContent } from "./official-content.js";
+} from "./rules/signals.js";
+import { classifyFraudType } from "./rules/fraud-types.js";
+import { retrieveIntentContext } from "./retrieval/rag.js";
+import { retrieveOfficialContent } from "./retrieval/official-content.js";
 import { safeTransferContext, sanitizeMessages } from "./sanitize.js";
 
 const FALLBACK_QUESTIONS = [
@@ -93,11 +93,15 @@ export async function handleIntent(body, apiKey) {
   // 위험이 확인됐어도 최소 질문 수를 채우기 전에는 결론을 내지 않는다.
   // 대신 무엇이 걱정되는지 지금 알려주고 한 단계 더 캐묻는다.
   // 송금은 이 동안에도 정지 상태이므로 지연으로 인한 위험 증가는 없다.
-  const verdictReady = turn >= MIN_TURNS_BEFORE_VERDICT || outOfTurns;
+  // 명백한 고위험 신호가 이미 확인된 경우 같은 내용을 채우기식으로 더 묻지 않는다.
+  // 첫 답변만으로 섣불리 끝내지는 않되, 두 번째 답변부터는 충분한 근거가 있으면 판정한다.
+  const verdictReady = turn >= MIN_TURNS_BEFORE_VERDICT
+    || outOfTurns
+    || (risk.level === "HIGH" && turn >= 2);
 
   if (risk.level === "HIGH" && !verdictReady) {
     return {
-      message: buildProbeMessage(risk, fraudType, llm),
+      message: buildProbeMessage(risk, fraudType, llm, safeMessages),
       hold: false,
       done: false,
       risk,
@@ -122,7 +126,7 @@ export async function handleIntent(body, apiKey) {
   // 위험 점수가 있는데 LLM이 그만하자고 하면, 최소 질문 수까지는 계속 묻는다
   if (llm.done && risk.score > 0 && !verdictReady) {
     return {
-      message: buildProbeMessage(risk, fraudType, llm),
+      message: buildProbeMessage(risk, fraudType, llm, safeMessages),
       hold: false,
       done: false,
       risk,
@@ -165,23 +169,61 @@ const pickIntent = (llm) => ({
  * 결론 전 중간 응답 — 지금 걱정되는 점을 먼저 알려주고 한 가지 더 묻는다.
  * 판정을 미루는 것이지 위험을 숨기는 것이 아니므로, 경고는 이 시점에 이미 전달한다.
  */
-function buildProbeMessage(risk, fraudType, llm) {
-  const topCode = risk.codes.find((code) => EASY_REASONS[code]);
-  const concern = topCode
-    ? `${EASY_REASONS[topCode]}`
-    : compactExplanation(llm.explanation);
+function buildProbeMessage(risk, fraudType, llm, messages = []) {
+  const aiMessages = messages.filter((m) => m.role === "ai");
+  const asked = aiMessages.map((m) => m.text).join("\n");
+  // FIRST_QUESTION("처음 보내는 계좌예요...")은 프로브가 아니므로 제외
+  const probeTurn = aiMessages.filter((m) => !m.text.includes("처음 보내는 계좌")).length;
 
-  // 아직 캐묻지 않은 신호 중 가장 점수가 높은 것을 골라 질문한다
-  const question = risk.codes.map((code) => PROBE_QUESTIONS[code]).find(Boolean)
-    || llm.next_question
+  const unusedProbe = risk.codes
+    .map((code) => PROBE_QUESTIONS[code])
+    .find((q) => q && !asked.includes(q));
+
+  if (probeTurn === 0) {
+    const topCode = risk.codes.find((code) => EASY_REASONS[code]);
+    const concern = topCode
+      ? EASY_REASONS[topCode]
+      : compactExplanation(llm.explanation);
+    const question = unusedProbe
+      || (llm.next_question ? llm.next_question : null)
+      || DEFAULT_PROBE;
+    return [
+      "잠시만요, 확인이 필요해 보여요.",
+      concern ? `걱정되는 점이 있어요.\n${concern}` : "",
+      "정확히 판단하려면 조금 더 알아야 해요.",
+      question,
+    ].filter(Boolean).join("\n\n");
+  }
+
+  // 후속 턴: Gemini reply(맞춤 응답) 우선, 없으면 고정 서두
+  const reply = llm.reply?.trim();
+  const FOLLOWUPS = [
+    "한 가지만 더 확인할게요.",
+    "안전을 위해 하나만 더 여쭤볼게요.",
+    "마지막으로 확인할 게 있어요.",
+  ];
+  const fallbackOpener = FOLLOWUPS[Math.min(probeTurn - 1, FOLLOWUPS.length - 1)];
+  const opener = reply || fallbackOpener;
+
+  // 질문: Gemini next_question 우선, 고정 PROBE_QUESTIONS 보조
+  const question = (llm.next_question && !asked.includes(llm.next_question) ? llm.next_question : null)
+    || unusedProbe
     || DEFAULT_PROBE;
 
-  return [
-    "잠시만요, 확인이 필요해 보여요.",
-    concern ? `걱정되는 점이 있어요.\n${concern}` : "",
-    "정확히 판단하려면 조금 더 알아야 해요.",
-    question,
-  ].filter(Boolean).join("\n\n");
+  // 새 위험 사유가 있으면 추가 (이미 말한 건 반복 안 함)
+  const unusedConcern = risk.codes
+    .filter((code) => EASY_REASONS[code] && !asked.includes(EASY_REASONS[code]))
+    .map((code) => EASY_REASONS[code])[0];
+
+  // Gemini explanation이 있고 이전에 안 나왔으면 활용
+  const explanation = llm.explanation?.trim();
+  const newExplanation = explanation && !asked.includes(explanation) ? explanation : "";
+
+  const concern = unusedConcern
+    ? `추가로 확인된 점이에요.\n${unusedConcern}`
+    : (newExplanation ? newExplanation : "");
+
+  return [opener, concern, question].filter(Boolean).join("\n\n");
 }
 
 function buildRiskMessage(llm, risk, fraudType) {
@@ -236,19 +278,51 @@ const EASY_REASONS = Object.freeze({
 });
 
 function safeActionFor(fraudType, signalCodes = []) {
-  if (fraudType === "family_or_acquaintance_impersonation" || signalCodes.includes("CHANGED_FAMILY_CONTACT")) {
-    return "지금은 보내지 마세요. 평소 알고 있던 가족 번호로 직접 전화해 확인해 주세요.";
+  const has = (code) => signalCodes.includes(code);
+  let verifyStep = "은행 앱에서 공식 고객센터 번호를 찾아 직접 전화하세요.";
+  let protectStep = "상대방 전화번호를 인터넷에 검색해 사기 신고 이력을 확인하세요.";
+
+  // 사기 유형별로 가장 중요한 행동 두 개만 고른다. 마지막 답변은 항상 4단계로 유지한다.
+  if (fraudType === "family_or_acquaintance_impersonation" || has("CHANGED_FAMILY_CONTACT")) {
+    verifyStep = "새 번호가 아닌 평소 알고 있던 가족 번호로 직접 전화하세요.";
+    protectStep = "연결되지 않으면 다른 가족에게 확인하고, 새 번호의 송금 요구에는 응답하지 마세요.";
+  } else if (fraudType === "institution_impersonation") {
+    verifyStep = "상대가 알려준 번호가 아닌 은행 앱·기관 홈페이지의 공식 번호로 직접 전화하세요.";
+    protectStep = "'안전계좌'나 개인 명의 계좌로 옮기라는 요구에는 응답하지 마세요.";
+  } else if (fraudType === "loan_advance_fee") {
+    verifyStep = "해당 금융사의 공식 앱이나 고객센터에서 대출 상품과 담당자를 확인하세요.";
+    protectStep = "보증금·수수료·기존 대출 상환 명목의 선입금 요구에는 응답하지 마세요.";
+  } else if (fraudType === "refund_advance_fee") {
+    verifyStep = "정부24 또는 해당 기관의 공식 홈페이지·고객센터에서 직접 확인하세요.";
+    protectStep = "환급금·당첨금을 받기 위한 세금이나 수수료를 먼저 보내지 마세요.";
+  } else if (fraudType === "investment_fraud") {
+    verifyStep = "금융감독원 금융소비자정보포털에서 정식 등록 업체인지 확인하세요.";
+    protectStep = "원금·고수익 보장이나 출금을 위한 추가 입금 요구에는 응답하지 마세요.";
+  } else if (fraudType === "job_or_mission_fraud") {
+    verifyStep = "업체명과 모집 공고를 공식 홈페이지에서 확인하고 사업자 정보를 조회하세요.";
+    protectStep = "미션 완료나 출금을 위한 추가 입금을 중단하고 대화·송금 내역을 보관하세요.";
+  } else if (fraudType === "smishing" || has("MALICIOUS_URL") || has("SMS_LURE")) {
+    verifyStep = "문자의 링크를 다시 누르지 말고 해당 기관의 공식 앱에서 내용을 확인하세요.";
+    protectStep = "링크를 눌렀거나 앱이 설치됐다면 네트워크를 끄고 118에 상담하세요.";
+  } else if (fraudType === "malicious_app" || has("APP_INSTALLATION_REQUEST")) {
+    verifyStep = "상대가 알려준 앱을 실행하지 말고 은행 공식 고객센터에 확인하세요.";
+    protectStep = "앱을 설치했다면 네트워크를 끄고 다른 안전한 기기에서 비밀번호를 변경하세요.";
+  } else if (fraudType === "personal_information_phishing") {
+    verifyStep = "은행 공식 고객센터에 개인정보 노출 사실을 알리고 계좌 상태를 확인하세요.";
+    protectStep = "개인정보 노출자 사고예방 시스템에 등록하고 비밀번호를 변경하세요.";
   }
-  if (fraudType === "smishing" || signalCodes.includes("MALICIOUS_URL")) {
-    return "지금은 보내지 마세요. 링크를 다시 누르지 말고 은행 앱의 공식 번호로 확인해 주세요.";
-  }
-  if (fraudType === "malicious_app" || signalCodes.includes("APP_INSTALLATION_REQUEST")) {
-    return "지금은 보내지 마세요. 통화를 끊고, 상대가 알려준 앱은 설치하지 마세요.";
-  }
-  if (["investment_fraud", "job_or_mission_fraud"].includes(fraudType)) {
-    return "지금은 보내지 마세요. 돈을 더 넣지 말고 금융회사 공식 번호로 확인해 주세요.";
-  }
-  return "지금은 보내지 마세요. 상대가 알려준 번호 말고, 은행 앱의 공식 번호로 직접 확인해 주세요.";
+
+  const stopStep = has("CALL_IN_PROGRESS")
+    ? "송금하지 말고 상대방과의 통화를 먼저 끊으세요."
+    : "지금은 송금하지 말고 상대방과의 연락을 멈추세요.";
+  const reportStep = has("CREDENTIAL_REQUEST")
+    ? "비밀번호·인증번호를 알려줬다면 즉시 변경하고, 경찰청 112 또는 금감원 1332에 신고하세요."
+    : "대화·문자·전화번호·계좌번호를 보관하고, 경찰청 112 또는 금감원 1332에 신고하세요.";
+  const steps = [stopStep, verifyStep, protectStep, reportStep];
+
+  const header = "지금 해야 할 일이에요.";
+  const numbered = steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  return `${header}\n${numbered}`;
 }
 
 function softenExplanation(value = "") {
@@ -342,23 +416,9 @@ function fallback({
     messages: safeMessages,
   });
 
-  // LLM이 없을 때도 결론 전 최소 질문 수는 같게 지킨다
-  if (risk.level === "HIGH" && turn < MIN_TURNS_BEFORE_VERDICT && turn < MAX_TURNS) {
+  if (risk.level === "HIGH" && turn < 2 && turn < MAX_TURNS) {
     return {
-      message: buildProbeMessage(risk, fraudType, localLlm),
-      hold: false,
-      done: false,
-      risk,
-      intent: pickIntent(localLlm),
-      analysis: buildAnalysis(localLlm, risk, fraudType, retrieval, retrieveOfficialContent(fraudType.code)),
-      fallback: true,
-    };
-  }
-
-  // Gemini 없이 돌 때도 결론을 서두르지 않는다 — 규칙 질문으로 상황을 먼저 구체화한다
-  if (risk.level === "HIGH" && turn < MIN_TURNS_BEFORE_VERDICT && turn < MAX_TURNS) {
-    return {
-      message: buildProbeMessage(risk, fraudType, localLlm),
+      message: buildProbeMessage(risk, fraudType, localLlm, safeMessages),
       hold: false,
       done: false,
       risk,

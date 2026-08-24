@@ -2,8 +2,8 @@
 // 위험도 채점과 보류 판정은 signals.js 가 한다.
 // API 키는 이 파일이 실행되는 서버 프로세스 밖으로 나가지 않는다.
 
-import { SIGNAL_CODES } from "./signals.js";
-import { FRAUD_TYPE_CODES } from "./fraud-types.js";
+import { SIGNAL_CODES } from "../rules/signals.js";
+import { FRAUD_TYPE_CODES } from "../rules/fraud-types.js";
 
 // 모델 변경은 루트 .env 의 GEMINI_MODEL 로. 사용 가능 목록은
 // https://generativelanguage.googleapis.com/v1beta/models?key=... 로 확인.
@@ -107,6 +107,7 @@ const SYSTEM_PROMPT = `당신은 한국 은행 앱 '안심동행 AI'의 송금 �
 [출력 규칙]
 - 신호가 하나도 없고 목적이 분명하면 done=true, next_question 은 빈 문자열
 - 더 확인할 게 있으면 done=false, next_question 에 다음 질문 하나만
+- reply 는 부모님의 직전 답변을 자연스럽게 받아주는 한 문장입니다. 답변 내용을 언급하며 공감하거나 확인해 주세요. 첫 턴(부모님 답변이 아직 없을 때)에는 빈 문자열로 두세요. 예) "돌려준다는 약속이 없었군요.", "전화로 연락이 왔다고 하셨군요."
 - explanation 은 신호가 있을 때만 작성. 왜 위험한지 어르신 눈높이로 2~3문장. 없으면 빈 문자열
 - 확인된 신호만으로 범죄를 확정하지 마세요. "100% 사기", "확실한 사기"라고 단정하지 말고 "사기일 가능성이 있습니다"라고 표현하세요.
 - fraud_type 은 가장 가까운 의심 유형 하나만 선택하고, 위험 신호가 없으면 none 으로 작성
@@ -121,6 +122,7 @@ const RESPONSE_SCHEMA = {
   type: "object",
   properties: {
     done:          { type: "boolean" },
+    reply:         { type: "string" },
     next_question: { type: "string" },
     purpose:       { type: "string" },
     requester:     { type: "string" },

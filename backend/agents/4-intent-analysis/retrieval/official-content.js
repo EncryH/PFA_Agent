@@ -10,7 +10,7 @@
 
 import { readFileSync } from "node:fs";
 
-const catalogUrl = new URL("./data/official-content-catalog.json", import.meta.url);
+const catalogUrl = new URL("../data/official-content-catalog.json", import.meta.url);
 const catalog = JSON.parse(readFileSync(catalogUrl, "utf8"));
 
 const FSS = catalog.sources.find((source) => source.key === "fss_phishing_keeper");

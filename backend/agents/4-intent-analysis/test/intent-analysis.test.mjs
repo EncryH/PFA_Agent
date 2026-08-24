@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { classifyFraudType } from "./agents/intent-analysis/fraud-types.js";
-import { handleIntent } from "./agents/intent-analysis/intent.js";
-import { retrieveIntentContext } from "./agents/intent-analysis/rag.js";
-import { extractRuleContradictions, extractRuleSignals, scoreSignals } from "./agents/intent-analysis/signals.js";
+import { classifyFraudType } from "../rules/fraud-types.js";
+import { handleIntent } from "../intent.js";
+import { retrieveIntentContext } from "../retrieval/rag.js";
+import { extractRuleContradictions, extractRuleSignals, scoreSignals } from "../rules/signals.js";
 
 test("사기·정상 사례를 동시에 검색한다", () => {
   const result = retrieveIntentContext({
@@ -130,6 +130,11 @@ test("의도 분석은 개인정보를 마스킹하고 근거·유형·점수를
     assert.equal(result.risk.level, "HIGH");
     assert.match(result.message, /대출을 빙자한 사기가 의심돼요/);
     assert.match(result.message, /보증금이나 수수료를 먼저/);
+    assert.match(result.message, /지금 해야 할 일이에요/);
+    assert.match(result.message, /1\. 지금은/);
+    assert.match(result.message, /2\. 해당 금융사의 공식 앱/);
+    assert.match(result.message, /3\. 보증금·수수료/);
+    assert.match(result.message, /4\. 대화·문자/);
     assert.equal(result.message.includes("100%"), false);
     assert.equal(result.message.includes("확인된 위험 신호"), false);
   } finally {
@@ -179,14 +184,14 @@ test("대화 앞뒤가 다르면 쉬운 문장으로 알려주고 위험 신호�
     assert.ok(result.risk.codes.includes("ANSWER_CONTRADICTION"));
     assert.match(result.message, /송금 이유가 앞뒤에서 달라요/);
     assert.match(result.message, /처음에는 병원비/);
-    assert.match(result.message, /지금은 보내지 마세요/);
+    assert.match(result.message, /지금은 송금하지 말고/);
     assert.ok(result.message.length < 350);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("위험이 확인돼도 최소 질문 수를 채우기 전에는 결론을 내지 않는다", async () => {
+test("고위험은 한 번 확인한 뒤 같은 질문을 반복하지 않고 결론을 낸다", async () => {
   const originalFetch = globalThis.fetch;
   const llmReply = {
     done: true,                       // LLM 이 그만하자고 해도 규칙이 더 묻게 한다
@@ -224,16 +229,18 @@ test("위험이 확인돼도 최소 질문 수를 채우기 전에는 결론을 
     assert.match(first.message, /걱정되는 점이 있어요/);   // 위험은 지금 알려준다
     assert.match(first.message, /안전계좌/);               // 신호에 맞는 후속 질문
 
-    const third = await handleIntent(body(3), "test-key");
-    assert.equal(third.hold, true);             // 최소 질문 수를 채우면 보류
-    assert.equal(third.done, true);
-    assert.match(third.message, /지금은 보내지 마세요/);
+    const second = await handleIntent(body(2), "test-key");
+    assert.equal(second.hold, true);
+    assert.equal(second.done, true);
+    assert.match(second.message, /지금 해야 할 일이에요/);
+    assert.match(second.message, /1\. 지금은/);
+    assert.match(second.message, /4\./);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("LLM 없이 폴백일 때도 최소 질문 수 규칙은 같다", async () => {
+test("LLM 없이 폴백일 때도 고위험은 두 번째 답변에서 결론을 낸다", async () => {
   const transfer = { amount: 12_000_000, isFirstTransfer: true, patternRiskScore: 40, callInProgress: true };
   const messages = [{ role: "user", text: "대출받으려면 보증금을 먼저 보내라고 해서요" }];
 
@@ -243,8 +250,9 @@ test("LLM 없이 폴백일 때도 최소 질문 수 규칙은 같다", async () 
   assert.equal(first.hold, false);
   assert.equal(first.done, false);
 
-  const third = await handleIntent({ transfer, messages, turn: 3 }, "");
-  assert.equal(third.fallback, true);
-  assert.equal(third.hold, true);
-  assert.equal(third.done, true);
+  const second = await handleIntent({ transfer, messages, turn: 2 }, "");
+  assert.equal(second.fallback, true);
+  assert.equal(second.hold, true);
+  assert.equal(second.done, true);
+  assert.match(second.message, /지금 해야 할 일이에요/);
 });

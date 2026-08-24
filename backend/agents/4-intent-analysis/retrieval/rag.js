@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-const corpusUrl = new URL("./data/processed/runtime/intent-rag-corpus.json", import.meta.url);
+const corpusUrl = new URL("../data/processed/runtime/intent-rag-corpus.json", import.meta.url);
 const corpus = JSON.parse(readFileSync(corpusUrl, "utf8"));
 
 function normalize(text = "") {
