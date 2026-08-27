@@ -18,10 +18,6 @@ function AnsimBanner({ paired, onClick, onVerify, protectionLevel, protectionNam
       <div onClick={onClick} className="mt-3 rounded-2xl bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 p-5 active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[15px] font-bold text-white">안심동행 AI</p>
-          <span className="flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1">
-            <span className="w-2 h-2 rounded-full bg-green-400" />
-            <span className="text-[12px] font-semibold text-white">연결됨</span>
-          </span>
         </div>
         <p className="text-[12px] text-white/70 mb-4">딸 김지혜님과 함께 지키고 있어요.</p>
         <div className="rounded-xl border border-transparent bg-white/15 backdrop-blur-sm p-4 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/25 hover:shadow-lg active:translate-y-0 active:scale-[0.99]">

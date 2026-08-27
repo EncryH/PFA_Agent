@@ -62,6 +62,15 @@ export type ProtectionPolicy = {
   guideDamageResponse: boolean;
 };
 
+export type AiReviewThreshold = number;
+
+export const AI_REVIEW_THRESHOLD_OPTIONS = [
+  { amount: 1_000_000 as const, label: "100만원", desc: "조금만 이상해도 확인" },
+  { amount: 3_000_000 as const, label: "300만원", desc: "큰돈부터 확인" },
+  { amount: 10_000_000 as const, label: "1,000만원", desc: "고액 송금 중심" },
+  { amount: 30_000_000 as const, label: "3,000만원", desc: "매우 큰 금액만" },
+] as const;
+
 export function getProtectionPolicy(level: ProtectionLevel): ProtectionPolicy {
   return {
     delaySeconds: level >= 1 ? 300 : 0,
@@ -72,7 +81,9 @@ export function getProtectionPolicy(level: ProtectionLevel): ProtectionPolicy {
 }
 
 const STORAGE_KEY = "ansimProtectionLevel";
+const AI_REVIEW_THRESHOLD_KEY = "ansimAiReviewThreshold";
 export const PROTECTION_EVENT = "ansim-protection-level";
+export const AI_REVIEW_THRESHOLD_EVENT = "ansim-ai-review-threshold";
 
 export function readProtectionLevel(): ProtectionLevel {
   const value = Number(localStorage.getItem(STORAGE_KEY) ?? 2);
@@ -82,6 +93,19 @@ export function readProtectionLevel(): ProtectionLevel {
 export function saveProtectionLevel(level: ProtectionLevel) {
   localStorage.setItem(STORAGE_KEY, String(level));
   window.dispatchEvent(new Event(PROTECTION_EVENT));
+}
+
+export function readAiReviewThreshold(): AiReviewThreshold {
+  const value = Number(localStorage.getItem(AI_REVIEW_THRESHOLD_KEY) ?? 1_000_000);
+  return Number.isFinite(value) && value >= 10_000
+    ? value
+    : 1_000_000;
+}
+
+export function saveAiReviewThreshold(amount: AiReviewThreshold) {
+  const safeAmount = Math.max(10_000, Math.floor(Number(amount) || 1_000_000));
+  localStorage.setItem(AI_REVIEW_THRESHOLD_KEY, String(safeAmount));
+  window.dispatchEvent(new Event(AI_REVIEW_THRESHOLD_EVENT));
 }
 
 export function useProtectionLevel() {
@@ -98,4 +122,20 @@ export function useProtectionLevel() {
   }, []);
 
   return [level, saveProtectionLevel] as const;
+}
+
+export function useAiReviewThreshold() {
+  const [threshold, setThreshold] = useState<AiReviewThreshold>(readAiReviewThreshold);
+
+  useEffect(() => {
+    const sync = () => setThreshold(readAiReviewThreshold());
+    window.addEventListener(AI_REVIEW_THRESHOLD_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(AI_REVIEW_THRESHOLD_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  return [threshold, saveAiReviewThreshold] as const;
 }

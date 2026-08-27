@@ -20,17 +20,17 @@ import {
 } from "../shared/intentChat";
 import { fetchRiskScore, type RiskResult } from "../api/riskScore";
 import type { BehaviorSignals } from "../shared/behavior";
-import { getProtectionPolicy, useProtectionLevel } from "../shared/protection";
+import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
 // ── 보안 분석 결과 카드 ─────────────────────────────────────────────────────
 const GRADE_STYLE = {
-  safe:    { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-700",  badge: "bg-green-500"  },
-  caution: { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700",  badge: "bg-amber-500"  },
-  warning: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "bg-orange-500" },
-  danger:  { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-700",    badge: "bg-red-500"    },
+  safe:    { text: "text-emerald-700", meter: "bg-emerald-500", chip: "text-emerald-700 border-emerald-100 bg-emerald-50" },
+  caution: { text: "text-amber-700",   meter: "bg-amber-500",   chip: "text-amber-700 border-amber-100 bg-amber-50" },
+  warning: { text: "text-orange-700",  meter: "bg-orange-500",  chip: "text-orange-700 border-orange-100 bg-orange-50" },
+  danger:  { text: "text-red-700",     meter: "bg-red-500",     chip: "text-red-700 border-red-100 bg-red-50" },
 } as const;
 
 function RiskGradeCard({
@@ -46,44 +46,56 @@ function RiskGradeCard({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className={`rounded-2xl border p-5 ${s.bg} ${s.border}`}>
-        <p className="text-[13px] font-semibold text-gray-500 mb-3">🛡 안심동행 보안 분석 결과</p>
-
-        {/* 등급 배지 + 점수 */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className={`w-[60px] h-[60px] rounded-2xl ${s.badge} flex items-center justify-center`}>
-            <span className="text-[32px] font-black text-white leading-none">{result.grade}</span>
+      <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white bg-white shadow-sm">
+            <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
           </div>
-          <div>
-            <p className={`text-[24px] font-black leading-tight ${s.text}`}>{result.gradeLabel}</p>
-            <p className="text-[12px] text-gray-400">종합 위험 점수 {result.score}점 / 100점</p>
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+              안심동행 AI 분석 결과
+            </div>
+            <p className="mt-1 text-[12px] text-gray-500">거래 정보와 평소 패턴을 함께 확인했어요</p>
           </div>
         </div>
 
-        {/* 점수 바 */}
-        <div className="flex flex-col gap-2 mb-4">
-          {[
-            { label: "행동 분석", val: result.behaviorScore },
-            { label: "거래 검사", val: result.transactionScore },
-          ].map(({ label, val }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-[11px] text-gray-500 w-[60px] shrink-0">{label}</span>
-              <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden">
-                <div className={`h-full ${s.badge} rounded-full`} style={{ width: `${Math.min(100, val)}%` }} />
-              </div>
-              <span className="text-[11px] font-bold text-gray-600 w-7 text-right">{val}점</span>
+        {/* 등급 배지 + 점수 */}
+        <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="flex h-[64px] w-[64px] items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--ac-500)] to-[var(--ac-300)] shadow-sm">
+              <span className="text-[34px] font-black text-white leading-none">{result.grade}</span>
             </div>
-          ))}
+            <div>
+              <p className={`text-[25px] font-black leading-tight ${s.text}`}>{result.gradeLabel}</p>
+              <p className="text-[12px] text-gray-400">종합 위험 점수 {result.score}점 / 100점</p>
+            </div>
+          </div>
+
+          {/* 점수 바 */}
+          <div className="mt-4 flex flex-col gap-2.5">
+            {[
+              { label: "행동 분석", val: result.behaviorScore },
+              { label: "거래 검사", val: result.transactionScore },
+            ].map(({ label, val }) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-[12px] text-gray-500 w-[64px] shrink-0">{label}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+                  <div className={`h-full ${s.meter} rounded-full`} style={{ width: `${Math.min(100, val)}%` }} />
+                </div>
+                <span className="w-8 text-right text-[12px] font-bold text-gray-700">{val}점</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 감지 항목 */}
         {result.reasons.length > 0 && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {result.reasons.map((r) => (
-              <div key={r} className="flex items-center gap-1.5">
-                <span className="text-[11px]">{isHigh ? "⚠" : "•"}</span>
-                <span className={`text-[12px] font-medium ${s.text}`}>{r}</span>
-              </div>
+              <span key={r} className={`rounded-full border px-2.5 py-1 text-[12px] font-bold ${s.chip}`}>
+                {isHigh ? "주의 · " : ""}{r}
+              </span>
             ))}
           </div>
         )}
@@ -108,18 +120,21 @@ function RiskGradeCard({
         </>
       ) : (
         /* D등급 — 송금을 5분 정지시키고 그 시간에 AI가 목적을 확인한다 */
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[18px]">🔒</span>
-            <span className="text-[14px] font-bold text-red-700">송금 5분 정지</span>
+        <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-[var(--ac-50)] via-white to-[var(--ac-50)] p-5 shadow-sm flex flex-col items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white bg-white shadow-sm">
+            <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[var(--ac-700)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+            송금 5분 정지
           </div>
           {freezeSecsLeft !== null && (
-            <div className="text-[40px] font-black text-red-600 font-mono tracking-[3px] leading-none">
+            <div className="rounded-2xl bg-white px-5 py-3 text-[40px] font-black text-[var(--ac-700)] font-mono tracking-[3px] leading-none shadow-sm">
               {String(Math.floor(freezeSecsLeft / 60)).padStart(2, "0")}:{String(freezeSecsLeft % 60).padStart(2, "0")}
             </div>
           )}
-          <p className="text-[12px] text-red-500 text-center leading-relaxed">
-            매우 높은 위험 신호가 감지됐어요.<br />정지된 동안 AI가 송금 목적을 확인할게요.
+          <p className="text-center text-[13px] leading-relaxed text-gray-600">
+            매우 높은 위험 신호가 감지됐어요.<br />정지된 동안 안심동행 AI가 송금 목적을 확인할게요.
           </p>
           <div className="flex items-center gap-2 pt-1 text-[var(--ac-600)]">
             <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--ac-200)] border-t-[var(--ac-600)] animate-spin" />
@@ -199,6 +214,7 @@ export default function Transfer({
   const [official, setOfficial] = useState<OfficialContent | null>(null);
   const [playingVideo, setPlayingVideo] = useState<string | null>(null);
   const [protectionLevel] = useProtectionLevel();
+  const [aiReviewThreshold] = useAiReviewThreshold();
   const protectionPolicy = getProtectionPolicy(protectionLevel);
   const [resumeNotice, setResumeNotice] = useState(false);   // 저장한 상담을 다시 연 상태
   const [intentSessionId, setIntentSessionId] = useState<string | null>(null);
@@ -241,10 +257,10 @@ export default function Transfer({
     if (!clean && !value) return null;
 
     if (isMyAccount(account))
-      return { score: 0, label: "내 계좌", cls: "text-green-600 bg-green-50 border-green-100", msg: "본인 명의 계좌 — 확인 없이 바로 보내드려요" };
+      return { score: 0, label: "내 계좌", msg: "본인 명의 계좌 — 확인 없이 바로 보내드려요" };
 
     if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7))))
-      return { score: 100, label: "DB 경고", cls: "text-red-600 bg-red-50 border-red-100", msg: "신고된 계좌예요 — 즉시 차단됩니다" };
+      return { score: 100, label: "DB 경고", msg: "신고된 계좌예요 — 즉시 차단됩니다" };
 
     const known = KNOWN_RECIPIENTS.find(
       (k) => (clean.length >= 8 && clean.includes(k.account.slice(0, 8))) || name === k.name
@@ -255,11 +271,11 @@ export default function Transfer({
     if (value >= 1000000) score += 15;
     if (value >= 3000000) score += 20;
 
-    if (score >= 35)
-      return { score, label: "AI 확인 필요", cls: "text-amber-600 bg-amber-50 border-amber-100", msg: "새 계좌 + 고액 — AI가 송금 목적을 여쭤볼게요" };
+    if (value >= aiReviewThreshold && score >= 35)
+      return { score, label: "AI 확인 필요", msg: `${aiReviewThreshold.toLocaleString()}원 이상 — AI가 송금 목적을 여쭤볼게요` };
 
-    return { score, label: "정상", cls: "text-green-600 bg-green-50 border-green-100", msg: "정상 거래로 분석됩니다" };
-  }, [account, amt, name]);
+    return { score, label: "정상", msg: "정상 거래로 분석됩니다" };
+  }, [account, amt, name, aiReviewThreshold]);
 
   // ── Effects ──
   useEffect(() => {
@@ -325,6 +341,10 @@ export default function Transfer({
 
     // 즉결 처리 (API 불필요)
     if (isMyAccount(account)) { setStep("success"); return; }
+    const amountValue = parseAmt(amt);
+    const localRisk = runRisk(account, amountValue, name);
+    if (localRisk === "db-warning") { setStep("db-warning"); return; }
+    if (amountValue < aiReviewThreshold) { setStep("success"); return; }
     const clean = account.replace(/\D/g, "");
     if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7)))) {
       setStep("db-warning"); return;
@@ -350,7 +370,7 @@ export default function Transfer({
     fetchRiskScore({
       behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec },
       transaction: {
-        amount: parseAmt(amt),
+        amount: amountValue,
         isKnownRecipient: !!known,
         isMyAccount: false,
         hourOfDay: new Date().getHours(),
@@ -660,12 +680,6 @@ export default function Transfer({
             ))}
           </div>
 
-          {paired && (
-            <button onClick={() => { setEmergencyStage("review"); setEmergencyConsent(false); setEmergencyReceipt(""); setEmergencyAuthOpen(false); setEmergencyAuthVerifying(false); setReliefSigned(false); setEvidenceSaved(false); setPoliceReportDone(false); setPoliceDraftOpen(false); setPoliceDraftConfirmed(false); setSafetyConfirmed(false); setBankFollowupConfirmed(false); setShowEmergencyStatus(false); setEmergencyReceiptSaved(false); setReliefDocumentOpen(false); setReliefSignatureNotice(false); setStep("already-sent"); }}
-              className="w-full py-3 rounded-xl text-[14px] font-medium text-red-500 border border-red-200 bg-red-50 active:scale-[0.98] transition-all">
-              이미 보냈어요 → 긴급 대응
-            </button>
-          )}
         </div>
       )}
 
@@ -814,11 +828,17 @@ export default function Transfer({
 
           {/* 실시간 위험 미리보기도 안심동행 기능 — 연결 전에는 띄우지 않는다 */}
           {paired && liveRisk && (
-            <div className={`rounded-xl px-4 py-2 border flex items-center gap-2 mt-2 shrink-0 ${liveRisk.cls}`}>
-              <div className="w-2 h-2 rounded-full bg-current opacity-60 shrink-0" />
-              <div>
-                <span className="text-[12px] font-bold">{liveRisk.label}</span>
-                <span className="text-[12px] opacity-75 ml-2">{liveRisk.msg}</span>
+            <div className="mt-2 flex shrink-0 items-center gap-3 rounded-2xl border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-4 py-3 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--ac-100)] bg-[var(--ac-50)] shadow-sm">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  <span className="text-[12px] font-bold text-[var(--ac-700)]">안심동행 AI</span>
+                  <span className="text-[12px] font-bold text-gray-900">· {liveRisk.label}</span>
+                </div>
+                <p className="mt-0.5 truncate text-[12px] text-gray-500">{liveRisk.msg}</p>
               </div>
             </div>
           )}
@@ -905,35 +925,62 @@ export default function Transfer({
             <p className="text-[16px] font-bold text-gray-900">송금하고 있어요...</p>
           </div>
         ) : checkPhase === "analyzing" ? (
-          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-6">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-100)]" />
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-500)] border-t-transparent animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="#3b82f6" className="w-8 h-8"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-6 shadow-sm">
+            <div className="flex flex-col items-center text-center">
+              <div className="relative flex h-24 w-24 items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-[6px] border-[var(--ac-100)]" />
+                <div className="absolute inset-0 rounded-full border-[6px] border-[var(--ac-500)] border-t-transparent animate-spin" />
+                <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border border-white bg-white shadow-md">
+                  <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+                </div>
+              </div>
+
+              <div className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-bold text-[var(--ac-700)] shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                안심동행 AI
+              </div>
+              <p className="mt-3 text-[20px] font-extrabold text-gray-950">거래를 확인하고 있어요</p>
+              <p className="mt-1 text-[13px] text-gray-500">계좌·금액·거래 패턴을 함께 보고 있어요.</p>
+
+              <div className="mt-5 w-full rounded-2xl bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-gray-400">받는 계좌</span>
+                  <span className="truncate text-[13px] font-semibold text-gray-900">{account}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-gray-400">송금 금액</span>
+                  <span className="text-[15px] font-extrabold text-gray-950">{amt}원</span>
+                </div>
               </div>
             </div>
-            <div className="text-center">
-              <p className="text-[16px] font-bold text-gray-900">안심동행 AI 분석 중</p>
-              <p className="text-[13px] text-gray-400 mt-1 font-mono">{account} · {amt}원</p>
-            </div>
-            <div className="w-full flex flex-col gap-1">
-              {["행동 패턴 분석 중", "거래 이상 탐지 중", "안전 등급 산출 중"].map((s, i) => (
-                <div key={s} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+
+            <div className="mt-5 flex flex-col gap-2">
+              {["행동 패턴 분석", "거래 이상 탐지", "안전 등급 산출"].map((s, i) => (
+                <div
+                  key={s}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
+                    analyzeStep >= i ? "bg-white text-gray-900 shadow-sm" : "bg-white/60 text-gray-300"
+                  }`}
+                >
                   {analyzeStep > i ? (
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M20 6L9 17l-5-5" /></svg>
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M20 6L9 17l-5-5" /></svg>
                     </div>
                   ) : analyzeStep === i ? (
-                    <div className="w-5 h-5 rounded-full bg-[var(--ac-100)] flex items-center justify-center shrink-0">
-                      <div className="w-2 h-2 rounded-full bg-[var(--ac-400)] animate-pulse" />
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--ac-100)]">
+                      <div className="h-2.5 w-2.5 rounded-full bg-[var(--ac-500)] animate-pulse" />
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      <div className="w-2 h-2 rounded-full bg-gray-300" />
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                      <div className="h-2.5 w-2.5 rounded-full bg-gray-300" />
                     </div>
                   )}
-                  <p className={`text-[13px] ${analyzeStep >= i ? "text-gray-700" : "text-gray-300"}`}>{s}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-[14px] font-bold ${analyzeStep >= i ? "text-gray-900" : "text-gray-300"}`}>{s}</p>
+                    <p className={`mt-0.5 text-[12px] ${analyzeStep >= i ? "text-gray-500" : "text-gray-300"}`}>
+                      {i === 0 ? "평소 송금 습관과 비교" : i === 1 ? "새 계좌·고액·위험 문구 확인" : "보호 단계에 맞춰 판단"}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1053,44 +1100,50 @@ export default function Transfer({
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           {/* 냉각이 걸린 상태면 남은 시간을 대화 위에 계속 보여준다 — 대화와 정지가 동시에 진행 중임을 알린다 */}
           {freezeSecsLeft !== null && freezeSecsLeft > 0 && (
-            <div className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[14px]">🔒</span>
+            <div className="shrink-0 rounded-2xl border border-[var(--ac-100)] bg-gradient-to-r from-[var(--ac-50)] via-white to-[var(--ac-50)] px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[var(--ac-600)] shadow-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M7 11V8a5 5 0 0110 0v3" />
+                    <path d="M6 11h12v9H6z" />
+                  </svg>
+                </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] font-bold text-red-700">송금 정지 중</p>
-                  <p className="text-[11px] text-red-500 truncate">정지가 풀리기 전까지는 보낼 수 없어요</p>
+                  <p className="text-[12px] font-extrabold text-[var(--ac-700)]">안심동행 AI가 송금을 잠시 멈췄어요</p>
+                  <p className="text-[11px] text-gray-500 truncate">남은 시간 동안 확인 대화를 이어갈 수 있어요</p>
                 </div>
               </div>
-              <span className="shrink-0 text-[20px] font-black text-red-600 font-mono tracking-[2px] leading-none">
+              <span className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-[18px] font-black text-[var(--ac-700)] font-mono tracking-[2px] leading-none shadow-sm">
                 {String(Math.floor(freezeSecsLeft / 60)).padStart(2, "0")}:{String(freezeSecsLeft % 60).padStart(2, "0")}
               </span>
             </div>
           )}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex flex-col gap-2">
-            <div className="flex items-start gap-2.5">
-              <svg viewBox="0 0 24 24" fill="#f59e0b" className="mt-0.5 w-4 h-4 shrink-0"><path d="M12 2L2 21h20L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
-              <div>
-                <p className="text-[13px] font-bold text-gray-900">안전을 위해 한 번 더 확인할게요</p>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-gray-600">처음 보내는 계좌에 큰 금액을 보내려고 해요.</p>
+          <div className="rounded-[22px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-4 py-4 shadow-sm flex flex-col gap-3">
+            <div>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                안심동행 AI 확인
               </div>
+              <p className="mt-2 text-[16px] font-extrabold text-gray-950">안전을 위해 한 번 더 확인할게요</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-gray-600">처음 보내는 계좌에 큰 금액을 보내려고 해요.</p>
             </div>
             {riskLabels.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pl-6">
+              <div className="flex flex-wrap gap-1.5">
                 {riskLabels.map((l) => (
-                  <span key={l} className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                  <span key={l} className="text-[11px] font-bold text-[var(--ac-700)] bg-white border border-[var(--ac-100)] px-2.5 py-1 rounded-full shadow-sm">
                     {l}
                   </span>
                 ))}
               </div>
             )}
             {fraudTypeLabel && (
-              <p className="pl-6 text-[12px] font-bold text-red-600">의심 유형: {fraudTypeLabel}</p>
+              <p className="rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-[var(--ac-700)] shadow-sm">의심 유형: {fraudTypeLabel}</p>
             )}
             {fallback && (
-              <p className="text-[11px] text-amber-600 pl-6">※ AI 연결이 불안정해 사전 정의 시나리오로 진행 중이에요</p>
+              <p className="rounded-xl bg-white/70 px-3 py-2 text-[11px] text-gray-500">※ AI 연결이 불안정해 사전 정의 시나리오로 진행 중이에요</p>
             )}
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white p-4 flex flex-col gap-3">
+          <div className="min-h-0 flex-1 overflow-y-auto rounded-[24px] border border-[var(--ac-100)] bg-white p-4 flex flex-col gap-3 shadow-sm">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
@@ -1179,8 +1232,8 @@ export default function Transfer({
             <div ref={chatEndRef} />
           </div>
           {chatDone && analysisHold && (
-            <div className="shrink-0 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-              <p className="text-[13px] font-bold text-gray-900">송금만 잠시 멈췄어요</p>
+            <div className="shrink-0 rounded-2xl border border-[var(--ac-100)] bg-[var(--ac-50)] px-4 py-3">
+              <p className="text-[13px] font-bold text-[var(--ac-700)]">송금만 잠시 멈췄어요</p>
               <p className="mt-0.5 text-[12px] leading-relaxed text-gray-600">상담은 끝나지 않았어요. 아래에서 계속 물어보실 수 있어요.</p>
             </div>
           )}

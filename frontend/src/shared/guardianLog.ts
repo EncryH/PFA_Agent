@@ -106,6 +106,11 @@ export function recordGuardianDecision(id: string, decision: Exclude<GuardianDec
   )));
 }
 
+export function deleteGuardianLogEntry(id: string) {
+  const entries = readGuardianLog();
+  write(entries.filter((entry) => entry.id !== id));
+}
+
 export function useGuardianLog() {
   const [entries, setEntries] = useState<GuardianLogEntry[]>(readGuardianLog);
 

@@ -54,10 +54,6 @@ function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert,
     <div onClick={onOpen} className="rounded-2xl border border-[var(--ac-band-border)] bg-gradient-to-br from-[var(--ac-band-from)] via-[var(--ac-band-via)] to-[var(--ac-band-to)] p-5 active:scale-[0.98] hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[15px] font-bold text-[var(--ac-band-text)]">안심동행 AI</p>
-        <span className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1">
-          <span className="w-2 h-2 rounded-full bg-[var(--ac-400)]" />
-          <span className="text-[12px] font-semibold text-[var(--ac-600)]">연결됨</span>
-        </span>
       </div>
       <p className="text-[12px] text-[var(--ac-band-sub)] mb-4">어머니 김영순님의 금융을 함께 지켜요.</p>
       {!hasPendingAlert && (

@@ -7,7 +7,7 @@
 //
 // 부모↔자녀는 localStorage("ansimAlert") 로만 연결된다.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { parentTabs, parentIcons } from "./shared/ui";
 import { MY_ACCOUNTS, parseAmt, type Role, type TxnRow } from "./shared/data";
 import Transfer from "./screens/Transfer";
@@ -45,6 +45,7 @@ export default function App() {
   const [activeCall, setActiveCall] = useState<typeof DEMO_SCENARIOS[number] | null>(null);
   const [msgIdx, setMsgIdx] = useState(0);
   const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
+  const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [behaviorSignals, setBehaviorSignals] = useState<BehaviorSignals>(INITIAL_SIGNALS);
   const [balanceOverrides, setBalanceOverrides] = useState<Record<number, string>>({});
   const [closedAccounts, setClosedAccounts] = useState<Set<number>>(new Set());
@@ -108,6 +109,16 @@ export default function App() {
   };
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
+  useEffect(() => {
+    const syncPairing = () => setPaired(localStorage.getItem("ansimPaired") === "true");
+    window.addEventListener("ansim-paired", syncPairing);
+    window.addEventListener("storage", syncPairing);
+    return () => {
+      window.removeEventListener("ansim-paired", syncPairing);
+      window.removeEventListener("storage", syncPairing);
+    };
+  }, []);
+
   const toggleLargeText = () => {
     setLargeText((current) => {
       const next = !current;
@@ -352,70 +363,60 @@ export default function App() {
         {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
       </button>
 
-      {/* ── 앱 외부 시뮬레이션 버튼 (데스크톱 뷰 기준 앱 오른쪽) ── */}
-      <div
-        className="fixed z-50 flex flex-col items-center gap-3.5 left-[calc(50%+235px)] top-[84px] max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-44"
-      >
-        {/* 전화 수신 버튼 */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative flex items-center justify-center">
+      {/* ── 앱 외부 시뮬레이션 버튼 (안심동행 연결 후 기능 1번 데모로만 노출) ── */}
+      {paired && (
+        <div
+          className="fixed z-50 flex flex-col items-center gap-3.5 left-[calc(50%+235px)] top-[84px] max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-44"
+        >
+          {/* 전화 수신 버튼 */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <button
+                onClick={triggerDemoCall}
+                disabled={!!activeCall}
+                className={`relative flex h-12 w-12 items-center justify-center rounded-[14px] shadow-lg transition-all active:scale-90 ${
+                  activeCall ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-b from-[#5ff474] to-[#09b72f] hover:scale-105'
+                }`}
+                style={{ boxShadow: activeCall ? 'none' : '0 4px 16px rgba(9,183,47,0.42), inset 0 1px 0 rgba(255,255,255,0.35)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="white" className="h-7 w-7">
+                  <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+                </svg>
+              </button>
+            </div>
             {!activeCall && (
-              <>
-                <div className="absolute w-14 h-14 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '1.4s' }} />
-                <div className="absolute w-11 h-11 rounded-full bg-green-500/15 animate-ping" style={{ animationDuration: '1.4s', animationDelay: '0.2s' }} />
-              </>
+              <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
+                <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">전화</p>
+                <p className="text-white text-[10px] font-semibold leading-tight">{scenarioLabel}</p>
+              </div>
             )}
-            <button
-              onClick={triggerDemoCall}
-              disabled={!!activeCall}
-              className={`relative w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 ${
-                activeCall ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 hover:scale-105'
-              }`}
-              style={{ boxShadow: activeCall ? 'none' : '0 3px 16px rgba(34,197,94,0.45)' }}
-            >
-              <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18 }}>
-                <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
-              </svg>
-            </button>
           </div>
-          {!activeCall && (
-            <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
-              <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">전화</p>
-              <p className="text-white text-[10px] font-semibold leading-tight">{scenarioLabel}</p>
-            </div>
-          )}
-        </div>
 
-        {/* 문자 수신 버튼 */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative flex items-center justify-center">
-            {!activeMessage && (
-              <>
-                <div className="absolute w-14 h-14 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '1.8s' }} />
-                <div className="absolute w-11 h-11 rounded-full bg-blue-500/15 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.3s' }} />
-              </>
-            )}
-            <button
-              onClick={triggerDemoMessage}
-              disabled={!!activeMessage}
-              className={`relative w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 ${
-                activeMessage ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'
-              }`}
-              style={{ boxShadow: activeMessage ? 'none' : '0 3px 16px rgba(59,130,246,0.45)' }}
-            >
-              <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18 }}>
-                <path d="M20 2H4a2 2 0 00-2 2v16l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
-              </svg>
-            </button>
-          </div>
-          {!activeMessage && (
-            <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
-              <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">문자</p>
-              <p className="text-white text-[10px] font-semibold leading-tight">{messageLabel}</p>
+          {/* 문자 수신 버튼 */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <button
+                onClick={triggerDemoMessage}
+                disabled={!!activeMessage}
+                className={`relative flex h-12 w-12 items-center justify-center rounded-[14px] shadow-lg transition-all active:scale-90 ${
+                  activeMessage ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-b from-[#5ff474] to-[#09b72f] hover:scale-105'
+                }`}
+                style={{ boxShadow: activeMessage ? 'none' : '0 4px 16px rgba(9,183,47,0.42), inset 0 1px 0 rgba(255,255,255,0.35)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="white" className="h-8 w-8">
+                  <path d="M12 4C6.9 4 3 7.2 3 11.3c0 2.2 1.1 4.1 3 5.5l-.7 3.2 3.5-1.8c1 .3 2.1.5 3.2.5 5.1 0 9-3.2 9-7.4S17.1 4 12 4z" />
+                </svg>
+              </button>
             </div>
-          )}
+            {!activeMessage && (
+              <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
+                <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">문자</p>
+                <p className="text-white text-[10px] font-semibold leading-tight">{messageLabel}</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
