@@ -90,3 +90,66 @@ export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
     reasons,
   };
 }
+
+/**
+ * 0~3층 방어선을 순서대로 실행한다. README 아키텍처의 "0~3은 기본 방어선이다.
+ * 거래 위험이 없으면 여기서 정상 송금으로 종료한다"를 코드로 그대로 옮긴 것.
+ *
+ * 1층(상대방 검증)에서 결론이 분명하면(PASS/BLOCK) 거기서 즉시 끝내고 2·3층은 부르지 않는다.
+ * 결론이 안 나면(CONTINUE) 1층 점수까지 포함해 2·3층과 합산해서 등급을 낸다 — 이때 1층이
+ * "본 적 없는 상대"라고 판단한 것을 3층의 isKnownRecipient 로도 넘겨서 이중 입력을 없앤다.
+ *
+ * 4층(의도 분석)은 대화가 필요해 여기서 호출하지 않는다 — scoreTransferRisk 와 동일한 제약.
+ */
+export function runDefensePipeline({ counterparty = {}, behavior = {}, transaction = {} } = {}) {
+  const counterpartyResult = runCounterpartyVerificationAgent(counterparty);
+
+  if (counterpartyResult.decision === "PASS" || counterpartyResult.decision === "BLOCK") {
+    const score = counterpartyResult.decision === "PASS" ? 0 : 100;
+    const { grade, gradeLabel, gradeColor } = GRADES.find(({ min }) => score >= min);
+    return {
+      score,
+      grade,
+      gradeLabel,
+      gradeColor,
+      counterpartyScore: counterpartyResult.score,
+      behaviorScore: 0,
+      transactionScore: 0,
+      reasons: counterpartyResult.reasons,
+      stoppedAt: counterpartyResult.agent,
+      thecheat: counterpartyResult.thecheat,
+    };
+  }
+
+  const behaviorResult = runBehaviorDetectionAgent(behavior);
+  const transactionResult = runTransactionRiskAgent({
+    ...transaction,
+    isKnownRecipient: Boolean(transaction.isKnownRecipient) || counterpartyResult.isKnownRecipient,
+  });
+
+  let score = Math.min(
+    100,
+    counterpartyResult.score + behaviorResult.score + transactionResult.score,
+  );
+  const reasons = [...counterpartyResult.reasons, ...behaviorResult.reasons, ...transactionResult.reasons];
+
+  const limitBumps = Number(behavior.limitIncreased ?? 0);
+  const amount = Number(transaction.amount ?? 0);
+  if (limitBumps >= 1 && amount >= LIMIT_BUMP_ESCALATION_AMOUNT) {
+    score = 100;
+    reasons.push(LIMIT_BUMP_ESCALATION_REASON);
+  }
+
+  const { grade, gradeLabel, gradeColor } = GRADES.find(({ min }) => score >= min);
+
+  return {
+    score,
+    grade,
+    gradeLabel,
+    gradeColor,
+    counterpartyScore: counterpartyResult.score,
+    behaviorScore: behaviorResult.score,
+    transactionScore: transactionResult.score,
+    reasons,
+  };
+}

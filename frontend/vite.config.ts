@@ -49,45 +49,14 @@ function backendApi(apiKey: string): Plugin {
 }
 
 // 더치트 mock API — POST /api/thecheat/check { query: string }
-// 실제 더치트 API는 기관 발급 전용이므로 MVP용 임의 데이터셋으로 대체한다.
+// 데이터·조회 로직은 1층 상대방 검증 에이전트(backend/agents/1-counterparty-verification)에 있다.
+// Verify.tsx 화면과 실제 송금 시 1층 판정이 서로 다른 데이터를 보면 "검증 땐 안전했는데
+// 송금은 막혔다" 같은 불일치가 생기므로, 여기서는 그 모듈을 그대로 불러다 감싸기만 한다.
 function thecheatMockApi(): Plugin {
-  type Entry = { reportCount: number; scamTypes: string[]; lastReported: string }
-  const BLACKLIST: Record<string, Entry> = {
-    "01012345678": { reportCount: 14, scamTypes: ["기관사칭", "보이스피싱"], lastReported: "2025-11-03" },
-    "01098765432": { reportCount: 6,  scamTypes: ["대출사기"],              lastReported: "2025-10-28" },
-    "07012341234": { reportCount: 29, scamTypes: ["보이스피싱", "기관사칭"], lastReported: "2025-11-15" },
-    "01055556666": { reportCount: 3,  scamTypes: ["스미싱"],                lastReported: "2025-09-14" },
-    "01099990000": { reportCount: 11, scamTypes: ["투자사기"],              lastReported: "2025-11-01" },
-    "1104421783":  { reportCount: 7,  scamTypes: ["보이스피싱"],            lastReported: "2025-10-10" },
-    "1566XXXX":    { reportCount: 2,  scamTypes: ["기관사칭"],              lastReported: "2025-08-22" },
-    "kb-safe.com":      { reportCount: 31, scamTypes: ["피싱사이트"],       lastReported: "2025-11-20" },
-    "shinhan-auth.net": { reportCount: 18, scamTypes: ["피싱사이트"],       lastReported: "2025-11-12" },
-    "hana-secure.co":   { reportCount: 9,  scamTypes: ["피싱사이트"],       lastReported: "2025-10-30" },
-    "woori-verify.com": { reportCount: 24, scamTypes: ["피싱사이트"],       lastReported: "2025-11-18" },
-    "bank-confirm.net": { reportCount: 15, scamTypes: ["피싱사이트", "스미싱"], lastReported: "2025-11-05" },
-    "secure-login.kr":  { reportCount: 42, scamTypes: ["피싱사이트"],       lastReported: "2025-11-22" },
-    "kbstar-verify.com":{ reportCount: 8,  scamTypes: ["피싱사이트"],       lastReported: "2025-10-15" },
-  }
-
-  function lookup(query: string): Entry | null {
-    const clean = query.replace(/[-\s]/g, "")
-    // 숫자번호: 6자리 이상일 때만 매칭 (짧은 입력의 오탐 방지)
-    if (/^\d+$/.test(clean) && clean.length >= 6) {
-      return BLACKLIST[clean] ?? null
-    }
-    // 도메인: 점(.)이 포함된 경우에만 매칭
-    if (query.includes(".")) {
-      const lower = query.toLowerCase()
-      for (const [k, v] of Object.entries(BLACKLIST)) {
-        if (k.includes(".") && lower.includes(k)) return v
-      }
-    }
-    return null
-  }
-
   return {
     name: 'thecheat-mock-api',
     configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/agents/1-counterparty-verification/rules/blacklist.js')).href
       server.middlewares.use('/api/thecheat/check', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         if (req.method !== 'POST') {
@@ -98,7 +67,8 @@ function thecheatMockApi(): Plugin {
           const chunks: Buffer[] = []
           for await (const c of req) chunks.push(c as Buffer)
           const { query } = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
-          const hit = lookup(String(query ?? ''))
+          const { matchBlacklist } = await import(handlerPath)
+          const hit = matchBlacklist(String(query ?? ''))
           res.statusCode = 200
           res.end(JSON.stringify({
             data: hit
