@@ -41,9 +41,20 @@ test("짧은 숫자는 계좌번호 오탐을 막기 위해 블랙리스트 매�
   assert.equal(matchBlacklist("112"), null);
 });
 
-test("화이트리스트·블랙리스트 어디에도 없으면 CONTINUE 로 다음 계층에 넘긴다", () => {
+test("화이트리스트·블랙리스트 어디에도 없으면 CONTINUE 로 다음 계층에 넘긴다 — 점수는 안 준다", () => {
   const result = runCounterpartyVerificationAgent({ account: "9999999999" });
   assert.equal(result.decision, "CONTINUE");
   assert.equal(result.isKnownRecipient, false);
-  assert.ok(result.score > 0);
+  // "미등록 수취인" 채점은 3층 몫이다 — 1층이 여기서 또 점수를 매기면 이중 페널티가 된다.
+  assert.equal(result.score, 0);
+});
+
+test("호출자가 이미 아는 수취인이라고 알려주면 미확인 페널티 없이 CONTINUE한다", () => {
+  // 프론트의 저장된 수취인 목록(KNOWN_RECIPIENTS)처럼, 공식 화이트리스트엔 없어도
+  // 다른 신뢰 경로로 이미 확인된 상대는 "처음 보는 상대" 취급을 받으면 안 된다.
+  const result = runCounterpartyVerificationAgent({ account: "0102345678", isKnownRecipient: true });
+  assert.equal(result.decision, "CONTINUE");
+  assert.equal(result.isKnownRecipient, true);
+  assert.equal(result.score, 0);
+  assert.deepEqual(result.reasons, []);
 });

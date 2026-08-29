@@ -208,6 +208,7 @@ export default function Transfer({
   const [isTyping, setIsTyping]   = useState(false);
   const [fallback, setFallback]   = useState(false); // LLM 실패로 폴백 사용 중
   const [riskLabels, setRiskLabels] = useState<string[]>([]);
+  const [thecheatHit, setThecheatHit] = useState<{ reportCount: number; scamTypes: string[]; lastReported: string } | null>(null);
   const [fraudTypeLabel, setFraudTypeLabel] = useState("");
   const [analysisHold, setAnalysisHold] = useState(false);
   // 사기 유형이 확정되면 금감원 사례·영상을 함께 보여준다 (서버가 유형별로 미리 매핑)
@@ -338,6 +339,7 @@ export default function Transfer({
     setCheckPhase("analyzing");
     setAnalyzeStep(0);
     setRiskResult(null);
+    setThecheatHit(null); // 이전 검사에서 남은 신고 정보가 이번 화면에 잘못 뜨지 않도록 초기화
 
     // 즉결 처리 (API 불필요)
     if (isMyAccount(account)) { setStep("success"); return; }
@@ -368,6 +370,7 @@ export default function Transfer({
     };
 
     fetchRiskScore({
+      counterparty: { account },
       behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec },
       transaction: {
         amount: amountValue,
@@ -378,6 +381,13 @@ export default function Transfer({
     }).then((result) => {
       const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
       setTimeout(() => {
+        // 1층(상대방 검증)이 더치트 신고 이력으로 즉시 차단한 경우다. 이미 신고가 확정된
+        // 계좌라 대화로 목적을 물어볼 필요가 없다 — 점수 기반 D등급과 달리 바로 db-warning으로 간다.
+        if (result.thecheat) {
+          setThecheatHit(result.thecheat);
+          setStep("db-warning");
+          return;
+        }
         setRiskResult(result);
         setCheckPhase("result");
         if (result.grade === "A") setTimeout(() => setStep("success"), 1500);
@@ -1065,16 +1075,16 @@ export default function Transfer({
               </div>
               <div>
                 <p className="text-[15px] font-bold text-red-700">신고된 계좌입니다</p>
-                <p className="text-[12px] text-red-400">더치트 DB 피해 신고 7건 확인됨</p>
+                <p className="text-[12px] text-red-400">더치트 DB 피해 신고 {thecheatHit?.reportCount ?? 7}건 확인됨</p>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 flex flex-col gap-2 text-[13px]">
               {[
                 ["수취 계좌", account],
                 ["은행",     bank || "-"],
-                ["신고 건수","7건"],
-                ["최근 신고","2026-07-31"],
-                ["피해 유형","보이스피싱 사기"],
+                ["신고 건수", `${thecheatHit?.reportCount ?? 7}건`],
+                ["최근 신고", thecheatHit?.lastReported ?? "2026-07-31"],
+                ["피해 유형", thecheatHit?.scamTypes.join(", ") ?? "보이스피싱 사기"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-gray-400">{k}</span>

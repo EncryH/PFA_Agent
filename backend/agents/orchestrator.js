@@ -102,7 +102,13 @@ export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
  * 4층(의도 분석)은 대화가 필요해 여기서 호출하지 않는다 — scoreTransferRisk 와 동일한 제약.
  */
 export function runDefensePipeline({ counterparty = {}, behavior = {}, transaction = {} } = {}) {
-  const counterpartyResult = runCounterpartyVerificationAgent(counterparty);
+  // 프론트가 저장된 수취인 목록 등으로 이미 아는 상대라고 표시했으면(counterparty.isKnownRecipient
+  // 또는 기존 transaction.isKnownRecipient 둘 다 받아준다) 1층도 그 사실을 그대로 인정한다 —
+  // 공식 화이트리스트에 없다는 이유만으로 "미확인 상대" 취급해 3층과 이중 페널티를 주지 않기 위해서다.
+  const counterpartyResult = runCounterpartyVerificationAgent({
+    ...counterparty,
+    isKnownRecipient: Boolean(counterparty.isKnownRecipient) || Boolean(transaction.isKnownRecipient),
+  });
 
   if (counterpartyResult.decision === "PASS" || counterpartyResult.decision === "BLOCK") {
     const score = counterpartyResult.decision === "PASS" ? 0 : 100;
