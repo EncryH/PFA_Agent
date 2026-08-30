@@ -1,0 +1,9 @@
+# 원본과 압축 파일은 팀 공유 저장소에서 관리한다.
+**/raw/
+**/*.pdf
+**/*.zip
+**/*.7z
+
+# 검색 인덱스는 실행 환경에서 재생성한다.
+rag/runtime/vector/
+rag/runtime/graph/

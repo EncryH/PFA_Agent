@@ -1,6 +1,6 @@
 param(
     [string]$InputRoot = "C:\Users\khm35\Downloads\25.금융분야 고객상담 데이터",
-    [string]$OutputRoot = "$PSScriptRoot\processed\aihub-normal-finance",
+    [string]$OutputRoot = "$PSScriptRoot\..\datasets\rag\input\aihub-normal-finance",
     [int]$ChunkSize = 2000
 )
 

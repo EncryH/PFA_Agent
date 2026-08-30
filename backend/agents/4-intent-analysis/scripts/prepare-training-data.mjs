@@ -3,8 +3,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const inputPath = resolve(process.argv[2] || `${here}/processed/kisa-consultations.json`);
-const outputPath = resolve(process.argv[3] || `${here}/training/kisa-intent-review.jsonl`);
+const ragRoot = resolve(here, "../datasets/rag");
+const inputPath = resolve(process.argv[2] || `${ragRoot}/cases/kisa-consultations.json`);
+const outputPath = resolve(process.argv[3] || `${ragRoot}/cases/kisa-intent-review.jsonl`);
 
 const source = JSON.parse(readFileSync(inputPath, "utf8"));
 

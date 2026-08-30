@@ -1,7 +1,7 @@
 param(
     [string]$SourceZip = "C:\Users\khm35\Downloads\한국인터넷진흥원_전화상담 가명정보 현황_20251208.zip",
-    [string]$ExistingCorpus = "$PSScriptRoot\processed\kisa-corpus\kisa-integrated-corpus.json",
-    [string]$OutputPath = "$PSScriptRoot\processed\kisa-auxiliary-consultations.json"
+    [string]$ExistingCorpus = "$PSScriptRoot\..\datasets\rag\input\kisa-corpus\kisa-integrated-corpus.json",
+    [string]$OutputPath = "$PSScriptRoot\..\datasets\rag\input\kisa-auxiliary-consultations.json"
 )
 
 $ErrorActionPreference = "Stop"
