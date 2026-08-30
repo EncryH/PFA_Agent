@@ -1,11 +1,11 @@
 // /api/intent 핸들러
 //
-// 흐름:  대화 → [Gemini] 신호 추출 → [규칙] 채점 → [규칙] 보류 판정 → 응답
+// 흐름: 대화 → [Gemini] 신호 추출 → [규칙] 판정 → [Gemini] 근거 기반 설명 → 출력 검증
 //
 // LLM 이 done 을 true 로 줘도 그건 '더 물을 게 없다'는 의견일 뿐이다.
 // 실제로 송금을 멈출지는 아래 규칙만이 결정한다.
 
-import { extractIntent } from "./llm/gemini.js";
+import { extractIntent, generateUserResponse } from "./llm/gemini.js";
 import {
   extractRuleContradictions, extractRuleSignals, scoreSignals,
   MAX_TURNS, MIN_TURNS_BEFORE_VERDICT,
@@ -21,25 +21,6 @@ const FALLBACK_QUESTIONS = [
   "혹시 지금도 그 사람과 통화 중이신가요?",
 ];
 
-/**
- * 위험 신호가 이미 잡혔지만 아직 결론을 내기 전에 더 캐물을 질문.
- * 신호 종류에 맞춰 물어야 가족에게 넘길 근거가 구체화된다.
- */
-const PROBE_QUESTIONS = Object.freeze({
-  AGENCY_IMPERSONATION:        "그 기관 이름과 담당자 이름을 들으셨나요? 어떤 번호로 연락이 왔는지도 알려주세요.",
-  SAFE_ACCOUNT_TRANSFER:       "'안전계좌'라는 말을 그쪽에서 먼저 했나요? 계좌 주인 이름도 알려줬는지 궁금해요.",
-  PREPAY_CONTRADICTION:        "먼저 보내면 언제 돌려준다고 했나요? 그 약속을 문서로 받으셨어요?",
-  PERSONAL_ACCOUNT_FOR_AGENCY: "기관인데 개인 이름 계좌를 알려줬나요? 계좌 주인 이름이 무엇이었나요?",
-  SECRECY_INSTRUCTION:         "가족에게 말하지 말라는 이야기도 들으셨나요? 왜 그러라고 했는지 기억나세요?",
-  CALL_IN_PROGRESS:            "지금도 그 사람과 통화 중이신가요? 전화를 끊으라고 하면 뭐라고 하던가요?",
-  CREDENTIAL_REQUEST:          "비밀번호나 인증번호를 알려달라고 했나요? 이미 알려주셨어요?",
-  APP_INSTALLATION_REQUEST:    "설치하라고 한 앱 이름이 무엇이었나요? 지금 설치돼 있나요?",
-  GUARANTEED_RETURN:           "수익을 얼마나 보장한다고 했나요? 그 사람을 어떻게 알게 되셨어요?",
-  ADDITIONAL_PAYMENT_REQUEST:  "이번이 몇 번째 입금인가요? 지금까지 보낸 금액이 얼마인지 알려주세요.",
-  CHANGED_FAMILY_CONTACT:      "원래 알던 번호가 아닌가요? 목소리로 직접 통화해서 확인해 보셨어요?",
-  URGENCY:                     "언제까지 보내야 한다고 했나요? 늦으면 어떻게 된다고 하던가요?",
-});
-
 const DEFAULT_PROBE = "조금만 더 여쭤볼게요. 그분이 정확히 어떤 이유로 이 계좌에 보내라고 했나요?";
 
 const PASS_MESSAGE = "확인했어요.\n\n지금 말씀해 주신 내용에서는 위험한 점이 발견되지 않았어요.\n\n송금을 계속할 수 있어요.";
@@ -52,7 +33,10 @@ export async function handleIntent(body, apiKey) {
   const { transfer = {}, messages = [], turn = 1 } = body;
   const safeTransfer = safeTransferContext(transfer);
   const safeMessages = sanitizeMessages(messages);
-  const retrieval = retrieveIntentContext({ transfer: safeTransfer, messages: safeMessages });
+  const retrieval = await retrieveIntentContext(
+    { transfer: safeTransfer, messages: safeMessages },
+    { apiKey },
+  );
 
   let llm;
   try {
@@ -95,68 +79,123 @@ export async function handleIntent(body, apiKey) {
   // 송금은 이 동안에도 정지 상태이므로 지연으로 인한 위험 증가는 없다.
   // 명백한 고위험 신호가 이미 확인된 경우 같은 내용을 채우기식으로 더 묻지 않는다.
   // 첫 답변만으로 섣불리 끝내지는 않되, 두 번째 답변부터는 충분한 근거가 있으면 판정한다.
-  const verdictReady = turn >= MIN_TURNS_BEFORE_VERDICT
-    || outOfTurns
+  const evidenceGapQuestion = selectEvidenceGapQuestion(llm, risk, safeMessages, safeTransfer);
+  const minimumEvidenceTurnsReached = turn >= MIN_TURNS_BEFORE_VERDICT
     || (risk.level === "HIGH" && turn >= 2);
+  const verdictReady = outOfTurns
+    || (minimumEvidenceTurnsReached && !evidenceGapQuestion);
 
   if (risk.level === "HIGH" && !verdictReady) {
+    const probeQuestion = selectProbeQuestion(llm, risk, safeMessages, safeTransfer);
+    const fallbackMessage = buildProbeMessage(risk, fraudType, llm, safeMessages, probeQuestion);
+    const response = await personalizeResponse({
+      mode: "probe", fallbackMessage, safeTransfer, safeMessages,
+      requiredMessage: probeQuestion,
+      llm, risk, fraudType, retrieval, apiKey,
+    });
     return {
-      message: buildProbeMessage(risk, fraudType, llm, safeMessages),
+      message: response.message,
       hold: false,
       done: false,
       risk,
       intent: pickIntent(llm),
       analysis,
       fallback: false,
+      responseFallback: response.fallback,
     };
   }
 
   if (risk.level === "HIGH" || ((llm.done || outOfTurns) && risk.score > 0)) {
+    const fallbackMessage = buildRiskMessage(llm, risk, fraudType);
+    const response = await personalizeResponse({
+      mode: "risk", fallbackMessage, safeTransfer, safeMessages,
+      requiredMessage: safeActionFor(fraudType.code, risk.codes),
+      llm, risk, fraudType, retrieval, apiKey,
+    });
     return {
-      message: buildRiskMessage(llm, risk, fraudType),
+      message: response.message,
       hold: true,
       done: true,
       risk,
       intent: pickIntent(llm),
       analysis,
       fallback: false,
+      responseFallback: response.fallback,
     };
   }
 
   // 위험 점수가 있는데 LLM이 그만하자고 하면, 최소 질문 수까지는 계속 묻는다
   if (llm.done && risk.score > 0 && !verdictReady) {
+    const probeQuestion = selectProbeQuestion(llm, risk, safeMessages, safeTransfer);
+    const fallbackMessage = buildProbeMessage(risk, fraudType, llm, safeMessages, probeQuestion);
+    const response = await personalizeResponse({
+      mode: "probe", fallbackMessage, safeTransfer, safeMessages,
+      requiredMessage: probeQuestion,
+      llm, risk, fraudType, retrieval, apiKey,
+    });
     return {
-      message: buildProbeMessage(risk, fraudType, llm, safeMessages),
+      message: response.message,
       hold: false,
       done: false,
       risk,
       intent: pickIntent(llm),
       analysis,
       fallback: false,
+      responseFallback: response.fallback,
     };
   }
 
   if (llm.done || outOfTurns) {
+    const response = await personalizeResponse({
+      mode: "pass", fallbackMessage: PASS_MESSAGE, safeTransfer, safeMessages,
+      requiredMessage: "현재 대화에서 확인된 위험 신호가 없으며 송금을 계속할 수 있다는 판정을 바꾸지 마세요.",
+      llm, risk, fraudType, retrieval, apiKey,
+    });
     return {
-      message: PASS_MESSAGE,
+      message: response.message,
       hold: false,
       done: true,
       risk,
       intent: pickIntent(llm),
       analysis,
       fallback: false,
+      responseFallback: response.fallback,
     };
   }
 
   return {
-    message: llm.next_question || FALLBACK_QUESTIONS[0],
+    message: [llm.reply, llm.next_question || FALLBACK_QUESTIONS[0]].filter(Boolean).join("\n\n"),
     hold: false,
     done: false,
     risk,
     intent: pickIntent(llm),
     analysis,
     fallback: false,
+    responseFallback: false,
   };
+}
+
+async function personalizeResponse({
+  mode, fallbackMessage, safeTransfer, safeMessages,
+  requiredMessage = fallbackMessage,
+  llm, risk, fraudType, retrieval, apiKey,
+}) {
+  try {
+    const message = await generateUserResponse({
+      mode,
+      transfer: safeTransfer,
+      messages: safeMessages,
+      llm,
+      risk,
+      fraudType,
+      retrieval,
+      requiredMessage,
+    }, apiKey);
+    return { message, fallback: false };
+  } catch (error) {
+    console.warn(`[intent] 맞춤 답변 생성 실패 → 안전 문구 사용: ${error.message}`);
+    return { message: fallbackMessage, fallback: true };
+  }
 }
 
 const pickIntent = (llm) => ({
@@ -169,28 +208,152 @@ const pickIntent = (llm) => ({
  * 결론 전 중간 응답 — 지금 걱정되는 점을 먼저 알려주고 한 가지 더 묻는다.
  * 판정을 미루는 것이지 위험을 숨기는 것이 아니므로, 경고는 이 시점에 이미 전달한다.
  */
-function buildProbeMessage(risk, fraudType, llm, messages = []) {
+/**
+ * 근거 결합 뒤 남은 공백 중 판정에 가장 큰 영향을 주는 것 하나만 묻는다.
+ *
+ * - RAG: 현재 대화와 유사 사기 수법을 비교할 요청자·접촉 경로·요구 행동
+ * - 거래 패턴: 송금 화면에서 이미 아는 금액·신규 수취인·계좌 표시는 다시 묻지 않음
+ * - 규칙 엔진: 앱 설치·인증정보 제공 등 대응 단계가 달라지는 사실을 우선 확인
+ */
+function selectEvidenceGapQuestion(llm = {}, risk = {}, messages = [], transfer = {}) {
+  const asked = messages
+    .filter((message) => message.role === "ai")
+    .map((message) => message.text)
+    .join("\n");
+  const userText = messages
+    .filter((message) => message.role !== "ai")
+    .map((message) => message.text)
+    .join(" ");
+  const isKnown = (value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    return Boolean(normalized)
+      && !["unknown", "none", "null", "미상", "알 수 없음", "확인되지 않음", "불명"].includes(normalized);
+  };
+  const requestedActions = normalizeStringList(llm.requested_actions).filter(isKnown);
+  const codes = new Set(risk.codes || []);
+  const requester = String(llm.requester || "").trim().toLowerCase();
+  const requesterIsVague = /^(기관|은행|회사|그\s*사람|상대방)$/.test(requester);
+  const channel = String(llm.channel || "").trim().toLowerCase();
+  const isPhoneContact = /전화|통화|phone|call/.test(`${channel} ${userText}`);
+  const hasRequester = isKnown(llm.requester)
+    || /(검찰|경찰|금감원|금융감독원|국세청|구청|정부기관|은행|카드사|증권|보험|가족|아들|딸|손자|손녀|지인|친구|회사|업체|상담사|직원|수사관)/.test(userText);
+  const hasChannel = isKnown(llm.channel)
+    || /(전화|통화|문자|카카오톡|카톡|메신저|앱|웹|사이트|대면|직접 만)/.test(userText);
+  const hasContactNumber = /<PHONE>|\[전화번호\]|0\d{1,2}[\s-]?\d{3,4}[\s-]?\d{4}|전화번호|번호는/.test(userText);
+  const hasRecipientFromTransaction = transfer.recipient_display_type
+    && transfer.recipient_display_type !== "확인되지 않음";
+  const hasPurpose = isKnown(llm.purpose)
+    || /(대출|투자|환급|당첨|보증금|수수료|세금|병원비|생활비|용돈|등록금|물건|계약금|안전\s*계좌|범죄.{0,8}연루)/.test(userText);
+  const hasRequestedAction = requestedActions.length > 0
+    || /(보내|송금|입금|이체|설치|깔|인증번호|비밀번호|신분증|링크|클릭|통화.{0,6}유지|말하지)/.test(userText);
+  const hasCompromiseAnswer = /(이미|아직|전에|지금까지).{0,14}(보냈|보낸|송금|입금|설치|깔았|눌렀|클릭|알려|제공)|(?:안|않|못)\s*(보냈|보낸|설치|눌렀|알려)/.test(userText);
+
+  // 이미 노출·설치·송금했는지는 6단계 피해 대응 여부를 바꾸므로 가장 먼저 확인한다.
+  const safetyCritical = [
+    (codes.has("CREDENTIAL_REQUEST") || codes.has("PERSONAL_DATA_REQUEST")) && !hasCompromiseAnswer
+      && !/(이미.*알려|인증번호.*알려|개인정보.*제공)/.test(asked)
+      ? "비밀번호나 인증번호를 이미 알려주셨나요?"
+      : "",
+    codes.has("APP_INSTALLATION_REQUEST") && !hasCompromiseAnswer
+      && !/(앱을 이미 설치|설치하셨)/.test(asked)
+      ? "그 앱을 이미 설치하셨나요?"
+      : "",
+    codes.has("MALICIOUS_URL") && !hasCompromiseAnswer
+      && !/(링크를 이미|링크.*누르셨)/.test(asked)
+      ? "그 링크를 이미 누르셨나요?"
+      : "",
+    codes.has("ADDITIONAL_PAYMENT_REQUEST") && !hasCompromiseAnswer
+      && !/(이전에.*돈|이미.*보냈|몇 번 보내)/.test(asked)
+      ? "이전에 같은 이유로 돈을 보낸 적이 있나요?"
+      : "",
+  ].filter(Boolean);
+
+  // RAG 사례와 비교할 핵심 축이다. 대화에서 확인되지 않은 항목만 후보로 둔다.
+  const sourceAndIntent = [
+    !hasRequester && !/(누가|어디에서|어느 곳|기관 이름)/.test(asked)
+      ? "누가 돈을 보내라고 했나요?"
+      : "",
+    !hasChannel && !/(전화|문자|카카오톡|어떻게 연락)/.test(asked)
+      ? "전화, 문자, 카카오톡 중 어떻게 연락해 왔나요?"
+      : "",
+    requesterIsVague && codes.has("AGENCY_IMPERSONATION")
+      && !/(정확한 기관|기관의 정확한 이름)/.test(asked)
+      ? "연락한 곳의 정확한 기관 이름은 무엇이었나요?"
+      : "",
+    isPhoneContact && !hasContactNumber && !/(어떤 전화번호|몇 번|연락처)/.test(asked)
+      ? "어떤 전화번호로 연락이 왔나요?"
+      : "",
+    !hasRequestedAction && !/(무엇을 하라고|어떤 요구)/.test(asked)
+      ? "그 사람이 정확히 무엇을 하라고 했나요?"
+      : "",
+    !hasPurpose && !/(어떤 이유|무슨 돈|송금 이유)/.test(asked)
+      ? "그 사람이 돈을 보내야 하는 이유를 뭐라고 설명했나요?"
+      : "",
+    !hasRecipientFromTransaction && /(?:transfer|송금|입금|이체)/.test(requestedActions.join(" "))
+      && !/(계좌|입금|송금|보내)/.test(userText) && !/(누구 이름의 계좌|계좌 주인)/.test(asked)
+      ? "돈은 누구 이름의 계좌로 보내라고 했나요?"
+      : "",
+  ].filter(Boolean);
+
+  // 위험 유형별로 사실 여부를 가르는 질문. 검색 근거는 질문 선택에만 쓰고 사실로 간주하지 않는다.
+  const discriminators = [
+    codes.has("CHANGED_FAMILY_CONTACT") && !/(평소.*번호|직접.*통화)/.test(`${asked} ${userText}`)
+      ? "평소 쓰던 가족 번호로 직접 통화해 보셨나요?"
+      : "",
+    codes.has("PREPAY_CONTRADICTION") && !/(돈의 명목|무슨 명목|보증금|수수료|세금)/.test(`${asked} ${userText}`)
+      ? "먼저 보내라는 돈은 무슨 명목이라고 했나요?"
+      : "",
+    codes.has("GUARANTEED_RETURN") && !/(어떻게 알게|유튜브|카카오톡|리딩방|소개)/.test(`${asked} ${userText}`)
+      ? "그 투자처를 어디에서 처음 알게 되셨나요?"
+      : "",
+    codes.has("SECRECY_INSTRUCTION") && !/(왜.*말하지|비밀.*이유)/.test(`${asked} ${userText}`)
+      ? "왜 가족이나 은행에 말하지 말라고 했나요?"
+      : "",
+    codes.has("URGENCY") && !/(언제까지|오늘까지|지금 당장|시간)/.test(`${asked} ${userText}`)
+      ? "언제까지 보내야 한다고 했나요?"
+      : "",
+    codes.has("CALL_IN_PROGRESS") && !transfer.call_in_progress
+      && !/(지금도.*통화|통화.*중)/.test(`${asked} ${userText}`)
+      ? "지금도 그 사람과 통화 중이신가요?"
+      : "",
+  ].filter(Boolean);
+
+  const candidates = [
+    ...safetyCritical,
+    ...sourceAndIntent,
+    ...discriminators,
+  ].filter(Boolean);
+
+  return candidates.find((question) => !asked.includes(question)) || "";
+}
+
+export function selectProbeQuestion(llm = {}, risk = {}, messages = [], transfer = {}) {
+  const asked = messages
+    .filter((message) => message.role === "ai")
+    .map((message) => message.text)
+    .join("\n");
+  const evidenceGap = selectEvidenceGapQuestion(llm, risk, messages, transfer);
+  if (evidenceGap) return evidenceGap;
+  if (llm.next_question && !asked.includes(llm.next_question)) return llm.next_question;
+  return DEFAULT_PROBE;
+}
+
+function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestion = "") {
   const aiMessages = messages.filter((m) => m.role === "ai");
   const asked = aiMessages.map((m) => m.text).join("\n");
   // FIRST_QUESTION("처음 보내는 계좌예요...")은 프로브가 아니므로 제외
   const probeTurn = aiMessages.filter((m) => !m.text.includes("처음 보내는 계좌")).length;
-
-  const unusedProbe = risk.codes
-    .map((code) => PROBE_QUESTIONS[code])
-    .find((q) => q && !asked.includes(q));
 
   if (probeTurn === 0) {
     const topCode = risk.codes.find((code) => EASY_REASONS[code]);
     const concern = topCode
       ? EASY_REASONS[topCode]
       : compactExplanation(llm.explanation);
-    const question = unusedProbe
-      || (llm.next_question ? llm.next_question : null)
-      || DEFAULT_PROBE;
+    const question = preferredQuestion || selectProbeQuestion(llm, risk, messages);
     return [
-      "잠시만요, 확인이 필요해 보여요.",
-      concern ? `걱정되는 점이 있어요.\n${concern}` : "",
-      "정확히 판단하려면 조금 더 알아야 해요.",
+      "확인한 내용이에요",
+      concern || "말씀하신 내용을 안전하게 확인하고 있어요.",
+      "한 가지만 확인할게요",
       question,
     ].filter(Boolean).join("\n\n");
   }
@@ -205,10 +368,8 @@ function buildProbeMessage(risk, fraudType, llm, messages = []) {
   const fallbackOpener = FOLLOWUPS[Math.min(probeTurn - 1, FOLLOWUPS.length - 1)];
   const opener = reply || fallbackOpener;
 
-  // 질문: Gemini next_question 우선, 고정 PROBE_QUESTIONS 보조
-  const question = (llm.next_question && !asked.includes(llm.next_question) ? llm.next_question : null)
-    || unusedProbe
-    || DEFAULT_PROBE;
+  // 질문: 서버가 고른 근거 공백 질문을 우선 사용한다.
+  const question = preferredQuestion || selectProbeQuestion(llm, risk, messages);
 
   // 새 위험 사유가 있으면 추가 (이미 말한 건 반복 안 함)
   const unusedConcern = risk.codes
@@ -223,7 +384,12 @@ function buildProbeMessage(risk, fraudType, llm, messages = []) {
     ? `추가로 확인된 점이에요.\n${unusedConcern}`
     : (newExplanation ? newExplanation : "");
 
-  return [opener, concern, question].filter(Boolean).join("\n\n");
+  return [
+    "확인한 내용이에요",
+    [opener, concern].filter(Boolean).join("\n"),
+    "한 가지만 확인할게요",
+    question,
+  ].filter(Boolean).join("\n\n");
 }
 
 function buildRiskMessage(llm, risk, fraudType) {
@@ -369,9 +535,21 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
     score: record.score,
     source_dataset: record.source_dataset,
     review_status: record.review_status,
+    title: record.title,
+    publisher: record.publisher,
+    page: record.page,
+    source_url: record.source_url,
   }));
+  const evidenceById = new Map(
+    [...(retrieval.fraud || []), ...(retrieval.normal || []), ...(retrieval.official || [])]
+      .map((record) => [record.id, record]),
+  );
+  const groundedEvidence = normalizeStringList(llm.grounding_evidence_ids)
+    .filter((id) => evidenceById.has(id))
+    .slice(0, 3)
+    .map((id) => publicEvidence([evidenceById.get(id)])[0]);
   return {
-    version: "intent-analysis-v2",
+    version: "intent-analysis-v3",
     suspected_fraud_type: fraudType,
     impersonation: llm.impersonation || "unknown",
     interaction_direction: llm.interaction_direction || "unknown",
@@ -384,6 +562,8 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
       method: retrieval.method,
       fraud_evidence: publicEvidence(retrieval.fraud),
       normal_evidence: publicEvidence(retrieval.normal),
+      official_document_evidence: publicEvidence(retrieval.official || []),
+      grounded_evidence: groundedEvidence,
     },
     score_components: risk.components,
     official_content: officialContent,
@@ -393,7 +573,7 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
 /** LLM 장애 시에도 명시적인 위험 표현은 같은 규칙 엔진으로 판정한다. */
 function fallback({
   turn,
-  retrieval = { method: "none", fraud: [], normal: [] },
+  retrieval = { method: "none", fraud: [], normal: [], official: [] },
   safeTransfer = {},
   safeMessages = [],
 }) {
@@ -415,10 +595,13 @@ function fallback({
     signals: risk.codes,
     messages: safeMessages,
   });
+  const fallbackEvidenceGap = selectEvidenceGapQuestion(localLlm, risk, safeMessages, safeTransfer);
 
-  if (risk.level === "HIGH" && turn < 2 && turn < MAX_TURNS) {
+  if (risk.level === "HIGH" && turn < MAX_TURNS && (turn < 2 || fallbackEvidenceGap)) {
+    const probeQuestion = fallbackEvidenceGap
+      || selectProbeQuestion(localLlm, risk, safeMessages, safeTransfer);
     return {
-      message: buildProbeMessage(risk, fraudType, localLlm, safeMessages),
+      message: buildProbeMessage(risk, fraudType, localLlm, safeMessages, probeQuestion),
       hold: false,
       done: false,
       risk,

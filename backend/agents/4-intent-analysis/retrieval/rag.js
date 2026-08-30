@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 
-const corpusUrl = new URL("../data/processed/runtime/intent-rag-corpus.json", import.meta.url);
+import { retrieveVectorContext } from "./vector-search.js";
+
+const corpusUrl = new URL("../datasets/rag/runtime/intent-rag-corpus.json", import.meta.url);
 const corpus = JSON.parse(readFileSync(corpusUrl, "utf8"));
 
 function normalize(text = "") {
@@ -83,10 +85,20 @@ function search(kind, query, limit) {
       excerpt: excerpt(record, queryWords),
       candidate_signals: record.candidate_signals || [],
       normal_actions: record.normal_actions || [],
+      document_id: record.document_id,
+      title: record.title,
+      publisher: record.publisher,
+      source_file: record.source_file,
+      source_url: record.source_url,
+      usage: record.usage,
+      page: record.page,
+      page_label: record.page_label,
+      total_pages: record.total_pages,
+      extraction_method: record.extraction_method,
     }));
 }
 
-export function retrieveIntentContext({ messages = [], transfer = {} } = {}) {
+function buildQuery({ messages = [], transfer = {} } = {}) {
   const userText = messages
     .filter((message) => message.role !== "ai")
     .map((message) => message.text)
@@ -94,17 +106,58 @@ export function retrieveIntentContext({ messages = [], transfer = {} } = {}) {
   const query = [
     userText,
     Number(transfer.amount) >= 1_000_000 ? "고액 송금" : "송금",
-    transfer.isFirstTransfer !== false ? "처음 보내는 계좌" : "기존 수취인",
+    (transfer.is_first_transfer ?? transfer.isFirstTransfer) !== false
+      ? "처음 보내는 계좌"
+      : "기존 수취인",
+    (transfer.call_in_progress ?? transfer.callInProgress) ? "상대방과 통화 중" : "",
   ].join(" ");
 
-  const fraud = search("fraud_context_candidate", query, 3);
-  const normal = search("normal_financial_control", query, 3);
+  return query;
+}
+
+function lexicalContext(query) {
   return {
     method: "local_idf_weighted_lexical_rag",
     corpus_version: corpus.schema_version,
-    fraud,
-    normal,
+    fraud: search("fraud_context_candidate", query, 3),
+    normal: search("normal_financial_control", query, 3),
+    official: search("official_fraud_document", query, 4),
   };
+}
+
+function fillVectorResults(vectorRecords, lexicalRecords, limit = 3) {
+  const output = [...vectorRecords];
+  const seen = new Set(output.map((record) => record.id));
+  for (const record of lexicalRecords) {
+    if (output.length >= limit) break;
+    if (seen.has(record.id)) continue;
+    output.push({ ...record, retrieval_fallback: "lexical" });
+    seen.add(record.id);
+  }
+  return output;
+}
+
+export async function retrieveIntentContext(input = {}, { apiKey } = {}) {
+  const query = buildQuery(input);
+  const lexical = lexicalContext(query);
+
+  if (!apiKey) return lexical;
+
+  try {
+    const vector = await retrieveVectorContext(query, apiKey);
+    if (!vector) return lexical;
+
+    return {
+      ...vector,
+      method: "gemini_embedding_vector_search_with_lexical_fill",
+      fraud: fillVectorResults(vector.fraud, lexical.fraud),
+      normal: fillVectorResults(vector.normal, lexical.normal),
+      official: fillVectorResults(vector.official || [], lexical.official, 4),
+    };
+  } catch (error) {
+    console.warn(`[RAG] 벡터 검색 실패 → 키워드 검색 사용: ${error.message}`);
+    return lexical;
+  }
 }
 
 export const ragCorpusSummary = Object.freeze(corpus.summary);

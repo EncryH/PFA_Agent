@@ -32,7 +32,15 @@ export function classifyFraudType({ llm = {}, signals = [], messages = [] } = {}
   if (has("PREPAY_CONTRADICTION") && /환급|당첨|세금|지원금/.test(text)) {
     return result("refund_advance_fee", "rules");
   }
-  if (has("CHANGED_FAMILY_CONTACT") || ((has("SECRECY_INSTRUCTION") || has("URGENCY")) && /아들|딸|손자|손녀|가족|지인/.test(text))) {
+  if (has("CHANGED_FAMILY_CONTACT")) {
+    return result("family_or_acquaintance_impersonation", "rules");
+  }
+  // "가족에게 말하지 말라"는 기관사칭의 대표적인 비밀 유지 지시다.
+  // 메시지에 '가족'이라는 단어가 있다는 이유로 가족사칭으로 먼저 분류하지 않는다.
+  if (has("SAFE_ACCOUNT_TRANSFER") || has("AGENCY_IMPERSONATION") || has("PERSONAL_ACCOUNT_FOR_AGENCY")) {
+    return result("institution_impersonation", "rules");
+  }
+  if ((has("SECRECY_INSTRUCTION") || has("URGENCY")) && /아들|딸|손자|손녀|엄마|아빠|어머니|아버지|형|누나|동생|친구|지인/.test(text)) {
     return result("family_or_acquaintance_impersonation", "rules");
   }
   if (has("GUARANTEED_RETURN") && /투자|수익|주식|코인|가상.?자산|리딩/.test(text)) {
@@ -43,9 +51,6 @@ export function classifyFraudType({ llm = {}, signals = [], messages = [] } = {}
   }
   if (has("ADDITIONAL_PAYMENT_REQUEST") && /환급|당첨|출금|돌려받/.test(text)) {
     return result("refund_advance_fee", "rules");
-  }
-  if (has("SAFE_ACCOUNT_TRANSFER") || has("AGENCY_IMPERSONATION") || has("PERSONAL_ACCOUNT_FOR_AGENCY")) {
-    return result("institution_impersonation", "rules");
   }
   if ((has("CREDENTIAL_REQUEST") || has("APP_INSTALLATION_REQUEST")) && /원격|화면.?공유|앱|어플|설치/.test(text)) {
     return result("malicious_app", "rules");
