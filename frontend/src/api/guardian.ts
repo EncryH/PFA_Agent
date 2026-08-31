@@ -4,6 +4,9 @@
 export type ChatMessage = { role: "ai" | "user"; text: string };
 
 export type TransferContext = {
+  userId?: "demo-parent-01" | "demo-parent-02" | "demo-parent-03";
+  sourceAccount?: string;
+  occurredAt?: string;
   amount: number;
   recipientName: string;
   account: string;
@@ -59,6 +62,30 @@ export type Verdict = {
       method: string;
       fraud_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
       normal_evidence: { id: string; score: number; source_dataset: string; review_status: string }[];
+      transaction_pattern?: {
+        status: "ready" | "disabled" | "unavailable";
+        method: string;
+        user_id: string;
+        lookback_months: number;
+        average_transfer_amount: number;
+        maximum_transfer_amount: number;
+        recipient_transfer_count: number;
+        recipient_known: boolean;
+        typical_transfer_hour: number;
+        risk_score: number;
+        risk_reasons: string[];
+      };
+      knowledge_graph?: {
+        status: "ready" | "disabled" | "unavailable";
+        method: string;
+        paths: {
+          fraud_type_code: string;
+          fraud_type_label: string;
+          score: number;
+          matched_signal_codes: string[];
+          steps: { order: number; label: string; stage: string; stageLabel: string }[];
+        }[];
+      };
     };
     official_content: OfficialContent;
   };

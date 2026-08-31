@@ -50,6 +50,16 @@ console.log(JSON.stringify({
   fraud: compact(result.fraud),
   normal: compact(result.normal),
   official: compact(result.official),
+  knowledge_graph: {
+    status: result.graph?.status || "disabled",
+    method: result.graph?.method,
+    paths: (result.graph?.paths || []).map((path) => ({
+      fraud_type: path.fraud_type_label,
+      score: path.score,
+      matched_signals: path.matched_signal_codes,
+      chain: path.steps.map((step) => step.label).join(" → "),
+    })),
+  },
 }, null, 2));
 
 if (fullIntentCheck) {

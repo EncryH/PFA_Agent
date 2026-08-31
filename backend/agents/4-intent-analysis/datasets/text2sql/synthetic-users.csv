@@ -1,0 +1,4 @@
+user_id,display_name,profile_type,age_band,account_id,account_name,bank_name,analysis_window_months,is_synthetic
+demo-parent-01,김영순,근로·연금 생활형,60대,1101234567,한결은행 입출금통장,한결은행,12,true
+demo-parent-02,박성호,자영업 거래형,60대,1102234568,한결은행 사업생활통장,한결은행,12,true
+demo-parent-03,이정자,연금·의료 생활형,70대,1103234569,한결은행 연금생활통장,한결은행,12,true

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 
 import { retrieveVectorContext } from "./vector-search.js";
+import { retrieveGraphContext } from "./neo4j-search.js";
 
 const corpusUrl = new URL("../datasets/rag/runtime/intent-rag-corpus.json", import.meta.url);
 const corpus = JSON.parse(readFileSync(corpusUrl, "utf8"));
@@ -137,27 +138,35 @@ function fillVectorResults(vectorRecords, lexicalRecords, limit = 3) {
   return output;
 }
 
-export async function retrieveIntentContext(input = {}, { apiKey } = {}) {
+export async function retrieveIntentContext(input = {}, {
+  apiKey,
+  graphConfig = {},
+  graphRetriever = retrieveGraphContext,
+} = {}) {
   const query = buildQuery(input);
   const lexical = lexicalContext(query);
+  const graphPromise = graphRetriever(input, { config: graphConfig });
 
-  if (!apiKey) return lexical;
+  if (!apiKey) return { ...lexical, graph: await graphPromise };
 
+  let vector;
   try {
-    const vector = await retrieveVectorContext(query, apiKey);
-    if (!vector) return lexical;
-
-    return {
-      ...vector,
-      method: "gemini_embedding_vector_search_with_lexical_fill",
-      fraud: fillVectorResults(vector.fraud, lexical.fraud),
-      normal: fillVectorResults(vector.normal, lexical.normal),
-      official: fillVectorResults(vector.official || [], lexical.official, 4),
-    };
+    vector = await retrieveVectorContext(query, apiKey);
   } catch (error) {
     console.warn(`[RAG] 벡터 검색 실패 → 키워드 검색 사용: ${error.message}`);
-    return lexical;
   }
+
+  const graph = await graphPromise;
+  if (!vector) return { ...lexical, graph };
+
+  return {
+    ...vector,
+    method: "gemini_embedding_vector_search_with_lexical_fill_and_neo4j_graph",
+    fraud: fillVectorResults(vector.fraud, lexical.fraud),
+    normal: fillVectorResults(vector.normal, lexical.normal),
+    official: fillVectorResults(vector.official || [], lexical.official, 4),
+    graph,
+  };
 }
 
 export const ragCorpusSummary = Object.freeze(corpus.summary);

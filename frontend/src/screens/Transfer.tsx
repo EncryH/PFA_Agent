@@ -674,6 +674,9 @@ export default function Transfer({
 
     const verdict = await takeTurn(
       {
+        userId: "demo-parent-01",
+        sourceAccount: accounts[fromIdx].account,
+        occurredAt: new Date(sessionStartRef.current).toISOString(),
         amount: parseAmt(amt), recipientName: name, account, bank,
         isFirstTransfer: isNewRecipient,
         patternRiskScore: liveRisk?.score ?? 0,

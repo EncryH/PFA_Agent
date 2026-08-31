@@ -9,8 +9,8 @@ export const metadata = Object.freeze({
 });
 
 // LLM은 의도와 위험 신호를 추출하고, 같은 폴더의 규칙 엔진이 점수와 보류 여부를 결정한다.
-export async function runIntentAnalysisAgent(input, { apiKey } = {}) {
-  return handleIntent(input, apiKey);
+export async function runIntentAnalysisAgent(input, { apiKey, graphConfig, databaseConfig } = {}) {
+  return handleIntent(input, apiKey, { graphConfig, databaseConfig });
 }
 
 // 기존 개발 서버 API가 같은 함수명으로 호출할 수 있도록 유지한다.

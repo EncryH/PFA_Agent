@@ -14,6 +14,7 @@ import { classifyFraudType } from "./rules/fraud-types.js";
 import { retrieveIntentContext } from "./retrieval/rag.js";
 import { retrieveOfficialContent } from "./retrieval/official-content.js";
 import { safeTransferContext, sanitizeMessages } from "./sanitize.js";
+import { retrieveTransactionPattern } from "./text2sql/transaction-pattern.js";
 
 const FALLBACK_QUESTIONS = [
   "누가 보내 달라고 했나요?",
@@ -29,14 +30,31 @@ const PASS_MESSAGE = "확인했어요.\n\n지금 말씀해 주신 내용에서�
  * @param {{transfer: object, messages: {role: string, text: string}[], turn: number}} body
  * @param {string} apiKey
  */
-export async function handleIntent(body, apiKey) {
+export async function handleIntent(body, apiKey, { graphConfig = {}, databaseConfig = {} } = {}) {
   const { transfer = {}, messages = [], turn = 1 } = body;
-  const safeTransfer = safeTransferContext(transfer);
+  const initialTransfer = safeTransferContext(transfer);
   const safeMessages = sanitizeMessages(messages);
-  const retrieval = await retrieveIntentContext(
-    { transfer: safeTransfer, messages: safeMessages },
-    { apiKey },
-  );
+  const [ragRetrieval, transactionPattern] = await Promise.all([
+    retrieveIntentContext(
+      { transfer: initialTransfer, messages: safeMessages },
+      { apiKey, graphConfig },
+    ),
+    retrieveTransactionPattern(
+      { transfer: initialTransfer },
+      { config: databaseConfig },
+    ),
+  ]);
+  const safeTransfer = {
+    ...initialTransfer,
+    pattern_risk_score: Math.max(
+      Number(initialTransfer.pattern_risk_score) || 0,
+      Number(transactionPattern.risk_score) || 0,
+    ),
+  };
+  const retrieval = {
+    ...ragRetrieval,
+    transaction_pattern: transactionPattern,
+  };
 
   let llm;
   try {
@@ -564,10 +582,42 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
       normal_evidence: publicEvidence(retrieval.normal),
       official_document_evidence: publicEvidence(retrieval.official || []),
       grounded_evidence: groundedEvidence,
+      transaction_pattern: {
+        status: retrieval.transaction_pattern?.status || "disabled",
+        method: retrieval.transaction_pattern?.method || "supabase_parameterized_sql",
+        user_id: retrieval.transaction_pattern?.user_id || safeUserId(retrieval.transaction_pattern),
+        lookback_months: retrieval.transaction_pattern?.lookback_months || 12,
+        average_transfer_amount: Number(retrieval.transaction_pattern?.average_transfer_amount) || 0,
+        maximum_transfer_amount: Number(retrieval.transaction_pattern?.maximum_transfer_amount) || 0,
+        recipient_transfer_count: Number(retrieval.transaction_pattern?.recipient_transfer_count) || 0,
+        recipient_known: Boolean(retrieval.transaction_pattern?.recipient_known),
+        typical_transfer_hour: Number(retrieval.transaction_pattern?.typical_transfer_hour) || 0,
+        risk_score: Number(retrieval.transaction_pattern?.risk_score) || 0,
+        risk_reasons: normalizeStringList(retrieval.transaction_pattern?.risk_reasons),
+      },
+      knowledge_graph: {
+        status: retrieval.graph?.status || "disabled",
+        method: retrieval.graph?.method || "neo4j_fixed_cypher",
+        paths: (retrieval.graph?.paths || []).map((path) => ({
+          fraud_type_code: path.fraud_type_code,
+          fraud_type_label: path.fraud_type_label,
+          score: path.score,
+          matched_signal_codes: path.matched_signal_codes,
+          matched_channel_codes: path.matched_channel_codes,
+          matched_impersonator_codes: path.matched_impersonator_codes,
+          matched_action_codes: path.matched_action_codes,
+          steps: path.steps,
+        })),
+      },
     },
     score_components: risk.components,
     official_content: officialContent,
   };
+}
+
+function safeUserId(pattern = {}) {
+  const value = String(pattern?.user_id || "");
+  return /^demo-parent-0[1-3]$/.test(value) ? value : "demo-parent-01";
 }
 
 /** LLM 장애 시에도 명시적인 위험 표현은 같은 규칙 엔진으로 판정한다. */

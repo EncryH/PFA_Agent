@@ -6,7 +6,60 @@ import { enforceSingleProbeQuestion, generateUserResponse, validateUserResponse 
 import { handleIntent, selectProbeQuestion } from "../intent.js";
 import { retrieveIntentContext } from "../retrieval/rag.js";
 import { rankVectorRecords } from "../retrieval/vector-search.js";
+import {
+  deriveGraphLookup,
+  formatGraphContext,
+  retrieveGraphContext,
+} from "../retrieval/neo4j-search.js";
+import { resolveNeo4jConfig, toAuraHttpUrl } from "../retrieval/neo4j-client.js";
 import { extractRuleContradictions, extractRuleSignals, scoreSignals } from "../rules/signals.js";
+import {
+  calculatePatternRisk,
+  formatTransactionPatternContext,
+  retrieveTransactionPattern,
+} from "../text2sql/transaction-pattern.js";
+
+test("개인 거래 패턴은 신규 고액 송금을 최대 40점 안에서 가산한다", async () => {
+  const fakeClient = () => Promise.resolve([{
+    outgoing_count: 300,
+    transfer_count: 12,
+    average_transfer_amount: 480_000,
+    median_transfer_amount: 500_000,
+    maximum_transfer_amount: 700_000,
+    recipient_transfer_count: 0,
+    typical_transfer_hour: 13,
+    family_count: 12,
+    housing_count: 48,
+    consumption_count: 220,
+  }]);
+  const pattern = await retrieveTransactionPattern({
+    transfer: {
+      user_id: "demo-parent-01",
+      amount: 12_000_000,
+      occurred_at: "2026-08-31T13:00:00+09:00",
+      recipient_account_hash: "acct_new",
+    },
+  }, { client: fakeClient });
+
+  assert.equal(pattern.status, "ready");
+  assert.equal(pattern.recipient_known, false);
+  assert.equal(pattern.risk_score, 35);
+  const context = formatTransactionPatternContext(pattern);
+  assert.match(context, /현재 송금액: 12,000,000원/);
+  assert.match(context, /최근 12개월 송금 이력이 없는 수취인/);
+  assert.match(context, /개인 패턴 위험 점수: 35점/);
+});
+
+test("평소 범위의 기존 수취인 송금은 개인 패턴 위험 점수를 더하지 않는다", () => {
+  const risk = calculatePatternRisk({
+    transfer_count: 20,
+    average_transfer_amount: 500_000,
+    maximum_transfer_amount: 1_000_000,
+    recipient_transfer_count: 8,
+    typical_transfer_hour: 13,
+  }, { amount: 500_000, hour: 13 });
+  assert.deepEqual(risk, { score: 0, reasons: [] });
+});
 
 test("사기·정상·공식 PDF 근거를 동시에 검색한다", async () => {
   const result = await retrieveIntentContext({
@@ -47,6 +100,82 @@ test("공식 PDF 벡터 결과는 문서명·기관·페이지 출처를 보존�
   assert.equal(result[0].publisher, "법제처");
   assert.equal(result[0].page, 12);
   assert.equal(result[0].source_url, "https://example.com/official");
+});
+
+test("대화에서 Neo4j 조회용 신호·채널·사칭대상·행동을 추출한다", () => {
+  const lookup = deriveGraphLookup({
+    messages: [{
+      role: "user",
+      text: "검찰에서 070 전화로 연락해 통화를 끊지 말고 안전계좌로 송금하라고 했어요",
+    }],
+  });
+
+  assert.ok(lookup.signalCodes.includes("AGENCY_IMPERSONATION"));
+  assert.ok(lookup.signalCodes.includes("SAFE_ACCOUNT_TRANSFER"));
+  assert.ok(lookup.channelCodes.includes("phone"));
+  assert.ok(lookup.impersonatorCodes.includes("prosecution"));
+  assert.ok(lookup.requestedActionCodes.includes("transfer"));
+  assert.ok(lookup.requestedActionCodes.includes("keep_call"));
+  assert.ok(lookup.fraudTypeHints.includes("institution_impersonation"));
+});
+
+test("AuraDB 접속 URI를 HTTPS Query API 주소로 변환한다", () => {
+  assert.equal(
+    toAuraHttpUrl("neo4j+s://example.databases.neo4j.io"),
+    "https://example.databases.neo4j.io",
+  );
+  assert.equal(
+    resolveNeo4jConfig({
+      uri: "neo4j+s://example.databases.neo4j.io",
+      username: "neo4j",
+      password: "secret",
+    }).enabled,
+    true,
+  );
+  assert.equal(resolveNeo4jConfig({ password: "secret" }).enabled, false);
+});
+
+test("고정 Cypher 결과를 사기 진행 흐름과 대응 행동으로 구조화한다", async () => {
+  let calls = 0;
+  const queryExecutor = async () => {
+    calls += 1;
+    if (calls === 1) {
+      return [{
+        code: "institution_impersonation",
+        label: "은행·기관을 사칭한 사기",
+        summary: "기관을 사칭해 송금을 요구하는 수법",
+        score: 18,
+        matchedSignalCodes: ["AGENCY_IMPERSONATION", "SAFE_ACCOUNT_TRANSFER"],
+        matchedChannelCodes: ["phone"],
+        matchedImpersonatorCodes: ["prosecution"],
+        matchedActionCodes: ["transfer"],
+      }];
+    }
+    return [{
+      code: "institution_impersonation",
+      steps: [
+        { order: 2, label: "계좌가 범죄에 연루됐다고 불안감 조성", stage: "trust_building", stageLabel: "신뢰 형성" },
+        { order: 1, label: "검찰·경찰·금융기관을 사칭해 연락", stage: "approach", stageLabel: "접근" },
+        { order: 3, label: "통화를 유지시키며 안전계좌 송금 요구", stage: "money_request", stageLabel: "금전 요구" },
+      ],
+      safetyActions: [{ order: 1, label: "송금을 멈추고 통화를 끊으세요." }],
+    }];
+  };
+
+  const graph = await retrieveGraphContext({
+    messages: [{ role: "user", text: "검찰이 전화해 안전계좌로 보내라고 했어요" }],
+  }, {
+    config: {
+      uri: "neo4j+s://test.databases.neo4j.io",
+      password: "test-password",
+    },
+    queryExecutor,
+  });
+
+  assert.equal(graph.status, "ready");
+  assert.equal(graph.paths[0].fraud_type_code, "institution_impersonation");
+  assert.equal(graph.paths[0].steps[0].order, 1);
+  assert.match(formatGraphContext(graph), /검찰·경찰·금융기관을 사칭해 연락 → 계좌가 범죄에 연루됐다고 불안감 조성/);
 });
 
 test("맞춤 답변은 내부 출처와 사기 확정 표현을 차단한다", () => {
@@ -197,6 +326,54 @@ test("규칙 판정 뒤 Gemini가 사용자 상황을 반영한 자연스러운 
     assert.match(message, /070 번호/);
     assert.match(message, /안전계좌/);
     assert.equal(message.includes("PDF"), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("고위험 개인 거래 패턴이 답변에서 빠지면 한 번 재생성한다", async () => {
+  const originalFetch = globalThis.fetch;
+  const bodies = [];
+  let callCount = 0;
+  globalThis.fetch = async (_url, options) => {
+    callCount += 1;
+    bodies.push(JSON.parse(options.body));
+    const message = callCount === 1
+      ? "확인한 내용이에요\n\n처음 보는 업체가 송금을 재촉했군요.\n\n왜 위험한가요\n\n급한 송금 요구는 위험할 수 있어요.\n\n지금 해야 할 일이에요\n\n1. 지금은 송금하지 마세요.\n\n2. 공식 번호로 확인하세요.\n\n3. 요구에 응답하지 마세요.\n\n4. 대화를 보관하고 신고하세요."
+      : "확인한 내용이에요\n\n처음 보는 업체가 송금을 재촉했군요.\n\n왜 위험한가요\n\n평소 가장 큰 송금은 70만원 정도였어요.\n이번에는 처음 보내는 계좌로 1,200만원을 보내려 해 평소와 크게 달라요.\n\n지금 해야 할 일이에요\n\n1. 지금은 송금하지 마세요.\n\n2. 공식 번호로 확인하세요.\n\n3. 요구에 응답하지 마세요.\n\n4. 대화를 보관하고 신고하세요.";
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ message }) }] } }],
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const message = await generateUserResponse({
+      mode: "risk",
+      transfer: { amount_band: "300만원 이상", is_first_transfer: true },
+      messages: [{ role: "user", text: "처음 보는 업체가 오늘 안에 송금하라고 했어요" }],
+      llm: { evidence_phrases: ["처음 보는 업체", "오늘 안에"] },
+      risk: { level: "HIGH", score: 60, codes: ["URGENCY", "SMS_LURE"] },
+      fraudType: { code: "unknown", label: "확인이 필요한 송금" },
+      retrieval: {
+        fraud: [], normal: [], official: [],
+        transaction_pattern: {
+          status: "ready",
+          current_amount: 12_000_000,
+          average_transfer_amount: 533_333,
+          maximum_transfer_amount: 700_000,
+          recipient_known: false,
+          risk_score: 35,
+          risk_reasons: ["최근 12개월에 보내지 않은 수취인", "과거 최대 송금액의 2배 이상"],
+        },
+      },
+      requiredMessage: "1. 송금 중단\n2. 공식 번호 확인\n3. 요구 거절\n4. 증거 보관·신고",
+    }, "test-key");
+
+    assert.equal(callCount, 2);
+    assert.match(bodies[1].contents[0].parts[0].text, /재작성 필수/);
+    assert.match(message, /70만원/);
+    assert.match(message, /1,200만원/);
+    assert.match(message, /평소와 크게 달라요/);
   } finally {
     globalThis.fetch = originalFetch;
   }
