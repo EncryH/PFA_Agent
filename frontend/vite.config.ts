@@ -210,6 +210,37 @@ function fscApi(apiKey: string): Plugin {
   }
 }
 
+// Google Safe Browsing 프록시 — GET /api/safe-browsing/check?url=...
+// 데이터포털 서비스키와 같은 이유로(브라우저 노출·쿼터 남용 방지) 서버가 대신 호출한다.
+// 실제 조회 로직은 backend/safebrowsing.js — verify.ts 의 verifyUrl()이 여기로 부른다.
+function safeBrowsingApi(apiKey: string): Plugin {
+  return {
+    name: 'ansim-safe-browsing-api',
+    configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/safebrowsing.js')).href
+      server.middlewares.use('/api/safe-browsing/check', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        try {
+          const url = new URL(req.url ?? '', 'http://localhost')
+          const target = url.searchParams.get('url') ?? ''
+          if (!target) {
+            res.statusCode = 400
+            return res.end(JSON.stringify({ error: 'url query param required' }))
+          }
+          const { checkUrlThreat } = await import(handlerPath)
+          const result = await checkUrlThreat(target, apiKey)
+          res.statusCode = 200
+          res.end(JSON.stringify({ result }))
+        } catch (e) {
+          console.error('[ansim-safe-browsing-api]', e)
+          res.statusCode = 502
+          res.end(JSON.stringify({ error: (e as Error).message }))
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // 루트 .env (저장소 최상위) — GEMINI_API_KEY·FSC_API_KEY 등 서버 전용 키를 여기 한 곳에서 관리한다.
   const env = loadEnv(mode, '..', '')
@@ -234,6 +265,7 @@ export default defineConfig(({ mode }) => {
       riskScoreApi(),
       stockQuoteApi(),
       fscApi(env.FSC_API_KEY),
+      safeBrowsingApi(env.GOOGLE_SAFE_BROWSING_API_KEY),
     ],
   }
 })

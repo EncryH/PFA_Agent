@@ -217,6 +217,20 @@ export async function verifyPhone(raw: string): Promise<VerifyResult> {
   };
 }
 
+// Google Safe Browsing 호출 (실패 시 null 반환) — 백엔드 프록시(/api/safe-browsing/check)를 거친다.
+// 서비스키를 브라우저 번들에 넣지 않으려고 FSC_API_KEY와 같은 방식으로 옮겼다
+// (키는 루트 .env 의 GOOGLE_SAFE_BROWSING_API_KEY, backend/safebrowsing.js 에서만 쓰인다).
+async function fetchSafeBrowsing(url: string): Promise<{ threat: boolean; threatTypes?: string[] } | null> {
+  try {
+    const res = await fetch(`/api/safe-browsing/check?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.result ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── URL 검증 ───────────────────────────────────────────────────────────────
 export async function verifyUrl(raw: string): Promise<VerifyResult> {
   const lower = raw.toLowerCase().trim();
@@ -246,6 +260,18 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
       return { status: "caution", label: "공식 도메인 · HTTP", detail: `${whiteHit}의 공식 도메인이나 HTTPS가 아닙니다. 주소창을 다시 확인하세요.` };
     }
     return { status: "safe", label: "공식 도메인", detail: `${whiteHit}의 공식 도메인으로 확인됩니다.` };
+  }
+
+  // Google Safe Browsing — 화이트리스트에 없는 URL만 실시간 조회 (쿼터 절약)
+  const sb = await fetchSafeBrowsing(raw);
+  if (sb?.threat) {
+    const tc = await callTheCheAt(raw).catch(() => null);
+    return {
+      status: "danger",
+      label: "Google 안전 브라우징 위험 URL",
+      detail: `Google이 실제 수집한 악성 URL 데이터베이스와 일치합니다 (${sb.threatTypes?.join(", ") ?? "위협 감지"}).`,
+      thecheat: tc,
+    };
   }
 
   const tc = await callTheCheAt(raw).catch(() => null);
