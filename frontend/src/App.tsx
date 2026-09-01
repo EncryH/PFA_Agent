@@ -1,7 +1,7 @@
 // 안심동행 AI — 라우팅만 담당.
 // 화면별 상태는 각 screens/* 파일이 스스로 소유한다.
 //
-//   부모 앱: ParentHome ─┬─ Transfer  (송금 7단계)
+//   부모 앱: ParentHome ─┬─ Transfer  (송금 입력·확인 흐름)
 //                        └─ Guardian  (안심동행 설정)
 //   자녀 앱: ChildApp
 //

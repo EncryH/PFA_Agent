@@ -46,7 +46,7 @@ function AnsimBanner({ paired, onClick, onVerify, protectionLevel, protectionNam
         </div>
         {protectionLevel !== undefined && protectionName && (
           <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
-            <span className="text-[12px] text-white/60">현재 보호 단계</span>
+            <span className="text-[12px] text-white/60">현재 가족 보호</span>
             <span className="text-[12px] font-semibold text-white">Lv.{protectionLevel} {protectionName}</span>
           </div>
         )}
