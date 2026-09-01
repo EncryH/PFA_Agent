@@ -20,6 +20,7 @@ import { PROTECTION_LEVELS, getProtectionPolicy, useProtectionLevel, type Protec
 import {
   markGuardianLogViewed, openGuardianLogEntry, recordGuardianDecision,
 } from "../shared/guardianLog";
+import { ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
@@ -93,7 +94,7 @@ function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert,
         ))}
       </div>
       <div className="mt-3 pt-3 border-t border-[var(--ac-200)] flex items-center justify-between">
-        <span className="text-[12px] text-[var(--ac-band-sub)]">현재 보호 단계</span>
+        <span className="text-[12px] text-[var(--ac-band-sub)]">현재 가족 보호</span>
         <span className="text-[12px] font-semibold text-[var(--ac-600)]">Lv.{protectionLevel} {protectionName}</span>
       </div>
       <button
@@ -448,13 +449,23 @@ export default function ChildApp() {
               <p className="text-[12px] text-gray-500 leading-relaxed bg-gray-50 rounded-xl p-3">{a?.aiSummary ?? DEMO_ALERT.aiSummary}</p>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl p-5">
-              <p className="text-[13px] font-bold text-gray-700 mb-3">AI · 어머니 대화 내용</p>
-              <div className="flex flex-col gap-2">
+            <div className="rounded-[24px] border border-[var(--ac-100)] bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm">
+                  <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-extrabold text-gray-950">어머니와 AI의 대화</p>
+                  <p className="text-[11px] text-gray-500">어머니가 함께 확인을 요청한 상담 기록이에요</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
                 {conversation.map((msg: { role: string; text: string }, i: number) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "ai" && <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2 shrink-0 mt-0.5"><svg viewBox="0 0 24 24" fill="#3b82f6" className="w-3.5 h-3.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z" /></svg></div>}
-                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-[12px] whitespace-pre-line leading-relaxed ${msg.role === "ai" ? "bg-blue-50 text-gray-800 rounded-tl-sm" : "bg-gray-100 text-gray-700 rounded-tr-sm"}`}>{msg.text}</div>
+                    {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
+                    <div className={`${msg.role === "ai" ? "max-w-[88%] bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "max-w-[78%] bg-[var(--ac-500)] text-white rounded-tr-sm"} rounded-2xl px-4 py-3 text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
+                      {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -478,7 +489,7 @@ export default function ChildApp() {
             ) : !alert ? (
               <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
                 <p className="text-[14px] font-bold text-blue-700">확인용 알림이에요</p>
-                <p className="mt-1 text-[12px] text-gray-500">현재 보호 단계에서는 자녀가 송금을 승인하거나 보류할 수 없어요.</p>
+                <p className="mt-1 text-[12px] text-gray-500">현재 가족 보호 설정에서는 자녀가 송금을 승인하거나 보류할 수 없어요.</p>
                 <button onClick={() => setPage("home")} className="mt-3 text-[13px] font-medium text-gray-900">확인</button>
               </div>
             ) : null}

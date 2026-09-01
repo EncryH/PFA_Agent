@@ -1,4 +1,4 @@
-// 송금 화면 — 7단계 전부 여기서 관리한다.
+// 송금 화면 — 입력부터 AI 확인·피해 대응까지의 화면 흐름을 관리한다.
 //   input → account → amount → checking → (success | db-warning | ai-chat → hold)
 //   already-sent 는 별도 진입 (골든타임 사후 대응)
 //
@@ -10,7 +10,7 @@ import { takeTurn, FIRST_QUESTION, type ChatMessage, type OfficialContent } from
 import { BankAvatar, BankLogo, PageHeader, RECIPIENT_ICONS, shortBank } from "../shared/ui";
 import {
   MY_ACCOUNTS, KNOWN_RECIPIENTS, BLACKLISTED_ACCOUNTS, BANKS, BROKERAGES, DEMO_ALERT, lookupHolder,
-  fmtAccount, fmtAmt, parseAmt, runRisk, isMyAccount, nowTime,
+  fmtAccount, fmtAmt, parseAmt, runIntentPrefilter, isMyAccount, nowTime,
   type TransferStep,
 } from "../shared/data";
 import {
@@ -22,98 +22,9 @@ import { fetchRiskScore, type RiskResult } from "../api/riskScore";
 import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
+import { formatAiSpeechText, ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
-
-const AI_MESSAGE_HEADINGS = new Set([
-  "확인한 내용이에요",
-  "왜 확인하나요",
-  "왜 위험한가요",
-  "지금 해야 할 일이에요",
-  "한 가지만 확인할게요",
-  "확인 결과",
-  "보내기 전 확인",
-]);
-
-function formatReadableAiMessage(value: string) {
-  let text = value
-    .replace(/\r\n/g, "\n")
-    .replace(/[\[\]#*_]+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요|확인 결과|보내기 전 확인)\s*[\[\]#*_]*/g, "$1")
-    .replace(/^\s*[\[\]#*_]+\s*$/gm, "")
-    .replace(/([^\n])\s+(?=(?:[1-4])\.\s)/g, "$1\n\n")
-    .replace(/\n(?=(?:[2-4])\.\s)/g, "\n\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  const actionHeading = text.match(/지금 해야 할 일이에요[.!]?/);
-  const firstNumber = text.search(/(?:^|\n)1\.\s/);
-  if (!text.includes("확인한 내용이에요") && (actionHeading || firstNumber >= 0)) {
-    const splitIndex = actionHeading?.index ?? firstNumber;
-    const summary = text.slice(0, splitIndex).trim();
-    const actions = text
-      .slice(actionHeading ? splitIndex + actionHeading[0].length : splitIndex)
-      .trim();
-    const sentences = summary
-      .replace(/\n+/g, " ")
-      .match(/[^.!?]+(?:[.!?]+|$)/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) || [];
-    text = [
-      "확인한 내용이에요",
-      sentences.slice(0, 1).join(" "),
-      "왜 위험한가요",
-      sentences.slice(1, 3).join(" ") || "말씀하신 요구는 금융사기 수법과 비슷해요.",
-      "지금 해야 할 일이에요",
-      actions,
-    ].filter(Boolean).join("\n\n");
-  }
-
-  if (!text.includes("한 가지만 확인할게요") && text !== FIRST_QUESTION && /[?？]/.test(text)) {
-    const sentences = text
-      .replace(/\n+/g, " ")
-      .match(/[^.!?]+(?:[.!?]+|$)/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) || [];
-    const questionIndex = sentences.findLastIndex((sentence) => /[?？]$/.test(sentence));
-    if (questionIndex >= 0) {
-      const statements = sentences.filter((_, index) => index !== questionIndex);
-      text = [
-        "확인한 내용이에요",
-        statements.slice(0, 1).join(" ") || "말씀하신 내용을 확인했어요.",
-        statements.length > 1 ? "왜 확인하나요" : "",
-        statements.slice(1, 3).join(" "),
-        "한 가지만 확인할게요",
-        sentences[questionIndex],
-      ].filter(Boolean).join("\n\n");
-    }
-  }
-
-  return text;
-}
-
-function ReadableAiMessage({ text }: { text: string }) {
-  return (
-    <div>
-      {formatReadableAiMessage(text).split("\n").map((line, index) => {
-        const trimmed = line.trim();
-        if (!trimmed) return <div key={index} className="h-2" aria-hidden="true" />;
-        if (AI_MESSAGE_HEADINGS.has(trimmed.replace(/[.!]$/, ""))) {
-          return <p key={index} className={`${index > 0 ? "mt-1" : ""} font-extrabold text-[var(--ac-700)]`}>{trimmed.replace(/[.!]$/, "")}</p>;
-        }
-        const numbered = trimmed.match(/^([1-4])\.\s*(.+)$/);
-        if (numbered) {
-          return (
-            <div key={index} className="flex items-start gap-2">
-              <span className="mt-[2px] font-extrabold text-[var(--ac-600)]">{numbered[1]}.</span>
-              <span className="min-w-0 flex-1">{numbered[2]}</span>
-            </div>
-          );
-        }
-        return <p key={index}>{trimmed}</p>;
-      })}
-    </div>
-  );
-}
 
 // ── 보안 분석 결과 카드 ─────────────────────────────────────────────────────
 const GRADE_STYLE = {
@@ -165,8 +76,8 @@ function RiskGradeCard({
           {/* 점수 바 */}
           <div className="mt-4 flex flex-col gap-2.5">
             {[
-              { label: "행동 분석", val: result.behaviorScore },
-              { label: "거래 검사", val: result.transactionScore },
+              { label: "행동 감지", val: result.behaviorScore },
+              { label: "송금 신호", val: result.transferSignalScore },
             ].map(({ label, val }) => (
               <div key={label} className="flex items-center gap-2">
                 <span className="text-[12px] text-gray-500 w-[64px] shrink-0">{label}</span>
@@ -270,7 +181,7 @@ export default function Transfer({
   const [bankTab, setBankTab] = useState<"은행" | "증권사">("은행");
   const [fromIdx, setFromIdx] = useState(defaultFromIdx);   // 출금 계좌 (탭하면 다음 계좌로 순환)
 
-  // 페어링 전에는 안심동행 기능(4층 의도 분석·6층 골든타임)이 작동하지 않는다.
+  // 페어링 전에는 가족 확인 옵션만 비활성화되고 1~4단계 안전 기능은 그대로 작동한다.
   // 가족이 연결돼야 성립하는 기능이므로, 연결 전에는 평범한 은행 송금 화면이어야 한다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
 
@@ -300,6 +211,7 @@ export default function Transfer({
   const [riskLabels, setRiskLabels] = useState<string[]>([]);
   const [fraudTypeLabel, setFraudTypeLabel] = useState("");
   const [analysisHold, setAnalysisHold] = useState(false);
+  const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
   // 사기 유형이 확정되면 금감원 사례·영상을 함께 보여준다 (서버가 유형별로 미리 매핑)
   const [official, setOfficial] = useState<OfficialContent | null>(null);
   const [playingVideo, setPlayingVideo] = useState<string | null>(null);
@@ -326,6 +238,7 @@ export default function Transfer({
   const [showEmergencyStatus, setShowEmergencyStatus] = useState(false);
   const [emergencyReceiptSaved, setEmergencyReceiptSaved] = useState(false);
   const reliefDocumentRef = useRef<HTMLDivElement>(null);
+  const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // 행동 감지 — Transfer 내부 신호
   const [backPresses, setBackPresses]   = useState(0);
@@ -339,6 +252,37 @@ export default function Transfer({
   const behaviorSignalsRef = useRef(behaviorSignals);
   behaviorSignalsRef.current = behaviorSignals; // 렌더마다 갱신 — 클로저 stale 방지
   const time = nowTime();
+
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  const stopAiSpeech = () => {
+    if (speechSupported) window.speechSynthesis.cancel();
+    speechUtteranceRef.current = null;
+    setSpeakingMessageIndex(null);
+  };
+
+  const toggleAiSpeech = (text: string, messageIndex: number) => {
+    if (!speechSupported) return;
+    if (speakingMessageIndex === messageIndex) {
+      stopAiSpeech();
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(formatAiSpeechText(text));
+    utterance.lang = "ko-KR";
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+    utterance.onend = () => {
+      if (speechUtteranceRef.current !== utterance) return;
+      speechUtteranceRef.current = null;
+      setSpeakingMessageIndex(null);
+    };
+    utterance.onerror = utterance.onend;
+    speechUtteranceRef.current = utterance;
+    setSpeakingMessageIndex(messageIndex);
+    window.speechSynthesis.speak(utterance);
+  };
 
   // ── 실시간 위험 미리보기 (금액 입력 중) ──
   const liveRisk = useMemo(() => {
@@ -371,6 +315,10 @@ export default function Transfer({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => () => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
 
   useEffect(() => {
     if (!resumeSessionId) return;
@@ -419,9 +367,9 @@ export default function Transfer({
     if (hit) { setBank(hit.bank); setName(hit.name); }
   }, [account, step]);
 
-  // 분석 완료 → 행동 감지 + 거래 검사 → 등급 카드 표시
-  // 2층 행동 감지·3층 거래 검사는 가족 연결과 무관하게 항상 돈다 — 본인을 지키는 안전장치라
-  // 가족이 아직 연결되지 않았다고 꺼지면 안 된다. 가족 연결이 필요한 건 5층(가족 확인) 알림뿐이다.
+  // 분석 완료 → 2단계 행동 감지 + 3단계 내부의 빠른 송금 신호 → 사전 등급 표시
+  // 1~4단계 안전 기능은 가족 연결과 무관하게 항상 동작한다.
+  // 가족 연결이 필요한 것은 선택 기능인 가족 확인·권한 위임뿐이다.
   useEffect(() => {
     if (step !== "checking") return;
 
@@ -432,7 +380,7 @@ export default function Transfer({
     // 즉결 처리 (API 불필요)
     if (isMyAccount(account)) { setStep("success"); return; }
     const amountValue = parseAmt(amt);
-    const localRisk = runRisk(account, amountValue, name);
+    const localRisk = runIntentPrefilter(account, amountValue, name);
     if (localRisk === "db-warning") { setStep("db-warning"); return; }
     if (amountValue < aiReviewThreshold) { setStep("success"); return; }
     const clean = account.replace(/\D/g, "");
@@ -483,7 +431,7 @@ export default function Transfer({
       // API 장애 시 기존 로직으로 폴백
       const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
       setTimeout(() => {
-        const r = runRisk(account, parseAmt(amt), name);
+        const r = runIntentPrefilter(account, parseAmt(amt), name);
         if (r === "success") setStep("success");
         else if (r === "db-warning") setStep("db-warning");
         else goAiChat();
@@ -657,7 +605,7 @@ export default function Transfer({
     else goHome();
   };
 
-  // 4층 AI 의도 분석 — Gemini가 질문·신호 추출, 규칙이 보류 판정
+  // 3단계 AI 의도 분석 — 이전 거래 패턴·RAG·Gemini 신호를 결합하고 규칙이 보류 판정
   const handleSend = async () => {
     // 위험 판정이 끝나도 상담은 끝나지 않는다.
     // chatDone은 분석 결과가 나온 상태일 뿐, 추가 질문을 막는 조건이 아니다.
@@ -695,7 +643,7 @@ export default function Transfer({
     setOfficial(verdict.analysis?.official_content ?? null);
     setMessages((p) => [...p, { role: "ai", text: verdict.message }]);
 
-    // 4단계 의도 분석 결과까지만 표시한다. 5단계 가족 확인은 이후 별도로 연결한다.
+    // 3단계 의도 분석 결과를 표시하고, 가족 확인은 사용자가 선택할 때만 별도로 연결한다.
     if (verdict.done) {
       setChatDone(true);
       setAnalysisHold(verdict.hold);
@@ -1048,7 +996,7 @@ export default function Transfer({
             </div>
 
             <div className="mt-5 flex flex-col gap-2">
-              {["행동 패턴 분석", "거래 이상 탐지", "안전 등급 산출"].map((s, i) => (
+              {["행동 신호 확인", "송금 위험 신호 확인", "의도 분석 준비"].map((s, i) => (
                 <div
                   key={s}
                   className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
@@ -1071,7 +1019,7 @@ export default function Transfer({
                   <div className="min-w-0 flex-1">
                     <p className={`text-[14px] font-bold ${analyzeStep >= i ? "text-gray-900" : "text-gray-300"}`}>{s}</p>
                     <p className={`mt-0.5 text-[12px] ${analyzeStep >= i ? "text-gray-500" : "text-gray-300"}`}>
-                      {i === 0 ? "평소 송금 습관과 비교" : i === 1 ? "새 계좌·고액·위험 문구 확인" : "보호 단계에 맞춰 판단"}
+                      {i === 0 ? "이체 전 앱 행동을 확인" : i === 1 ? "새 계좌·고액 등 빠른 신호 확인" : "필요하면 이전 거래와 대화를 함께 분석"}
                     </p>
                   </div>
                 </div>
@@ -1240,8 +1188,26 @@ export default function Transfer({
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
-                <div className={`${msg.role === "ai" ? "max-w-[88%] bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "max-w-[78%] bg-[var(--ac-500)] text-white rounded-tr-sm"} px-4 py-3 rounded-2xl text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
-                  {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
+                <div className={`${msg.role === "ai" ? "max-w-[88%]" : "max-w-[78%]"} min-w-0`}>
+                  <div className={`${msg.role === "ai" ? "w-full bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "bg-[var(--ac-500)] text-white rounded-tr-sm"} rounded-2xl px-4 py-3 text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
+                    {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
+                    {msg.role === "ai" && speechSupported && (
+                      <button
+                        type="button"
+                        onClick={() => toggleAiSpeech(msg.text, i)}
+                        aria-label={speakingMessageIndex === i ? "답변 음성 재생 중지" : "이 답변을 음성으로 듣기"}
+                        aria-pressed={speakingMessageIndex === i}
+                        className="ml-auto mt-1.5 flex h-7 items-center gap-1 rounded-lg border border-[var(--ac-200)] bg-white/80 px-2 text-[10px] font-extrabold leading-none text-[var(--ac-700)] transition active:scale-[0.97]"
+                      >
+                        {speakingMessageIndex === i ? (
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3" aria-hidden="true"><path d="M7 6.5A1.5 1.5 0 018.5 5h7A1.5 1.5 0 0117 6.5v11a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 17.5v-11z" /></svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 010 7" /><path d="M18 6a8.5 8.5 0 010 12" /></svg>
+                        )}
+                        {speakingMessageIndex === i ? "듣기 중지" : "답변 듣기"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
