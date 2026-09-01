@@ -86,7 +86,7 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
       const key = import.meta.env.VITE_FSC_API_KEY as string | undefined
       if (key) {
         const url =
-          `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getBasList` +
+          `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getFnCoOutl` +
           `?serviceKey=${key}&resultType=json&numOfRows=3&pageNo=1` +
           `&fncoNm=${encodeURIComponent(institutionName)}`
         const res = await fetch(url)

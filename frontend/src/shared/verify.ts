@@ -318,19 +318,25 @@ function isFscError(json: unknown): boolean {
 }
 
 // FSC API 호출 (실패 시 null 반환)
+// 오퍼레이션명이 getBasList 로 잘못돼 있었다 — 실제로는 getFnCoOutl 이다(data.go.kr
+// "금융위원회_금융회사기본정보" 서비스 명세 기준). 잘못된 이름으로 부르면 서비스 자체가
+// 없다는 오류(NO_OPENAPI_SERVICE_ERROR, reason 12)가 나서 키가 문제인 것처럼 보였다.
 async function fetchFscApi(name: string): Promise<{ fncoNm: string; corpRegNo?: string }[] | null> {
   const key = import.meta.env.VITE_FSC_API_KEY as string | undefined;
   if (!key) return null;
   try {
     const url =
-      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getBasList` +
+      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getFnCoOutl` +
       `?serviceKey=${key}&resultType=json&numOfRows=5&pageNo=1&fncoNm=${encodeURIComponent(name)}`;
     const res = await fetch(url);
     const json = await res.json();
     if (isFscError(json)) return null;            // API 서비스 중단 등 에러
     const items = json?.response?.body?.items?.item;
     if (!items) return null;
-    return Array.isArray(items) ? items : [items];
+    const list = Array.isArray(items) ? items : [items];
+    // 응답 필드는 corpRegNo 가 아니라 crno(법인등록번호)다 — 기존 코드가 없는 필드를
+    // 찾고 있어서 "법인번호: ..." 문구가 항상 빈 채로 나가고 있었다.
+    return list.map((it: any) => ({ fncoNm: it.fncoNm, corpRegNo: it.crno }));
   } catch {
     return null;
   }
