@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MY_ACCOUNTS, SAVINGS_INFO } from "../shared/data";
 import { BankLogo } from "../shared/ui";
+import CallSafetyCheck from "../shared/CallSafetyCheck";
 
 type SavingsStep = "detail" | "confirm" | "done";
 
@@ -31,6 +32,7 @@ export default function SavingsDetail({
   isClosed?: boolean;
 }) {
   const [step, setStep] = useState<SavingsStep>("detail");
+  const [showCallCheck, setShowCallCheck] = useState(false);
 
   const clean = account.account.replace(/\D/g, "");
   const info = SAVINGS_INFO[clean];
@@ -193,11 +195,23 @@ export default function SavingsDetail({
         </p>
 
         <button
-          onClick={() => { onEarlyClosure(info.afterPenaltyBalance); setStep("done"); }}
+          onClick={() => setShowCallCheck(true)}
           className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-red-500 active:scale-[0.98] transition-all"
         >
           해지 확인
         </button>
+
+        {showCallCheck && (
+          <CallSafetyCheck
+            actionLabel="예·적금 중도해지"
+            onClose={() => setShowCallCheck(false)}
+            onProceed={() => {
+              setShowCallCheck(false);
+              onEarlyClosure(info.afterPenaltyBalance);
+              setStep("done");
+            }}
+          />
+        )}
       </div>
     );
   }
