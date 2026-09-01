@@ -312,31 +312,15 @@ export const KNOWN_FN_COMPANIES: Record<string, string> = {
   "웰컴저축은행": "저축은행", "페퍼저축은행": "저축은행",
 };
 
-// FSC API 응답이 에러 포맷인지 확인
-function isFscError(json: unknown): boolean {
-  return !!(json && typeof json === "object" && "OpenAPI_ServiceResponse" in (json as object));
-}
-
-// FSC API 호출 (실패 시 null 반환)
-// 오퍼레이션명이 getBasList 로 잘못돼 있었다 — 실제로는 getFnCoOutl 이다(data.go.kr
-// "금융위원회_금융회사기본정보" 서비스 명세 기준). 잘못된 이름으로 부르면 서비스 자체가
-// 없다는 오류(NO_OPENAPI_SERVICE_ERROR, reason 12)가 나서 키가 문제인 것처럼 보였다.
+// FSC API 호출 (실패 시 null 반환) — 백엔드 프록시(/api/fsc/verify)를 거친다.
+// 서비스키를 브라우저 번들에 넣지 않으려고 GEMINI_API_KEY와 같은 방식으로 옮겼다
+// (키는 루트 .env 의 FSC_API_KEY, backend/fsc.js 에서만 쓰인다).
 async function fetchFscApi(name: string): Promise<{ fncoNm: string; corpRegNo?: string }[] | null> {
-  const key = import.meta.env.VITE_FSC_API_KEY as string | undefined;
-  if (!key) return null;
   try {
-    const url =
-      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getFnCoOutl` +
-      `?serviceKey=${key}&resultType=json&numOfRows=5&pageNo=1&fncoNm=${encodeURIComponent(name)}`;
-    const res = await fetch(url);
+    const res = await fetch(`/api/fsc/verify?name=${encodeURIComponent(name)}`);
+    if (!res.ok) return null;
     const json = await res.json();
-    if (isFscError(json)) return null;            // API 서비스 중단 등 에러
-    const items = json?.response?.body?.items?.item;
-    if (!items) return null;
-    const list = Array.isArray(items) ? items : [items];
-    // 응답 필드는 corpRegNo 가 아니라 crno(법인등록번호)다 — 기존 코드가 없는 필드를
-    // 찾고 있어서 "법인번호: ..." 문구가 항상 빈 채로 나가고 있었다.
-    return list.map((it: any) => ({ fncoNm: it.fncoNm, corpRegNo: it.crno }));
+    return json?.items ?? null;
   } catch {
     return null;
   }

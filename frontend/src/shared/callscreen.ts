@@ -80,25 +80,14 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
       }
     }
 
-    // 금융사 → FSC API 검증 → 실패 시 로컬 DB 폴백
+    // 금융사 → FSC API 검증(백엔드 프록시 /api/fsc/verify — verify.ts 와 같은 경로) → 실패 시 로컬 DB 폴백
     let fsaVerified = false
     try {
-      const key = import.meta.env.VITE_FSC_API_KEY as string | undefined
-      if (key) {
-        const url =
-          `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getFnCoOutl` +
-          `?serviceKey=${key}&resultType=json&numOfRows=3&pageNo=1` +
-          `&fncoNm=${encodeURIComponent(institutionName)}`
-        const res = await fetch(url)
+      const res = await fetch(`/api/fsc/verify?name=${encodeURIComponent(institutionName)}`)
+      if (res.ok) {
         const json = await res.json()
-        // OpenAPI_ServiceResponse = 에러 포맷 (서비스 중단 등)
-        if (!json?.OpenAPI_ServiceResponse) {
-          const items = json?.response?.body?.items?.item
-          if (items) {
-            const list: { fncoNm: string }[] = Array.isArray(items) ? items : [items]
-            fsaVerified = list.some((it) => it.fncoNm === institutionName)
-          }
-        }
+        const items: { fncoNm: string }[] | null = json?.items ?? null
+        fsaVerified = !!items?.some((it) => it.fncoNm === institutionName)
       }
     } catch { /* FSC API 네트워크 오류 */ }
 

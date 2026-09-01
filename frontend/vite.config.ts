@@ -179,14 +179,42 @@ function stockQuoteApi(): Plugin {
   }
 }
 
+// 금융위원회 금융회사기본정보 OpenAPI 프록시 — GET /api/fsc/verify?name=국민은행
+// 데이터포털 서비스키를 브라우저에 노출하지 않으려고(GEMINI_API_KEY와 같은 이유) 서버가 대신 호출한다.
+// 실제 조회 로직은 backend/fsc.js — verify.ts·callscreen.ts 양쪽이 여기로 통일해서 부른다.
+function fscApi(apiKey: string): Plugin {
+  return {
+    name: 'ansim-fsc-api',
+    configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/fsc.js')).href
+      server.middlewares.use('/api/fsc/verify', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        try {
+          const url = new URL(req.url ?? '', 'http://localhost')
+          const name = url.searchParams.get('name') ?? ''
+          if (!name) {
+            res.statusCode = 400
+            return res.end(JSON.stringify({ error: 'name query param required' }))
+          }
+          const { lookupFscInstitution } = await import(handlerPath)
+          const items = await lookupFscInstitution(name, apiKey)
+          res.statusCode = 200
+          res.end(JSON.stringify({ items }))
+        } catch (e) {
+          console.error('[ansim-fsc-api]', e)
+          res.statusCode = 502
+          res.end(JSON.stringify({ error: (e as Error).message }))
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
-  // 루트 .env (저장소 최상위) — GEMINI_API_KEY 등 서버 전용 키
+  // 루트 .env (저장소 최상위) — GEMINI_API_KEY·FSC_API_KEY 등 서버 전용 키를 여기 한 곳에서 관리한다.
   const env = loadEnv(mode, '..', '')
-  // frontend/.env — VITE_* 브라우저 노출 키 (FSC_API_KEY 등)
-  const envFrontend = loadEnv(mode, '.', 'VITE_')
 
   return {
-    // envDir 기본값(프로젝트 루트 = frontend/)으로 VITE_ 변수를 브라우저에 노출
     plugins: [
       react(),
       tailwindcss(),
@@ -205,10 +233,7 @@ export default defineConfig(({ mode }) => {
       thecheatMockApi(),
       riskScoreApi(),
       stockQuoteApi(),
+      fscApi(env.FSC_API_KEY),
     ],
-    // 사용하지 않는 envFrontend 변수를 최소한으로 참조해 lint 경고 방지
-    define: {
-      __FSC_KEY_LOADED__: JSON.stringify(!!envFrontend.VITE_FSC_API_KEY),
-    },
   }
 })
