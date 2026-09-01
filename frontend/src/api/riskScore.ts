@@ -8,7 +8,7 @@ export interface RiskResult {
   gradeLabel: string
   gradeColor: 'safe' | 'caution' | 'warning' | 'danger'
   behaviorScore: number
-  transactionScore: number
+  transferSignalScore: number
   reasons: string[]
 }
 

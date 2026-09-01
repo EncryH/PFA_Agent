@@ -1,9 +1,9 @@
 import { AGENT_STATUS } from "../shared.js";
 
 export const metadata = Object.freeze({
-  layer: 6,
-  key: "golden-time",
-  name: "골든타임 사후 대응",
+  layer: 4,
+  key: "damage-response",
+  name: "피해 대응 (골든타임)",
   status: AGENT_STATUS.READY,
 });
 
@@ -15,7 +15,7 @@ const ACTIONS = Object.freeze([
 ]);
 
 // 실제 지급정지나 신고를 대신 실행하지 않고, 사용자가 즉시 수행할 순서를 반환한다.
-export function runGoldenTimeAgent({ transferId = "", sentAt = "", amount = 0, recipient = "" } = {}) {
+export function runDamageResponseAgent({ transferId = "", sentAt = "", amount = 0, recipient = "" } = {}) {
   return {
     agent: metadata.key,
     decision: "START_GOLDEN_TIME_RESPONSE",

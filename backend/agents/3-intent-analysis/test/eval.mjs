@@ -1,4 +1,4 @@
-// 4층 의도 분석 평가셋 러너
+// 3단계 의도 분석 평가셋 러너
 //
 //   node backend/eval.mjs [baseUrl]
 //

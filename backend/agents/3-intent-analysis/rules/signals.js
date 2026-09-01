@@ -1,4 +1,4 @@
-// 4층 위험 채점 규칙
+// 3단계 위험 채점 규칙
 //
 // 설계 원칙: "Rules decide, AI explains"
 //   - LLM은 대화에서 신호를 '추출'만 한다 (아래 코드 중에서 고르기)
@@ -29,7 +29,7 @@ export const SIGNALS = {
 
 export const SIGNAL_CODES = Object.keys(SIGNALS);
 
-export const HOLD_THRESHOLD = 50;  // 이상이면 5층 가족 확인으로
+export const HOLD_THRESHOLD = 50;  // 이상이면 송금을 보류하고 가족 확인 옵션을 제안
 // 4턴은 권장 범위일 뿐 강제 종료 기준이 아니다.
 // 판정에 필요한 근거가 남으면 더 묻되, 모델 오류로 대화가 무한 반복되는 것만 8턴에서 막는다.
 export const MAX_TURNS = 8;

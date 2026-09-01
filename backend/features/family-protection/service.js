@@ -1,37 +1,26 @@
-import { AGENT_STATUS } from "../shared.js";
+import familyProtectionConfig from "../../../shared/family-protection-policy.json" with { type: "json" };
 
-export const metadata = Object.freeze({
-  layer: 5,
-  key: "family-confirmation",
-  name: "가족 확인·권한 위임",
-  status: AGENT_STATUS.READY,
-});
+export const feature = Object.freeze({ ...familyProtectionConfig.feature });
 
-export const DELEGATION_LEVELS = Object.freeze({
-  0: "NOTIFY_ONLY",
-  1: "DELAY_AND_NOTIFY",
-  2: "JOINT_CONFIRMATION",
-  3: "DAMAGE_RESPONSE",
-});
+export const DELEGATION_LEVELS = Object.freeze(Object.fromEntries(
+  familyProtectionConfig.levels.map(({ level, code }) => [level, code]),
+));
 
-export const PROTECTION_POLICIES = Object.freeze({
-  0: Object.freeze({ delaySeconds: 0, notifyFamily: false, allowFamilyDecision: false, guideDamageResponse: false }),
-  1: Object.freeze({ delaySeconds: 300, notifyFamily: false, allowFamilyDecision: false, guideDamageResponse: false }),
-  2: Object.freeze({ delaySeconds: 300, notifyFamily: true, allowFamilyDecision: true, guideDamageResponse: false }),
-  3: Object.freeze({ delaySeconds: 300, notifyFamily: true, allowFamilyDecision: true, guideDamageResponse: true }),
-});
+export const PROTECTION_POLICIES = Object.freeze(Object.fromEntries(
+  familyProtectionConfig.levels.map(({ level, policy }) => [level, Object.freeze({ ...policy })]),
+));
 
 /**
  * 가족에게 공유할 최소 정보와 다음 조치를 결정한다.
  * 잔액·전체 거래내역은 어떤 단계에서도 반환하지 않는다.
  */
-export function runFamilyConfirmationAgent({ riskLevel = "LOW", delegatedLevel = 0, requesterVerified = false } = {}) {
+export function evaluateFamilyProtection({ riskLevel = "LOW", delegatedLevel = 0, requesterVerified = false } = {}) {
   const level = Math.max(0, Math.min(3, Number(delegatedLevel) || 0));
   const policy = PROTECTION_POLICIES[level];
 
   if (riskLevel === "LOW") {
     return {
-      agent: metadata.key,
+      feature: feature.key,
       decision: "PASS",
       level,
       notifyFamily: false,
@@ -51,7 +40,7 @@ export function runFamilyConfirmationAgent({ riskLevel = "LOW", delegatedLevel =
         : "WARN_PARENT";
 
   return {
-    agent: metadata.key,
+    feature: feature.key,
     decision,
     level,
     notifyFamily: highRisk && policy.notifyFamily,

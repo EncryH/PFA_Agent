@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "description": "4단계 사기 송금 의도 분석용 경량 지식그래프. 규칙 신호를 사기 유형, 진행 단계, 요구 행동, 대응 행동과 연결한다.",
+  "description": "3단계 사기 송금 의도 분석용 경량 지식그래프. 규칙 신호를 사기 유형, 진행 단계, 요구 행동, 대응 행동과 연결한다.",
   "fraud_types": [
     {
       "code": "institution_impersonation",

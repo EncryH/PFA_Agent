@@ -27,7 +27,7 @@ function backendApi(apiKey: string, graphConfig: Neo4jConfig, databaseConfig: Te
     configureServer(server) {
       // vite.config 는 .vite-temp 로 번들되므로 상대 경로가 깨진다.
       // 프로젝트 root(frontend/) 기준으로 절대 경로를 만든다.
-      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/agents/4-intent-analysis/agent.js')).href
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/agents/3-intent-analysis/agent.js')).href
 
       server.middlewares.use('/api/intent', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')

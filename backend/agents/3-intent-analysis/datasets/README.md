@@ -1,4 +1,4 @@
-# 4단계 데이터셋 구조
+# 3단계 데이터셋 구조
 
 Git에는 전처리된 입력과 실행에 필요한 결과만 둔다. PDF·ZIP 등 원본은 팀 공유 저장소에서 별도로 관리한다.
 
@@ -29,7 +29,7 @@ datasets/
 CSV는 다음 명령으로 동일하게 재생성할 수 있다.
 
 ```powershell
-node backend/agents/4-intent-analysis/scripts/generate-synthetic-transactions.mjs
+node backend/agents/3-intent-analysis/scripts/generate-synthetic-transactions.mjs
 ```
 
 ## Neo4j 지식그래프 적재
@@ -37,14 +37,14 @@ node backend/agents/4-intent-analysis/scripts/generate-synthetic-transactions.mj
 AuraDB Free 인스턴스를 만든 뒤 루트 `.env`에 `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`를 설정하고 실행한다.
 
 ```powershell
-node --env-file=.env backend/agents/4-intent-analysis/scripts/seed-neo4j-graph.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/seed-neo4j-graph.mjs
 ```
 
 적재 스크립트는 `MERGE`를 사용하므로 같은 데이터로 다시 실행해도 노드가 중복 생성되지 않는다.
 다음 명령은 AuraDB의 노드·관계 개수와 기관사칭 진행 경로를 원본 JSON과 읽기 전용으로 대조한다.
 
 ```powershell
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-neo4j-graph.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-neo4j-graph.mjs
 ```
 
 ## 로컬 벡터 인덱스 생성
@@ -52,13 +52,13 @@ node --env-file=.env backend/agents/4-intent-analysis/scripts/check-neo4j-graph.
 루트 `.env`의 `GEMINI_API_KEY`를 사용해 실행용 Corpus를 임베딩한다.
 
 ```powershell
-node --env-file=.env backend/agents/4-intent-analysis/scripts/build-vector-index.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/build-vector-index.mjs
 ```
 
 검색 결과를 빠르게 확인하려면 다음 명령을 사용한다.
 
 ```powershell
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
 ```
 
 `--full`을 붙이면 검색 근거를 포함한 Gemini 의도 분석까지 함께 확인한다.

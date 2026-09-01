@@ -1,19 +1,11 @@
-import { AGENT_STATUS } from "../shared.js";
-
-export const metadata = Object.freeze({
-  layer: 3,
-  key: "transaction-risk",
-  name: "거래 검사",
-  status: AGENT_STATUS.READY,
-});
-
 /**
- * 이 거래가 평소와 다른지만 본다. 송금 이유는 4층이 다룬다.
+ * 사기 송금 의도 분석에 들어가기 전 실행하는 빠른 거래 신호 검사다.
  *
- * 0점이면 이후 계층을 실행하지 않는다 — 정상 거래의 무마찰을 보장하는 지점이다.
- * 점수만 반환하고 등급 판정은 오케스트레이터가 한다.
+ * 별도 에이전트나 사용자 노출 단계가 아니며, 현재 거래만으로 즉시 확인할 수 있는
+ * 고액·신규 수취인·심야 송금 신호를 계산한다. 이후 3단계의 Supabase 개인 거래
+ * 패턴 조회와 대화 분석이 더 풍부한 근거로 최종 판단한다.
  */
-export function runTransactionRiskAgent({
+export function evaluateTransferPrefilter({
   amount = 0,
   isKnownRecipient = false,
   isMyAccount = false,
@@ -36,7 +28,6 @@ export function runTransactionRiskAgent({
     score += 8;
   }
 
-  // 본인 명의 계좌로 보내는 건 사기가 성립하지 않는다
   if (!isKnownRecipient && !isMyAccount) {
     score += 20;
     reasons.push("미등록 수취인");
@@ -48,5 +39,5 @@ export function runTransactionRiskAgent({
     reasons.push("야간 이체");
   }
 
-  return { agent: metadata.key, layer: metadata.layer, evaluated: true, score, reasons };
+  return { evaluated: true, score, reasons };
 }

@@ -107,12 +107,12 @@ try {
             $signals[$name] = Test-Pattern $transcript $patterns[$name]
         }
 
-        $stage4Candidate = (
+        $stage3Candidate = (
             $signals.direct_transfer -or
             $signals.advance_fee_or_safe_account -or
             ($signals.fraud -and $signals.account)
         )
-        $stage6Candidate = $signals.post_incident -or $signals.freeze_or_recovery
+        $stage4DamageCandidate = $signals.post_incident -or $signals.freeze_or_recovery
         $contextCandidate = (
             $signals.agency_impersonation -or
             $signals.financial_impersonation -or
@@ -125,23 +125,23 @@ try {
         )
         $normalOrIrrelevantCandidate = -not (
             $signals.fraud -or
-            $stage4Candidate -or
-            $stage6Candidate -or
+            $stage3Candidate -or
+            $stage4DamageCandidate -or
             $contextCandidate
         )
 
         $candidateUses = [System.Collections.Generic.List[string]]::new()
-        if ($stage4Candidate) { Add-Unique $candidateUses 'stage_4_intent_risk_candidate' }
-        if ($stage6Candidate) { Add-Unique $candidateUses 'stage_6_golden_time_candidate' }
+        if ($stage3Candidate) { Add-Unique $candidateUses 'stage_3_intent_risk_candidate' }
+        if ($stage4DamageCandidate) { Add-Unique $candidateUses 'stage_4_damage_response_candidate' }
         if ($contextCandidate) { Add-Unique $candidateUses 'stage_1_2_context_candidate' }
         if ($normalOrIrrelevantCandidate) { Add-Unique $candidateUses 'normal_or_irrelevant_control_candidate' }
         if ($candidateUses.Count -eq 0) { Add-Unique $candidateUses 'other_security_consultation' }
 
-        if ($stage4Candidate) {
-            $primaryBucket = 'stage_4_intent_risk_candidate'
+        if ($stage3Candidate) {
+            $primaryBucket = 'stage_3_intent_risk_candidate'
         }
-        elseif ($stage6Candidate) {
-            $primaryBucket = 'stage_6_golden_time_candidate'
+        elseif ($stage4DamageCandidate) {
+            $primaryBucket = 'stage_4_damage_response_candidate'
         }
         elseif ($normalOrIrrelevantCandidate) {
             $primaryBucket = 'normal_or_irrelevant_control_candidate'
@@ -232,8 +232,8 @@ $normalizedDuplicateGroups = @($records | Group-Object { $_.deduplication.normal
 
 $bucketCounts = [ordered]@{}
 foreach ($bucket in @(
-    'stage_4_intent_risk_candidate',
-    'stage_6_golden_time_candidate',
+    'stage_3_intent_risk_candidate',
+    'stage_4_damage_response_candidate',
     'security_context_candidate',
     'normal_or_irrelevant_control_candidate'
 )) {
@@ -242,8 +242,8 @@ foreach ($bucket in @(
 
 $usageCounts = [ordered]@{}
 foreach ($usage in @(
-    'stage_4_intent_risk_candidate',
-    'stage_6_golden_time_candidate',
+    'stage_3_intent_risk_candidate',
+    'stage_4_damage_response_candidate',
     'stage_1_2_context_candidate',
     'normal_or_irrelevant_control_candidate',
     'other_security_consultation'
@@ -296,7 +296,7 @@ $outputDirectory = Split-Path -Parent $OutputPath
 
 Write-Host "생성 완료: $OutputPath"
 Write-Host "전체 레코드: $($records.Count)"
-Write-Host "4단계 의도 분석 1차 후보: $($usageCounts.stage_4_intent_risk_candidate)"
-Write-Host "6단계 사후 대응 1차 후보: $($usageCounts.stage_6_golden_time_candidate)"
+Write-Host "3단계 의도 분석 1차 후보: $($usageCounts.stage_3_intent_risk_candidate)"
+Write-Host "4단계 피해 대응 1차 후보: $($usageCounts.stage_4_damage_response_candidate)"
 Write-Host "정상·무관 대조 후보: $($usageCounts.normal_or_irrelevant_control_candidate)"
 Write-Host "기존 300건 정규화 중복: $(@($records | Where-Object { $_.deduplication.normalized_overlap_with_existing_kisa_300 }).Count)"

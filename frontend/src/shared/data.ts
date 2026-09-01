@@ -168,8 +168,8 @@ export const isMyAccount = (account: string) => {
   return clean.length >= 8 && MY_ACCOUNTS.some((m) => clean.includes(m.account.slice(0, 8)));
 };
 
-/** 3층 거래 검사 — 패턴 룰. 0점이면 즉시 송금(무마찰). */
-export const runRisk = (account: string, amt: number, name: string): "success" | "db-warning" | "ai-chat" => {
+/** 3단계 의도분석 진입 여부를 정하는 클라이언트 폴백용 빠른 사전 필터. */
+export const runIntentPrefilter = (account: string, amt: number, name: string): "success" | "db-warning" | "ai-chat" => {
   const clean = account.replace(/\D/g, "");
 
   // 내 계좌 간 이체는 사기가 성립하지 않는다 — 항상 통과
