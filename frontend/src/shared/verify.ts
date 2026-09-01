@@ -26,6 +26,11 @@ export const OFFICIAL_PHONES: Record<string, string> = {
   "11001001": "금융감독원",
   "18335500": "금융위원회",
   "15884321": "경찰청 112",
+  "15885000": "한결은행",
+  "15889000": "나눔은행",
+  "112":      "경찰청",
+  "1332":     "금융감독원",
+  "1397":     "서민금융진흥원",
 };
 
 // 공식 정부·감독·공공기관 화이트리스트 (FSC API에 없는 기관 포함)
@@ -165,6 +170,7 @@ export const OFFICIAL_DOMAINS = [
   "nonghyup.com", "ibk.co.kr", "kakaobank.com", "tossbank.com",
   "fss.or.kr", "fsc.go.kr", "bok.or.kr", "kdic.or.kr",
   "krx.co.kr", "nts.go.kr", "police.go.kr",
+  "hangyeol-bank.co.kr", "nanum-bank.co.kr",
 ];
 
 // 피싱 패턴 블랙리스트
