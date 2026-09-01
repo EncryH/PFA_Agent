@@ -10,7 +10,7 @@ export interface RiskResult {
   // 1층(상대방 검증)이 PASS/BLOCK 으로 즉시 확정한 경우에만 채워진다.
   counterpartyScore?: number
   behaviorScore: number
-  transactionScore: number
+  transferSignalScore: number
   reasons: string[]
   stoppedAt?: string
   thecheat?: { reportCount: number; scamTypes: string[]; lastReported: string }

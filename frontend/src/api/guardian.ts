@@ -42,7 +42,7 @@ export type OfficialContent = {
 export type Verdict = {
   /** 다음에 보여줄 AI 메시지 */
   message: string;
-  /** 5층(가족 확인)으로 넘길지 — 규칙이 서버에서 판정 */
+  /** 송금을 보류하고 가족 확인 옵션을 제안할지 — 규칙이 서버에서 판정 */
   hold: boolean;
   /** 대화 종료 여부 */
   done: boolean;

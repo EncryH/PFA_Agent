@@ -266,7 +266,7 @@ function selectEvidenceGapQuestion(llm = {}, risk = {}, messages = [], transfer 
     || /(보내|송금|입금|이체|설치|깔|인증번호|비밀번호|신분증|링크|클릭|통화.{0,6}유지|말하지)/.test(userText);
   const hasCompromiseAnswer = /(이미|아직|전에|지금까지).{0,14}(보냈|보낸|송금|입금|설치|깔았|눌렀|클릭|알려|제공)|(?:안|않|못)\s*(보냈|보낸|설치|눌렀|알려)/.test(userText);
 
-  // 이미 노출·설치·송금했는지는 6단계 피해 대응 여부를 바꾸므로 가장 먼저 확인한다.
+  // 이미 노출·설치·송금했는지는 4단계 피해 대응 여부를 바꾸므로 가장 먼저 확인한다.
   const safetyCritical = [
     (codes.has("CREDENTIAL_REQUEST") || codes.has("PERSONAL_DATA_REQUEST")) && !hasCompromiseAnswer
       && !/(이미.*알려|인증번호.*알려|개인정보.*제공)/.test(asked)
@@ -466,7 +466,7 @@ function safeActionFor(fraudType, signalCodes = []) {
   let verifyStep = "은행 앱에서 공식 고객센터 번호를 찾아 직접 전화하세요.";
   let protectStep = "상대방 전화번호를 인터넷에 검색해 사기 신고 이력을 확인하세요.";
 
-  // 사기 유형별로 가장 중요한 행동 두 개만 고른다. 마지막 답변은 항상 4단계로 유지한다.
+  // 사기 유형별로 가장 중요한 행동 두 개만 고른다. 마지막 답변의 행동 항목은 항상 4개로 유지한다.
   if (fraudType === "family_or_acquaintance_impersonation" || has("CHANGED_FAMILY_CONTACT")) {
     verifyStep = "새 번호가 아닌 평소 알고 있던 가족 번호로 직접 전화하세요.";
     protectStep = "연결되지 않으면 다른 가족에게 확인하고, 새 번호의 송금 요구에는 응답하지 마세요.";

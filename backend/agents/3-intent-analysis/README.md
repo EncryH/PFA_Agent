@@ -1,4 +1,4 @@
-# 4단계 사기 송금 의도 분석
+# 3단계 사기 송금 의도 분석
 
 송금 목적을 대화로 확인하고, 유사 금융사기·정상 금융상담 근거와 비교해 위험 신호를 추출하는 에이전트다. Gemini는 신호와 설명을 구조화하고, 최종 점수와 송금 보류 여부는 서버 규칙 엔진이 결정한다.
 
@@ -99,8 +99,8 @@
 ## 주요 파일
 
 ```text
-4-intent-analysis/
-├─ agent.js                    # 4단계 실행 진입점
+3-intent-analysis/
+├─ agent.js                    # 3단계 실행 진입점
 ├─ intent.js                   # 전체 대화·검색·판정 흐름
 ├─ sanitize.js                 # 개인정보 마스킹
 ├─ llm/gemini.js               # Gemini 구조화 출력
@@ -114,7 +114,8 @@
 │  ├─ client.js                # Supabase PostgreSQL 서버 전용 연결
 │  └─ transaction-pattern.js   # 파라미터화된 SELECT·패턴 점수
 ├─ rules/
-│  ├─ signals.js               # 신호별 점수와 보류 기준
+│  ├─ transfer-prefilter.js    # 고액·신규 수취인·심야 송금 빠른 사전 신호
+│  ├─ signals.js               # 대화 신호별 점수와 보류 기준
 │  └─ fraud-types.js           # 사기 유형 분류
 ├─ datasets/                   # 입력·사례·실행 Corpus
 ├─ scripts/                    # Corpus·벡터 인덱스 생성·점검
@@ -134,41 +135,41 @@
 ```powershell
 # 저장소 밖 원본 PDF를 페이지 단위 JSON으로 변환
 & 'C:\Users\khm35\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' `
-  backend/agents/4-intent-analysis/scripts/extract-pdf-rag.py `
+  backend/agents/3-intent-analysis/scripts/extract-pdf-rag.py `
   --source-dir '원본 PDF 폴더' --gemini-image-summary
 
 # JSON·PDF 실행 Corpus 생성
-node backend/agents/4-intent-analysis/scripts/build-runtime-rag.mjs
+node backend/agents/3-intent-analysis/scripts/build-runtime-rag.mjs
 
 # 로컬 벡터 인덱스 생성
-node --env-file=.env backend/agents/4-intent-analysis/scripts/build-vector-index.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/build-vector-index.mjs
 
 # 벡터 검색 확인
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
 
 # 벡터 검색부터 Gemini 판정까지 확인
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-vector-search.mjs --full
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-vector-search.mjs --full
 
 # AuraDB 지식그래프 최초 적재 또는 갱신
-node --env-file=.env backend/agents/4-intent-analysis/scripts/seed-neo4j-graph.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/seed-neo4j-graph.mjs
 
 # AuraDB 적재 내용 읽기 전용 검증
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-neo4j-graph.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-neo4j-graph.mjs
 
 # JSON·PDF Vector Search + AuraDB + Gemini 최종 답변 통합 검증
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-hybrid-graphrag.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-hybrid-graphrag.mjs
 
 # Supabase 스키마와 01·02·03 가상 거래내역 적재
-node --env-file=.env backend/agents/4-intent-analysis/scripts/seed-supabase-text2sql.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/seed-supabase-text2sql.mjs
 
 # Supabase 거래 건수와 개인 패턴 위험 점수 검증
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-supabase-text2sql.mjs
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-supabase-text2sql.mjs
 
 # Vector + Neo4j 결합 검색 확인
-node --env-file=.env backend/agents/4-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
+node --env-file=.env backend/agents/3-intent-analysis/scripts/check-vector-search.mjs "검찰이 안전계좌로 옮기라고 했어요"
 
 # 단위 테스트
-node --test backend/agents/4-intent-analysis/test/intent-analysis.test.mjs
+node --test backend/agents/3-intent-analysis/test/intent-analysis.test.mjs
 ```
 
 필수 환경변수는 루트 `.env`의 `GEMINI_API_KEY`다. 모델·차원·유사도 기준은 `GEMINI_EMBEDDING_MODEL`, `GEMINI_EMBEDDING_DIMENSIONS`, `VECTOR_RAG_MIN_SIMILARITY`로 조정할 수 있다.

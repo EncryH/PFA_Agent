@@ -40,7 +40,8 @@ for (const record of core.records) {
 
 for (const record of auxiliary.records) {
   const uses = record.candidate_classification?.candidate_uses || [];
-  if (!uses.includes("stage_4_intent_risk_candidate")) continue;
+  const isIntentCandidate = uses.includes("stage_3_intent_risk_candidate");
+  if (!isIntentCandidate) continue;
   fraudCases.push({
     id: record.record_id,
     kind: "fraud_context_candidate",
