@@ -1,0 +1,39 @@
+{
+  "phones": [
+    { "value": "15881688", "name": "KB국민은행" },
+    { "value": "15444000", "name": "신한은행" },
+    { "value": "16448000", "name": "우리은행" },
+    { "value": "15990000", "name": "하나은행" },
+    { "value": "18991111", "name": "NH농협은행" },
+    { "value": "15999999", "name": "IBK기업은행" },
+    { "value": "15991500", "name": "카카오뱅크" },
+    { "value": "11001001", "name": "금융감독원" },
+    { "value": "18335500", "name": "금융위원회" },
+    { "value": "15884321", "name": "경찰청 112" },
+    { "value": "15885000", "name": "한결은행" },
+    { "value": "15889000", "name": "나눔은행" },
+    { "value": "112", "name": "경찰청" },
+    { "value": "1332", "name": "금융감독원" },
+    { "value": "1397", "name": "서민금융진흥원" }
+  ],
+  "domains": [
+    { "value": "kbstar.com", "name": "KB국민은행" },
+    { "value": "shinhan.com", "name": "신한은행" },
+    { "value": "wooribank.com", "name": "우리은행" },
+    { "value": "kebhana.com", "name": "하나은행" },
+    { "value": "nonghyup.com", "name": "NH농협은행" },
+    { "value": "ibk.co.kr", "name": "IBK기업은행" },
+    { "value": "kakaobank.com", "name": "카카오뱅크" },
+    { "value": "tossbank.com", "name": "토스뱅크" },
+    { "value": "fss.or.kr", "name": "금융감독원" },
+    { "value": "fsc.go.kr", "name": "금융위원회" },
+    { "value": "bok.or.kr", "name": "한국은행" },
+    { "value": "kdic.or.kr", "name": "예금보험공사" },
+    { "value": "krx.co.kr", "name": "한국거래소" },
+    { "value": "nts.go.kr", "name": "국세청" },
+    { "value": "police.go.kr", "name": "경찰청" },
+    { "value": "hangyeol-bank.co.kr", "name": "한결은행" },
+    { "value": "nanum-bank.co.kr", "name": "나눔은행" },
+    { "value": "gov.kr", "name": "정부24" }
+  ]
+}

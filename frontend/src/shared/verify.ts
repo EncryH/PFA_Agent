@@ -1,5 +1,7 @@
 // 상대방 검증 — 전화번호 / URL / 기관명 검증 로직
 
+import officialContacts from "../../../shared/official-contacts.json";
+
 export interface VerifyResult {
   status: "safe" | "caution" | "danger" | "unknown";
   label: string;
@@ -15,23 +17,9 @@ export interface TheCheAtResult {
 }
 
 // ─── 공식 번호 화이트리스트 ───────────────────────────────────────────────
-export const OFFICIAL_PHONES: Record<string, string> = {
-  "15881688": "KB국민은행",
-  "15444000": "신한은행",
-  "16448000": "우리은행",
-  "15990000": "하나은행",
-  "18991111": "NH농협은행",
-  "15999999": "IBK기업은행",
-  "15991500": "카카오뱅크",
-  "11001001": "금융감독원",
-  "18335500": "금융위원회",
-  "15884321": "경찰청 112",
-  "15885000": "한결은행",
-  "15889000": "나눔은행",
-  "112":      "경찰청",
-  "1332":     "금융감독원",
-  "1397":     "서민금융진흥원",
-};
+export const OFFICIAL_PHONES: Record<string, string> = Object.fromEntries(
+  officialContacts.phones.map((p) => [p.value, p.name]),
+);
 
 // 공식 정부·감독·공공기관 화이트리스트 (FSC API에 없는 기관 포함)
 export const OFFICIAL_GOV_BODIES: Record<string, string> = {
@@ -165,13 +153,7 @@ export const INSTITUTION_ALIASES: Record<string, string> = {
 };
 
 // 공식 금융사 도메인 화이트리스트
-export const OFFICIAL_DOMAINS = [
-  "kbstar.com", "shinhan.com", "wooribank.com", "kebhana.com",
-  "nonghyup.com", "ibk.co.kr", "kakaobank.com", "tossbank.com",
-  "fss.or.kr", "fsc.go.kr", "bok.or.kr", "kdic.or.kr",
-  "krx.co.kr", "nts.go.kr", "police.go.kr",
-  "hangyeol-bank.co.kr", "nanum-bank.co.kr",
-];
+export const OFFICIAL_DOMAINS = officialContacts.domains.map((d) => d.value);
 
 // 피싱 패턴 블랙리스트
 export const BLACKLISTED_DOMAINS = [
