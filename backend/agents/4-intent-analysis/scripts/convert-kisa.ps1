@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$ZipPath,
 
-  [string]$OutputPath = (Join-Path $PSScriptRoot "processed\kisa-consultations.json")
+  [string]$OutputPath = (Join-Path $PSScriptRoot "..\datasets\rag\cases\kisa-consultations.json")
 )
 
 $ErrorActionPreference = "Stop"

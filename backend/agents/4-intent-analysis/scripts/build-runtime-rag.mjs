@@ -1,17 +1,24 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import {
+  existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const processed = resolve(here, "processed");
-const outputPath = resolve(processed, "runtime", "intent-rag-corpus.json");
+const ragRoot = resolve(here, "../datasets/rag");
+const sourceJson = resolve(ragRoot, "input");
+const outputPath = resolve(ragRoot, "runtime", "intent-rag-corpus.json");
 
 const core = JSON.parse(
-  readFileSync(resolve(processed, "kisa-corpus", "kisa-integrated-corpus.json"), "utf8"),
+  readFileSync(resolve(sourceJson, "kisa-corpus", "kisa-integrated-corpus.json"), "utf8"),
 );
 const auxiliary = JSON.parse(
-  readFileSync(resolve(processed, "kisa-auxiliary-consultations.json"), "utf8"),
+  readFileSync(resolve(sourceJson, "kisa-auxiliary-consultations.json"), "utf8"),
 );
+const pdfPagesPath = resolve(sourceJson, "pdf-pages.json");
+const officialPdfPages = existsSync(pdfPagesPath)
+  ? JSON.parse(readFileSync(pdfPagesPath, "utf8")).records || []
+  : [];
 
 const riskTerms = new Set([
   "보이스피싱", "피싱", "스미싱", "송금", "계좌", "검찰", "경찰",
@@ -47,7 +54,7 @@ for (const record of auxiliary.records) {
   });
 }
 
-const normalRoot = resolve(processed, "aihub-normal-finance", "qa");
+const normalRoot = resolve(sourceJson, "aihub-normal-finance", "qa");
 const normalFiles = readdirSync(normalRoot)
   .filter((name) => name.endsWith(".json") && name.includes("-bank-"))
   .sort();
@@ -121,20 +128,23 @@ for (const file of normalFiles) {
 }
 
 const output = {
-  schema_version: "1.0.0",
+  schema_version: "1.1.0",
   dataset_name: "안심동행 AI 송금 의도 분석 실행용 RAG Corpus",
   generated_at: new Date().toISOString(),
   cautions: [
     "KISA 상담은 합성데이터이며 미검수 레코드를 실제 피해 사건으로 표시하지 않는다.",
     "AI Hub 정상 라벨은 데이터셋 역할에 따른 대조군 가정이다.",
+    "공식 PDF 페이지는 설명 근거이며 이미지 기반 Gemini 요약 페이지는 검수 전 직접 인용하지 않는다.",
     "검색 결과는 LLM의 비교 근거일 뿐 최종 위험 점수는 규칙 엔진이 결정한다.",
   ],
   summary: {
     fraud_context_candidates: fraudCases.length,
     normal_financial_controls: normalCases.length,
+    official_pdf_documents: new Set(officialPdfPages.map((record) => record.document_id)).size,
+    official_pdf_pages: officialPdfPages.length,
     normal_bucket_counts: Object.fromEntries(bucketCounts),
   },
-  records: [...fraudCases, ...normalCases],
+  records: [...fraudCases, ...normalCases, ...officialPdfPages],
 };
 
 mkdirSync(dirname(outputPath), { recursive: true });

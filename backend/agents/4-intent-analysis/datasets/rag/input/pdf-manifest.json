@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_name": "안심동행 AI 공식 금융사기 PDF 8종",
+  "documents": [
+    {
+      "document_id": "kofia-happy-investment-guide",
+      "file_name": "guide_pdf.pdf",
+      "title": "행복 금융투자 길라잡이",
+      "publisher": "금융투자협회",
+      "source_url": "https://www.kofia.or.kr/files/www/guide_pdf.pdf",
+      "usage": "투자사기·유사수신 및 금융투자 소비자보호 근거",
+      "selection": {
+        "mode": "keyword_with_neighbors",
+        "neighbor_pages": 1,
+        "keywords": ["금융사기", "투자사기", "유사수신", "보이스피싱", "스미싱", "리딩방", "불법", "사칭", "피해구제", "금융소비자보호"]
+      }
+    },
+    {
+      "document_id": "fsi-operation-blackecho",
+      "file_name": "[FSI Intelligence Report] Operation BlackEcho (KOR).pdf",
+      "title": "Operation BlackEcho",
+      "publisher": "금융보안원",
+      "source_url": "https://www.fsec.or.kr/bbs/detail?bbsNo=11611&menuNo=244",
+      "usage": "대출 빙자·악성 앱 기반 보이스피싱 수법 근거",
+      "selection": { "mode": "all_text_pages" }
+    },
+    {
+      "document_id": "kfb-fraud-prevention-encyclopedia",
+      "file_name": "사기 예방 백과사전.pdf",
+      "title": "사기 예방 백과사전",
+      "publisher": "전국은행연합회",
+      "source_url": "https://www.bankit.kr/newsroom/detail/2463",
+      "usage": "금융사기 유형·접근 수법·피해 사례·예방법 종합 근거",
+      "selection": { "mode": "all_text_pages" }
+    },
+    {
+      "document_id": "kfcpf-voice-phishing-guide",
+      "file_name": "[한국금융소비자보호재단] 보이스피싱 알아야 막을 수 있다! 피해 사례와 예방법.pdf",
+      "title": "보이스피싱 알아야 막을 수 있다! 피해 사례와 예방법",
+      "publisher": "한국금융소비자보호재단",
+      "source_url": "https://kfcpf.or.kr/front/finance/bookView.do?enIdx=1055",
+      "usage": "보이스피싱 실제 유형·사례·예방법 근거",
+      "selection": { "mode": "all_text_pages" }
+    },
+    {
+      "document_id": "kiri-older-financial-capability",
+      "file_name": "보험연구원(KIRI).pdf",
+      "title": "중고령소비자의 금융역량 진단과 강화방안",
+      "publisher": "보험연구원",
+      "source_url": "https://www.kiri.or.kr/pdf/%EC%A0%84%EB%AC%B8%EC%9E%90%EB%A3%8C/nre2026-04.pdf",
+      "usage": "고령층 금융 취약성·디지털 금융역량 보조 근거",
+      "selection": {
+        "mode": "keyword_with_neighbors",
+        "neighbor_pages": 1,
+        "keywords": ["금융사기", "보이스피싱", "스미싱", "피싱", "사기피해", "금융피해", "금융역량", "디지털 금융", "인지능력", "고령소비자", "취약성"]
+      }
+    },
+    {
+      "document_id": "fss-daxa-virtual-asset-fraud-cases",
+      "file_name": "[최종본_내지]_가상자산_연계_투자사기_사례집_240417.pdf",
+      "title": "가상자산 연계 투자사기 사례집",
+      "publisher": "금융감독원·DAXA",
+      "source_url": "https://kdaxa.org/ebook/index.html",
+      "usage": "가상자산·리딩방·투자금 및 추가 입금 유도 사례 근거",
+      "selection": { "mode": "all_text_pages" }
+    },
+    {
+      "document_id": "moleg-electronic-financial-crime",
+      "file_name": "[pdf]전자금융범죄.pdf",
+      "title": "전자금융범죄",
+      "publisher": "법제처",
+      "source_url": "https://easylaw.go.kr/CSP/CnpClsMain.laf?ccfNo=4&cciNo=1&cnpClsNo=3&csmSeq=1592&popMenu=ov",
+      "usage": "전자금융범죄 법적 정의·예방·피해구제·공식 대응 근거",
+      "selection": { "mode": "all_text_pages" }
+    },
+    {
+      "document_id": "spo-kicj-voice-phishing-psychology-2024",
+      "file_name": "보이스피싱_피해자의_심리분석을_통한_피해예방연구_2024년도_대검찰청_연구용역보고서.pdf",
+      "title": "보이스피싱 피해자의 심리분석을 통한 피해예방연구",
+      "publisher": "대검찰청·한국형사법무정책연구원",
+      "source_url": "https://nsp.nanet.go.kr/plan/subject/detail.do?nationalPlanControlNo=PLAN0000061129",
+      "usage": "실제 사기 대화·송금 유도 멘트와 피해 심리 근거",
+      "selection": { "mode": "all_text_pages" }
+    }
+  ]
+}

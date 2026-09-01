@@ -6,11 +6,11 @@
 //   3. 조회가 0ms — 부모님을 기다리게 하지 않는다
 //
 // 갱신은 런타임이 아니라 오프라인 스크립트가 한다.
-// (data/official-content-catalog.json — 금감원 게시판 크롤링 + YouTube Data API)
+// (datasets/rag/cases/official-content-catalog.json — 공식 사례·영상 카탈로그)
 
 import { readFileSync } from "node:fs";
 
-const catalogUrl = new URL("../data/official-content-catalog.json", import.meta.url);
+const catalogUrl = new URL("../datasets/rag/cases/official-content-catalog.json", import.meta.url);
 const catalog = JSON.parse(readFileSync(catalogUrl, "utf8"));
 
 const FSS = catalog.sources.find((source) => source.key === "fss_phishing_keeper");

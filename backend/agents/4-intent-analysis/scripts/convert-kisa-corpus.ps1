@@ -2,7 +2,7 @@ param(
     [string]$Set1Zip = "C:\Users\khm35\Downloads\과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 1종_20250923.zip",
     [string]$Set2Zip = "C:\Users\khm35\Downloads\과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 2종_20250923.zip",
     [string]$Set3Zip = "C:\Users\khm35\Downloads\과학기술정보통신부_스팸해킹피싱 전화상담 데이터셋 3종_20250923.zip",
-    [string]$OutputRoot = "$PSScriptRoot\processed\kisa-corpus"
+    [string]$OutputRoot = "$PSScriptRoot\..\datasets\rag\input\kisa-corpus"
 )
 
 $ErrorActionPreference = "Stop"

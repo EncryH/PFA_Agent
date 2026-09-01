@@ -6,7 +6,22 @@ import { pathToFileURL } from 'node:url'
 
 // 개발 서버에서 /api/intent 를 backend/ 로 넘긴다.
 // API 키를 브라우저 번들에 넣지 않기 위한 프록시 — 키는 Node 프로세스에만 존재한다.
-function backendApi(apiKey: string): Plugin {
+type Neo4jConfig = {
+  enabled?: string
+  uri?: string
+  username?: string
+  password?: string
+  database?: string
+  timeoutMs?: string
+}
+
+type Text2SqlConfig = {
+  enabled?: string
+  connectionString?: string
+  timeoutMs?: string
+}
+
+function backendApi(apiKey: string, graphConfig: Neo4jConfig, databaseConfig: Text2SqlConfig): Plugin {
   return {
     name: 'ansim-backend-api',
     configureServer(server) {
@@ -34,7 +49,11 @@ function backendApi(apiKey: string): Plugin {
           // backend/ 수정 후에는 dev 서버를 재시작해야 반영된다.
           // (Node ESM 캐시는 프로세스 단위라 쿼리 무효화로는 중첩 import 까지 못 지운다)
           const { runIntentAnalysisAgent } = await import(handlerPath)
-          const result = await runIntentAnalysisAgent(body, { apiKey })
+          const result = await runIntentAnalysisAgent(body, {
+            apiKey,
+            graphConfig,
+            databaseConfig,
+          })
 
           res.statusCode = 200
           res.end(JSON.stringify(result))
@@ -171,7 +190,18 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      backendApi(env.GEMINI_API_KEY),
+      backendApi(env.GEMINI_API_KEY, {
+        enabled: env.NEO4J_ENABLED,
+        uri: env.NEO4J_URI,
+        username: env.NEO4J_USERNAME,
+        password: env.NEO4J_PASSWORD,
+        database: env.NEO4J_DATABASE,
+        timeoutMs: env.NEO4J_TIMEOUT_MS,
+      }, {
+        enabled: env.TEXT2SQL_ENABLED,
+        connectionString: env.SUPABASE_DATABASE_URL || env.DATABASE_URL,
+        timeoutMs: env.TEXT2SQL_TIMEOUT_MS,
+      }),
       thecheatMockApi(),
       riskScoreApi(),
       stockQuoteApi(),

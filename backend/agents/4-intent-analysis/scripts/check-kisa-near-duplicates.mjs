@@ -3,8 +3,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const corpusPath = resolve(process.argv[2] || `${here}/processed/kisa-corpus/kisa-integrated-corpus.json`);
-const outputPath = resolve(process.argv[3] || `${here}/processed/kisa-corpus/near-duplicate-report.json`);
+const ragRoot = resolve(here, "../datasets/rag");
+const corpusPath = resolve(process.argv[2] || `${ragRoot}/input/kisa-corpus/kisa-integrated-corpus.json`);
+const outputPath = resolve(process.argv[3] || `${ragRoot}/input/kisa-corpus/near-duplicate-report.json`);
 const threshold = Number(process.argv[4] || 0.9);
 
 const corpus = JSON.parse(readFileSync(corpusPath, "utf8"));

@@ -25,6 +25,96 @@ import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/em
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
+const AI_MESSAGE_HEADINGS = new Set([
+  "확인한 내용이에요",
+  "왜 확인하나요",
+  "왜 위험한가요",
+  "지금 해야 할 일이에요",
+  "한 가지만 확인할게요",
+  "확인 결과",
+  "보내기 전 확인",
+]);
+
+function formatReadableAiMessage(value: string) {
+  let text = value
+    .replace(/\r\n/g, "\n")
+    .replace(/[\[\]#*_]+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요|확인 결과|보내기 전 확인)\s*[\[\]#*_]*/g, "$1")
+    .replace(/^\s*[\[\]#*_]+\s*$/gm, "")
+    .replace(/([^\n])\s+(?=(?:[1-4])\.\s)/g, "$1\n\n")
+    .replace(/\n(?=(?:[2-4])\.\s)/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const actionHeading = text.match(/지금 해야 할 일이에요[.!]?/);
+  const firstNumber = text.search(/(?:^|\n)1\.\s/);
+  if (!text.includes("확인한 내용이에요") && (actionHeading || firstNumber >= 0)) {
+    const splitIndex = actionHeading?.index ?? firstNumber;
+    const summary = text.slice(0, splitIndex).trim();
+    const actions = text
+      .slice(actionHeading ? splitIndex + actionHeading[0].length : splitIndex)
+      .trim();
+    const sentences = summary
+      .replace(/\n+/g, " ")
+      .match(/[^.!?]+(?:[.!?]+|$)/g)
+      ?.map((sentence) => sentence.trim())
+      .filter(Boolean) || [];
+    text = [
+      "확인한 내용이에요",
+      sentences.slice(0, 1).join(" "),
+      "왜 위험한가요",
+      sentences.slice(1, 3).join(" ") || "말씀하신 요구는 금융사기 수법과 비슷해요.",
+      "지금 해야 할 일이에요",
+      actions,
+    ].filter(Boolean).join("\n\n");
+  }
+
+  if (!text.includes("한 가지만 확인할게요") && text !== FIRST_QUESTION && /[?？]/.test(text)) {
+    const sentences = text
+      .replace(/\n+/g, " ")
+      .match(/[^.!?]+(?:[.!?]+|$)/g)
+      ?.map((sentence) => sentence.trim())
+      .filter(Boolean) || [];
+    const questionIndex = sentences.findLastIndex((sentence) => /[?？]$/.test(sentence));
+    if (questionIndex >= 0) {
+      const statements = sentences.filter((_, index) => index !== questionIndex);
+      text = [
+        "확인한 내용이에요",
+        statements.slice(0, 1).join(" ") || "말씀하신 내용을 확인했어요.",
+        statements.length > 1 ? "왜 확인하나요" : "",
+        statements.slice(1, 3).join(" "),
+        "한 가지만 확인할게요",
+        sentences[questionIndex],
+      ].filter(Boolean).join("\n\n");
+    }
+  }
+
+  return text;
+}
+
+function ReadableAiMessage({ text }: { text: string }) {
+  return (
+    <div>
+      {formatReadableAiMessage(text).split("\n").map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={index} className="h-2" aria-hidden="true" />;
+        if (AI_MESSAGE_HEADINGS.has(trimmed.replace(/[.!]$/, ""))) {
+          return <p key={index} className={`${index > 0 ? "mt-1" : ""} font-extrabold text-[var(--ac-700)]`}>{trimmed.replace(/[.!]$/, "")}</p>;
+        }
+        const numbered = trimmed.match(/^([1-4])\.\s*(.+)$/);
+        if (numbered) {
+          return (
+            <div key={index} className="flex items-start gap-2">
+              <span className="mt-[2px] font-extrabold text-[var(--ac-600)]">{numbered[1]}.</span>
+              <span className="min-w-0 flex-1">{numbered[2]}</span>
+            </div>
+          );
+        }
+        return <p key={index}>{trimmed}</p>;
+      })}
+    </div>
+  );
+}
+
 // ── 보안 분석 결과 카드 ─────────────────────────────────────────────────────
 const GRADE_STYLE = {
   safe:    { text: "text-emerald-700", meter: "bg-emerald-500", chip: "text-emerald-700 border-emerald-100 bg-emerald-50" },
@@ -594,6 +684,9 @@ export default function Transfer({
 
     const verdict = await takeTurn(
       {
+        userId: "demo-parent-01",
+        sourceAccount: accounts[fromIdx].account,
+        occurredAt: new Date(sessionStartRef.current).toISOString(),
         amount: parseAmt(amt), recipientName: name, account, bank,
         isFirstTransfer: isNewRecipient,
         patternRiskScore: liveRisk?.score ?? 0,
@@ -1157,7 +1250,9 @@ export default function Transfer({
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
-                <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-[13px] whitespace-pre-line leading-relaxed ${msg.role === "ai" ? "bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "bg-[var(--ac-500)] text-white rounded-tr-sm"}`}>{msg.text}</div>
+                <div className={`${msg.role === "ai" ? "max-w-[88%] bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "max-w-[78%] bg-[var(--ac-500)] text-white rounded-tr-sm"} px-4 py-3 rounded-2xl text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
+                  {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
+                </div>
               </div>
             ))}
             {isTyping && (
