@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { runCounterpartyVerificationAgent } from "../agent.js";
 import { matchWhitelist } from "../rules/whitelist.js";
 import { matchBlacklist } from "../rules/blacklist.js";
+import { matchImpersonation } from "../rules/impersonation.js";
 
 test("공식 은행 대표번호는 화이트리스트로 즉시 통과시킨다", () => {
   const result = runCounterpartyVerificationAgent({ phone: "1588-5000" });
@@ -57,4 +58,27 @@ test("호출자가 이미 아는 수취인이라고 알려주면 미확인 페�
   assert.equal(result.isKnownRecipient, true);
   assert.equal(result.score, 0);
   assert.deepEqual(result.reasons, []);
+});
+
+test("아직 신고 이력이 없는 신생 사칭 도메인도 이름 패턴으로 의심한다", () => {
+  // 블랙리스트는 '이미 신고된 것'만 잡는다. hangyeol-secure.net 은 아직 신고 이력이 없지만
+  // 한결은행 이름을 흉내낸 패턴이라 CONTINUE 로 넘기되 점수를 얹는다 — BLOCK 은 아니다
+  // (진짜 관련 없는 업체일 수도 있어서 확정 판정은 하지 않는다).
+  const result = runCounterpartyVerificationAgent({ domain: "hangyeol-secure.net" });
+  assert.equal(result.decision, "CONTINUE");
+  assert.equal(result.score, 30);
+  assert.deepEqual(result.codes, ["IMPERSONATION_SUSPECTED"]);
+  assert.ok(result.reasons.some((r) => r.includes("한결은행")));
+});
+
+test("공식 화이트리스트 도메인 자체는 사칭 탐지 이전에 이미 PASS로 끝난다", () => {
+  const hit = matchImpersonation({ domain: "hangyeol-bank.co.kr" });
+  // 이 함수 자체는 이름만 보고 판단하므로 여기선 걸리지만, agent.js 는 화이트리스트를
+  // 먼저 확인하기 때문에 실제로는 이 규칙까지 도달하지 않는다(위 PASS 테스트 참고).
+  assert.ok(hit);
+  assert.equal(hit.brand, "한결은행");
+});
+
+test("기관 이름과 무관한 도메인은 사칭 의심을 받지 않는다", () => {
+  assert.equal(matchImpersonation({ domain: "market-shop.com" }), null);
 });

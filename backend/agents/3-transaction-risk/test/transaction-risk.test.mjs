@@ -37,4 +37,12 @@ test("미등록 수취인에게 야간에 고액을 보내면 점수가 모두 �
     amount: 30_000_000, isKnownRecipient: false, isMyAccount: false, hourOfDay: 3,
   });
   assert.equal(result.score, 35 + 20 + 15);
+  assert.deepEqual(result.codes, ["AMOUNT_TIER_3", "UNREGISTERED_RECIPIENT", "NIGHT_TRANSFER"]);
+});
+
+test("100만원대는 점수만 붙고 근거 문구엔 안 뜬다 — 이 금액대만으론 '고액'이라 부르지 않는다", () => {
+  const result = runTransactionRiskAgent({ amount: 1_000_000, isKnownRecipient: true, hourOfDay: 14 });
+  assert.equal(result.score, 8);
+  assert.deepEqual(result.codes, ["AMOUNT_TIER_0"]);
+  assert.deepEqual(result.reasons, []);
 });
