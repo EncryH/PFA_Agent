@@ -10,7 +10,7 @@ export interface DemoMessage {
 export const DEMO_MESSAGES: DemoMessage[] = [
   {
     sender: 'KB국민은행',
-    number: '15881688',
+    number: '15889999',
     body: '[KB국민은행] 이체 완료 안내입니다. 상세 내역 확인: https://kbstar.com/history?ref=tx9823',
     url: 'https://kbstar.com/history?ref=tx9823',
   },

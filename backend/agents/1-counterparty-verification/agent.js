@@ -2,6 +2,7 @@ import { AGENT_STATUS } from "../shared.js";
 import { matchWhitelist } from "./rules/whitelist.js";
 import { matchBlacklist } from "./rules/blacklist.js";
 import { matchImpersonation } from "./rules/impersonation.js";
+export { verifyPhoneWithNaverSearch } from "./tools/phone-web-verification.js";
 
 export const metadata = Object.freeze({
   layer: 1,

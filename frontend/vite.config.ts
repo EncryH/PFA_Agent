@@ -21,6 +21,21 @@ type Text2SqlConfig = {
   timeoutMs?: string
 }
 
+type NaverSearchConfig = {
+  enabled?: string
+  clientId?: string
+  clientSecret?: string
+  baseUrl?: string
+  timeoutMs?: string
+}
+
+type KdicApiConfig = {
+  enabled?: string
+  apiKey?: string
+  baseUrl?: string
+  timeoutMs?: string
+}
+
 function backendApi(apiKey: string, graphConfig: Neo4jConfig, databaseConfig: Text2SqlConfig): Plugin {
   return {
     name: 'ansim-backend-api',
@@ -103,6 +118,67 @@ function thecheatMockApi(): Plugin {
   }
 }
 
+// 1단계 상대방 전화번호 검증 — POST /api/counterparty/phone { phone: string }
+// 예금보험공사·공식 연락처·위험번호 목록을 먼저 확인하고, 미확인 번호만 NAVER 웹문서로 보완한다.
+// 전화번호와 인증 키는 브라우저 번들·서버 로그에 남기지 않는다.
+function counterpartyPhoneApi(config: NaverSearchConfig, kdicConfig: KdicApiConfig): Plugin {
+  return {
+    name: 'ansim-counterparty-phone-api',
+    configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(
+        server.config.root,
+        '../backend/agents/1-counterparty-verification/agent.js',
+      )).href
+
+      server.middlewares.use('/api/counterparty/phone', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Cache-Control', 'no-store')
+
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          return res.end(JSON.stringify({ error: 'POST only' }))
+        }
+        try {
+          const chunks: Buffer[] = []
+          let size = 0
+          for await (const chunk of req) {
+            const buffer = chunk as Buffer
+            size += buffer.length
+            if (size > 4096) throw new Error('REQUEST_TOO_LARGE')
+            chunks.push(buffer)
+          }
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+          const { verifyPhoneWithNaverSearch } = await import(handlerPath)
+          const result = await verifyPhoneWithNaverSearch(body.phone, {
+            enabled: config.enabled,
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+            baseUrl: config.baseUrl,
+            timeoutMs: config.timeoutMs,
+            kdicConfig,
+          })
+
+          res.statusCode = 200
+          res.end(JSON.stringify({ result }))
+        } catch (error) {
+          const code = (error as Error & { code?: string }).code
+          if (code === 'INVALID_PHONE') {
+            res.statusCode = 400
+            return res.end(JSON.stringify({ error: (error as Error).message }))
+          }
+          if ((error as Error).message === 'REQUEST_TOO_LARGE') {
+            res.statusCode = 413
+            return res.end(JSON.stringify({ error: '요청이 너무 큽니다' }))
+          }
+          console.error('[ansim-counterparty-phone-api]', (error as Error).message)
+          res.statusCode = 502
+          res.end(JSON.stringify({ error: '전화번호 공개 웹문서 검색을 완료하지 못했습니다' }))
+        }
+      })
+    },
+  }
+}
+
 function riskScoreApi(): Plugin {
   return {
     name: 'ansim-risk-score-api',
@@ -133,11 +209,12 @@ function riskScoreApi(): Plugin {
 
 // 주식 시세 프록시 — GET /api/stocks?symbols=005930.KS,^KS11,...
 // Yahoo Finance 차트 API는 CORS 헤더가 없어 브라우저에서 직접 호출이 막힌다.
-// 그래서 개발 서버(Node)가 대신 호출해 결과만 같은 origin 으로 돌려준다. API 키 불필요.
+// 실제 조회는 backend/stocks.js에 두어 Vercel 함수와 같은 구현을 공유한다.
 function stockQuoteApi(): Plugin {
   return {
     name: 'ansim-stock-quote-api',
     configureServer(server) {
+      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/stocks.js')).href
       server.middlewares.use('/api/stocks', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         try {
@@ -149,26 +226,10 @@ function stockQuoteApi(): Plugin {
             return res.end(JSON.stringify({ error: 'symbols query param required' }))
           }
 
-          const quotes = await Promise.all(symbols.map(async (symbol) => {
-            try {
-              const r = await fetch(
-                `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
-                { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' } },
-              )
-              if (!r.ok) throw new Error(`upstream ${r.status}`)
-              const data = await r.json() as any
-              const meta = data?.chart?.result?.[0]?.meta
-              const price = meta?.regularMarketPrice
-              const prevClose = meta?.chartPreviousClose ?? meta?.previousClose
-              if (typeof price !== 'number' || typeof prevClose !== 'number') throw new Error('no data')
-              return { symbol, ok: true, price, changePct: ((price - prevClose) / prevClose) * 100 }
-            } catch (e) {
-              return { symbol, ok: false, error: (e as Error).message }
-            }
-          }))
-
+          const { fetchStockQuotes } = await import(handlerPath)
+          const result = await fetchStockQuotes(symbols)
           res.statusCode = 200
-          res.end(JSON.stringify({ quotes, fetchedAt: Date.now() }))
+          res.end(JSON.stringify(result))
         } catch (e) {
           console.error('[ansim-stock-quote-api]', e)
           res.statusCode = 502
@@ -260,6 +321,18 @@ export default defineConfig(({ mode }) => {
         enabled: env.TEXT2SQL_ENABLED,
         connectionString: env.SUPABASE_DATABASE_URL || env.DATABASE_URL,
         timeoutMs: env.TEXT2SQL_TIMEOUT_MS,
+      }),
+      counterpartyPhoneApi({
+        enabled: env.NAVER_SEARCH_ENABLED,
+        clientId: env.NAVER_API_HUB_CLIENT_ID,
+        clientSecret: env.NAVER_API_HUB_CLIENT_SECRET,
+        baseUrl: env.NAVER_SEARCH_BASE_URL,
+        timeoutMs: env.NAVER_SEARCH_TIMEOUT_MS,
+      }, {
+        enabled: env.KDIC_API_ENABLED,
+        apiKey: env.KDIC_API_KEY,
+        baseUrl: env.KDIC_API_URL,
+        timeoutMs: env.KDIC_API_TIMEOUT_MS,
       }),
       thecheatMockApi(),
       riskScoreApi(),

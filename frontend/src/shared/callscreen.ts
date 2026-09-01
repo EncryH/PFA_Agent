@@ -28,7 +28,7 @@ export const CALL_BLACKLIST: Record<string, { reportCount: number; scamTypes: st
 
 // 심사위원 데모용 시나리오 (아이콘 탭할 때마다 순환)
 export const DEMO_SCENARIOS: { display: string; number: string; label: string }[] = [
-  { display: "1588-1688",     number: "15881688",    label: "KB국민은행" },
+  { display: "1588-9999",     number: "15889999",    label: "KB국민은행" },
   { display: "070-1234-1234", number: "07012341234", label: "070 기관사칭" },
   { display: "1100-1001",     number: "11001001",    label: "금융감독원" },
   { display: "010-1234-5678", number: "01012345678", label: "보이스피싱 신고번호" },

@@ -6,7 +6,33 @@ export interface VerifyResult {
   status: "safe" | "caution" | "danger" | "unknown";
   label: string;
   detail: string;
+  institutionName?: string;
   thecheat?: TheCheAtResult | null;
+  maskedPhone?: string;
+  searchStatus?: "ready" | "partial" | "skipped" | "unavailable";
+  provider?: string;
+  listChecks?: PhoneListCheck[];
+  searchTotal?: number;
+  sources?: PhoneSearchSource[];
+}
+
+export interface PhoneListCheck {
+  type: "whitelist" | "blacklist";
+  matched: boolean;
+  available?: boolean;
+  label: string;
+  detail: string;
+}
+
+export interface PhoneSearchSource {
+  title: string;
+  url: string;
+  description: string;
+  signals: string[];
+  severity: "official" | "high" | "caution";
+  kind?: "official" | "risk";
+  institutionName?: string;
+  trusted: boolean;
 }
 
 export interface TheCheAtResult {
@@ -176,45 +202,28 @@ export async function callTheCheAt(query: string): Promise<TheCheAtResult> {
 
 // ─── 전화번호 검증 ──────────────────────────────────────────────────────────
 export async function verifyPhone(raw: string): Promise<VerifyResult> {
-  const clean = raw.replace(/[-\s]/g, "");
-
-  const official = OFFICIAL_PHONES[clean];
-  if (official) {
-    return { status: "safe", label: "공식 기관 번호", detail: `${official}의 공식 대표번호입니다.` };
-  }
-
-  // 070 인터넷전화 — 보이스피싱 다발
-  if (clean.startsWith("070")) {
-    const tc = await callTheCheAt(clean).catch(() => null);
+  try {
+    const response = await fetch("/api/counterparty/phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: raw }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json?.result) {
+      return {
+        status: "caution",
+        label: response.status === 400 ? "전화번호를 확인해 주세요" : "검색을 완료하지 못했어요",
+        detail: json?.error ?? "잠시 후 다시 시도하거나 해당 기관의 공식 앱·대표번호로 직접 확인하세요.",
+      };
+    }
+    return json.result as VerifyResult;
+  } catch {
     return {
-      status: "danger",
-      label: "070 인터넷전화",
-      detail: "공식 금융·정부기관은 070 번호를 사용하지 않습니다. 보이스피싱을 의심하세요.",
-      thecheat: tc,
+      status: "caution",
+      label: "검색 연결이 원활하지 않아요",
+      detail: "잠시 후 다시 시도하거나 해당 기관의 공식 앱·대표번호로 직접 확인하세요.",
     };
   }
-
-  // 해외번호 (+로 시작)
-  if (raw.trim().startsWith("+") && !raw.startsWith("+82")) {
-    return { status: "danger", label: "해외번호", detail: "국내 금융기관은 해외번호로 연락하지 않습니다." };
-  }
-
-  const tc = await callTheCheAt(clean).catch(() => null);
-  if (tc?.found) {
-    return {
-      status: "danger",
-      label: `더치트 신고 ${tc.reportCount}건`,
-      detail: `사기 유형: ${tc.scamTypes.join(", ")} · 최근 신고: ${tc.lastReported}`,
-      thecheat: tc,
-    };
-  }
-
-  return {
-    status: "unknown",
-    label: "확인 불가",
-    detail: "공식 번호로 확인되지 않습니다. 직접 은행 앱으로 연락처를 확인하세요.",
-    thecheat: tc,
-  };
 }
 
 // Google Safe Browsing 호출 (실패 시 null 반환) — 백엔드 프록시(/api/safe-browsing/check)를 거친다.
