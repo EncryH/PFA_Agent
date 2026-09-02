@@ -52,20 +52,17 @@ const PAIRED_KEY = "ansimPaired";
 const PAIRED_AT_KEY = "ansimPairedAt";   // 연결 시각 — 알림함에 그대로 표시된다
 const PAIRED_EVENT = "ansim-paired";
 
-const LAYERS = [
-  { step: "1", title: "휴대폰부터 살펴봐요",         desc: "몰래 조종하거나 은행을 흉내 낸 앱이 깔려 있는지 확인해요" },
-  { step: "2", title: "연락처가 진짜인지 확인해요",   desc: "받으신 번호·문자·링크가 기관의 공식 연락처와 같은지 대조해요" },
-  { step: "3", title: "평소와 다른 움직임을 알아채요", desc: "잔액을 자꾸 확인하거나 적금을 깨는 등 낯선 흐름을 살펴요" },
-  { step: "4", title: "송금 내용을 살펴봐요",         desc: "평소와 같으면 그대로 보내드리고, 다를 때만 한 번 더 확인해요" },
-  { step: "5", title: "왜 보내시는지 여쭤봐요",       desc: "AI가 대화로 확인해요. 통화 중이시면 끊고 5분 뒤에 다시 안내해요" },
-  { step: "6", title: "혼자 결정하지 않게 도와드려요", desc: "알림만 받을지 함께 승인할지, 보호 단계는 부모님이 직접 고르세요" },
-  { step: "7", title: "피해를 입어도 되돌려요",       desc: "지급정지·신고·피해구제 절차를 순서대로 안내해드려요" },
+const CORE_STAGES = [
+  { step: "1", title: "상대방이 믿을 만한지 확인해요", desc: "받으신 번호·문자·링크와 수취 정보를 공식 정보와 대조해요" },
+  { step: "2", title: "평소와 다른 행동을 알아채요",   desc: "잔액을 반복해서 보거나 적금을 깨는 등 낯선 흐름을 살펴요" },
+  { step: "3", title: "왜 보내는 돈인지 함께 확인해요", desc: "이전 거래 패턴과 대화를 함께 보고 사기 송금 의도를 분석해요" },
+  { step: "4", title: "피해가 생겼다면 바로 대응해요", desc: "지급정지·112 신고·피해구제·증거 보관 순서로 도와드려요" },
 ];
 
 const PROMISES = [
-  { t: "자녀는 잔액과 거래내역을 볼 수 없어요", d: "어떤 단계를 고르셔도 통장 잔액, 어디에 쓰셨는지는 부모님만 보십니다" },
+  { t: "자녀는 잔액과 거래내역을 볼 수 없어요", d: "어떤 보호 범위를 고르셔도 통장 잔액, 어디에 쓰셨는지는 부모님만 보십니다" },
   { t: "위험한 순간의 상황만 전달돼요",         d: '"처음 보는 곳에 큰 금액을 보내려 하십니다" 정도만 자녀에게 알려요' },
-  { t: "언제든 그만두실 수 있어요",             d: "보호 단계를 낮추거나 연결을 해제하는 것은 부모님 뜻대로예요" },
+  { t: "언제든 그만두실 수 있어요",             d: "가족 보호 범위를 줄이거나 연결을 해제하는 것은 부모님 뜻대로예요" },
 ];
 
 export default function Guardian({
@@ -94,7 +91,7 @@ export default function Guardian({
   const [protectionLevel, setProtectionLevel] = useProtectionLevel();
   const [aiReviewThreshold, setAiReviewThreshold] = useAiReviewThreshold();
   const protection = PROTECTION_LEVELS[protectionLevel];
-  // 보호 단계는 되돌리기 어려운 설정이라 저장 전에 한 번 더 묻는다
+  // 가족 보호 범위는 위험 판정에 영향을 주므로 저장 전에 한 번 더 묻는다
   const [pendingLevel, setPendingLevel] = useState<ProtectionLevel | null>(null);
   const [expandedLevel, setExpandedLevel] = useState<ProtectionLevel | null>(null);
   const [emergencyReceipts, setEmergencyReceipts] = useState<EmergencyReceipt[]>(readEmergencyReceipts);
@@ -263,7 +260,7 @@ export default function Guardian({
           <svg viewBox="0 0 48 48" fill="var(--ac-band-icon)" fillOpacity="0.9" className="w-14 h-14 shrink-0"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="24" cy="20" r="3.5" /><path d="M24 24c-3 0-5.5 2.5-5.5 5.5V36h11v-6.5c0-3-2.5-5.5-5.5-5.5z" /></svg>
           <div>
             <p className="text-[17px] font-bold text-[var(--ac-band-text)]">부모님 금융을 가족이 함께 지켜요</p>
-            <p className="text-[12px] text-[var(--ac-band-sub)] mt-1">AI가 이상 거래를 감지하고 가족에게 알려드려요</p>
+            <p className="text-[12px] text-[var(--ac-band-sub)] mt-1">AI가 위험한 송금을 확인하고, 원할 때만 가족과 함께 살펴봐요</p>
           </div>
         </div>
       )}
@@ -278,7 +275,7 @@ export default function Guardian({
                   {appRole === "parent" ? "딸 김지혜님과 연결되어 있어요." : "어머니 김영순님과 연결되어 있어요."}
                 </p>
                 <p className="mt-1 text-[13px] font-semibold text-gray-900">
-                  현재 보호 단계: {protection.name}
+                  현재 가족 보호: {protection.name}
                 </p>
               </div>
               <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--ac-50)] px-3 py-1.5 text-[12px] font-semibold text-[var(--ac-600)]">
@@ -324,7 +321,7 @@ export default function Guardian({
                 <div className="mt-3 grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-xl border border-gray-100 px-3 py-3">
                     <p className="text-[13px] font-bold text-gray-900">Lv.{getProtectionDisplayLevel(protectionLevel)} {protection.name}</p>
-                    <p className="mt-1 text-[10px] text-gray-400">현재 보호 단계</p>
+                    <p className="mt-1 text-[10px] text-gray-400">현재 가족 보호</p>
                   </div>
                   <div className="rounded-xl border border-gray-100 px-3 py-3">
                     <p className="text-[13px] font-bold text-gray-900">2026.08.15</p>
@@ -605,7 +602,7 @@ export default function Guardian({
               <div className="mt-3 flex flex-col gap-2" style={{ animation: "fade-in .18s ease-out" }}>
                 <button onClick={() => setStep("permissions")} className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-left active:scale-[0.98] transition-all">
                   <span>
-                    <span className="block text-[13px] font-bold text-gray-900">보호 단계 및 권한 관리</span>
+                    <span className="block text-[13px] font-bold text-gray-900">가족 보호 범위 관리</span>
                     <span className="mt-0.5 block text-[10px] text-gray-400">알림·지연·공동확인 범위 조정</span>
                   </span>
                   <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-gray-300">
@@ -640,9 +637,9 @@ export default function Guardian({
       {step === "permissions" && isPaired && (
         <div className="flex flex-col gap-3">
           <div className="rounded-2xl bg-white p-5">
-            <p className="text-[16px] font-bold text-gray-900">보호 단계를 선택해 주세요</p>
+            <p className="text-[16px] font-bold text-gray-900">가족 보호 범위를 선택해 주세요</p>
             <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
-              {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "보호 단계는 부모님만 변경할 수 있어요."}
+              {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "가족 보호 범위는 부모님만 변경할 수 있어요."}
             </p>
           </div>
 
@@ -739,7 +736,7 @@ export default function Guardian({
                     onClick={() => setExpandedLevel(expanded ? null : item.level)}
                     className="group flex w-full items-center justify-center gap-1.5 border-t border-gray-100/80 py-2.5 text-[11px] font-semibold text-gray-500 transition-colors hover:bg-white/70 hover:text-[var(--ac-600)]"
                   >
-                    {expanded ? "상세 설명 접기" : "이 단계 자세히 보기"}
+                    {expanded ? "상세 설명 접기" : "이 설정 자세히 보기"}
                     <svg viewBox="0 0 24 24" fill="none" className={`h-4 w-4 transition-transform duration-200 ${expanded ? "rotate-180" : "group-hover:translate-y-0.5"}`}>
                       <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -748,7 +745,7 @@ export default function Guardian({
                   {expanded && (
                     <div id={`protection-detail-${item.level}`} className="border-t border-gray-100 bg-white/80 px-4 pb-4 pt-4" style={{ animation: "fade-in .18s ease-out" }}>
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-[13px] font-bold text-gray-900">이 단계에서는 이렇게 보호해요</p>
+                        <p className="text-[13px] font-bold text-gray-900">이 설정에서는 이렇게 보호해요</p>
                         <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-1 text-[9px] font-bold text-[var(--ac-600)]">Lv.{getProtectionDisplayLevel(item.level)} {item.name}</span>
                       </div>
                       <ol className="mt-3 flex flex-col gap-3">
@@ -771,7 +768,7 @@ export default function Guardian({
           </div>
 
           <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
-            <p className="text-[11px] leading-relaxed text-green-800">어떤 단계를 선택해도 자녀에게 잔액과 전체 거래내역은 공개되지 않으며, 최종 결정권은 부모님에게 있어요.</p>
+            <p className="text-[11px] leading-relaxed text-green-800">어떤 보호 범위를 선택해도 자녀에게 잔액과 전체 거래내역은 공개되지 않으며, 최종 결정권은 부모님에게 있어요.</p>
           </div>
 
           {/* 변경 재확인 — 보호 강도가 바뀌면 위험 판정 결과가 달라지므로 한 번 더 묻는다 */}
@@ -784,7 +781,7 @@ export default function Guardian({
                 style={{ animation: "fade-in .2s ease-out" }}
               />
               <div className="relative w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl">
-                <p className="text-[17px] font-bold text-gray-900">보호 단계를 바꿀까요?</p>
+                <p className="text-[17px] font-bold text-gray-900">가족 보호 범위를 바꿀까요?</p>
                 <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
                   <span className="font-semibold text-gray-400">Lv.{getProtectionDisplayLevel(protectionLevel)} {protection.name}</span>
                   {" → "}
@@ -820,9 +817,9 @@ export default function Guardian({
       {step === "intro" && !isPaired && (
         <div className="flex flex-col gap-3">
           <div className={`bg-white rounded-2xl p-5 ${appRole === "child" ? "shadow-sm" : ""}`}>
-            <p className="text-[15px] font-bold text-gray-900">이렇게 지켜드려요</p>
-            <p className="text-[12px] text-gray-400 mt-1 mb-4">송금할 때 이 순서로 위험을 살펴봐요</p>
-            {LAYERS.map((item) => (
+            <p className="text-[15px] font-bold text-gray-900">네 가지 핵심 단계로 지켜드려요</p>
+            <p className="text-[12px] text-gray-400 mt-1 mb-4">필요한 순간에만 순서대로 확인해요</p>
+            {CORE_STAGES.map((item) => (
               <div key={item.step} className="flex items-start gap-3 mb-4 last:mb-0">
                 <div className="w-7 h-7 rounded-full bg-[var(--ac-500)] text-white text-[13px] font-bold flex items-center justify-center shrink-0 mt-0.5">{item.step}</div>
                 <div>
@@ -831,13 +828,16 @@ export default function Guardian({
                 </div>
               </div>
             ))}
-            <div className="mt-5 pt-4 border-t border-gray-100 flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-[var(--ac-50)] flex items-center justify-center shrink-0 mt-0.5">
+            <div className="mt-5 border-t border-gray-100 pt-4">
+              <span className="inline-flex rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">선택 기능</span>
+              <div className="mt-3 flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-[var(--ac-50)] flex items-center justify-center shrink-0 mt-0.5">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 2v20M2 12h20" /></svg>
-              </div>
-              <div>
-                <p className="text-[14px] font-semibold text-gray-900">은행이 달라도 가족이 연결돼요</p>
-                <p className="text-[12px] text-gray-400 mt-0.5">부모님과 자녀분이 서로 다른 은행을 쓰셔도 함께 지켜드려요</p>
+                </div>
+                <div>
+                  <p className="text-[14px] font-semibold text-gray-900">원할 때 가족과 함께 확인해요</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">부모님이 직접 보호 범위를 고르고, 은행이 달라도 자녀에게 최소 정보만 공유해요</p>
+                </div>
               </div>
             </div>
           </div>
@@ -868,8 +868,8 @@ export default function Guardian({
         <div className="flex flex-col gap-3">
           <p className="text-[15px] font-semibold text-gray-900 text-center mt-2">역할을 선택해주세요</p>
           {[
-            { r: "parent" as const, label: "부모님", desc: "AI와 자녀에게 안심동행 권한을 위임해요" },
-            { r: "child"  as const, label: "자녀",   desc: "부모님 금융을 함께 지켜드려요" },
+            { r: "parent" as const, label: "부모님", desc: "보호 범위를 직접 정하고 자녀와 연결해요" },
+            { r: "child"  as const, label: "자녀",   desc: "부모님이 요청한 위험 상황만 함께 확인해요" },
           ].map((item) => (
             <button key={item.r} onClick={() => selectRole(item.r)}
               className="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all">
@@ -932,8 +932,8 @@ export default function Guardian({
           <p className="text-[17px] font-bold text-gray-900">연동 완료!</p>
           <p className="text-[13px] text-gray-400 text-center whitespace-pre-line">
             {pairRole === "parent"
-              ? "딸 지혜님과 안심동행이 연결되었습니다.\n이제 AI가 이상 거래를 감지하면 자녀에게 알려드려요."
-              : "어머니 김영순님과 안심동행이 연결되었습니다.\n부모님의 이상 거래를 함께 지켜볼 수 있어요."}
+              ? "딸 지혜님과 안심동행이 연결되었습니다.\n원할 때 위험 상황을 함께 확인할 수 있어요."
+              : "어머니 김영순님과 안심동행이 연결되었습니다.\n어머니가 요청한 위험 상황을 함께 확인할 수 있어요."}
           </p>
           <button onClick={onExit} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
             홈으로 돌아가기

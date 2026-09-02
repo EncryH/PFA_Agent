@@ -27,6 +27,9 @@ export type IntentChatSession = {
   analysisDone?: boolean;
   analysisHold?: boolean;
   official?: OfficialContent | null;
+  /** 저장 시점에 남아있던 D등급 냉각 시간(초) — 재개 시 그대로 복원해야 보호 단계를
+   * 낮춰서 재개하는 우회로 냉각·가족 확인 게이트를 건너뛸 수 없다. */
+  freezeSecsLeft?: number | null;
 };
 
 const STORAGE_KEY = "ansimIntentChatsV1";

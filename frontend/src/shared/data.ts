@@ -30,7 +30,7 @@ export const KNOWN_RECIPIENTS = [
 ];
 
 // 신고된 계좌 (더치트 DB 시뮬레이션)
-export const BLACKLISTED_ACCOUNTS = ["1104421783", "1104421"];
+export const BLACKLISTED_ACCOUNTS = ["1104421783"];
 
 export const BANKS = [
   "한결은행", "나눔은행", "국민은행", "신한은행", "우리은행", "하나은행",
@@ -144,7 +144,6 @@ export const pushNotice = (
   const list = readNotices();
   list.push({ type, at, ...extra });
   localStorage.setItem(NOTICE_KEY, JSON.stringify(list));
-  window.dispatchEvent(new Event("ansim-notice"));
 };
 
 /** 데모용 예금주 조회 — 실제로는 금융결제원 조회. 같은 계좌번호면 항상 같은 이름이 나온다. */
@@ -155,31 +154,33 @@ export const lookupHolder = (account: string) => {
 
   if (isMyAccount(account)) return "본인";
 
-  const known = KNOWN_RECIPIENTS.find((k) => clean.includes(k.account.slice(0, 8)));
+  const known = KNOWN_RECIPIENTS.find((k) => clean.startsWith(k.account.slice(0, 8)));
   if (known) return known.name;
 
   const sum = [...clean].reduce((a, c) => a + Number(c), 0);
   return HOLDER_POOL[sum % HOLDER_POOL.length];
 };
 
-/** 본인 명의 계좌인지 — 맞으면 금액과 무관하게 검사 대상이 아니다. */
+/** 본인 명의 계좌인지 — 맞으면 금액과 무관하게 검사 대상이 아니다.
+ * 반드시 앞자리부터 일치해야 한다 — includes()로 어디든 포함되면 매치되던 예전 버전은
+ * "9911022233" 같은 무관한 계좌도 내 계좌(11022233)로 오인해 사기 탐지를 통째로 우회시켰다. */
 export const isMyAccount = (account: string) => {
   const clean = account.replace(/\D/g, "");
-  return clean.length >= 8 && MY_ACCOUNTS.some((m) => clean.includes(m.account.slice(0, 8)));
+  return clean.length >= 8 && MY_ACCOUNTS.some((m) => clean.startsWith(m.account.slice(0, 8)));
 };
 
-/** 3층 거래 검사 — 패턴 룰. 0점이면 즉시 송금(무마찰). */
-export const runRisk = (account: string, amt: number, name: string): "success" | "db-warning" | "ai-chat" => {
+/** 3단계 의도분석 진입 여부를 정하는 클라이언트 폴백용 빠른 사전 필터. */
+export const runIntentPrefilter = (account: string, amt: number, name: string): "success" | "db-warning" | "ai-chat" => {
   const clean = account.replace(/\D/g, "");
 
   // 내 계좌 간 이체는 사기가 성립하지 않는다 — 항상 통과
   if (isMyAccount(account)) return "success";
 
-  if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7))))
+  if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.startsWith(b.slice(0, 7))))
     return "db-warning";
 
   const known = KNOWN_RECIPIENTS.find(
-    (k) => (clean.length >= 8 && clean.includes(k.account.slice(0, 8))) || name === k.name
+    (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name
   );
 
   if (known && amt > 0 && amt <= known.maxSafe) return "success";

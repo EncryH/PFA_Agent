@@ -3,6 +3,7 @@
 // App 레벨 behaviorSignals(limitIncreased)로 넘어가 다음 송금의 위험 점수에 반영된다.
 
 import { useState } from "react";
+import CallSafetyCheck from "../shared/CallSafetyCheck";
 
 const OPTIONS = [10_000_000, 30_000_000, 50_000_000, 100_000_000];
 const fmt = (n: number) => n.toLocaleString("ko-KR");
@@ -16,6 +17,14 @@ export default function LimitIncrease({
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [done, setDone] = useState<number | null>(null);
+  const [showCallCheck, setShowCallCheck] = useState(false);
+
+  const completeIncrease = () => {
+    if (!selected) return;
+    setShowCallCheck(false);
+    setDone(selected);
+    onIncreased(selected);
+  };
 
   if (done !== null) {
     return (
@@ -81,12 +90,20 @@ export default function LimitIncrease({
       </p>
 
       <button
-        onClick={() => { if (selected) { setDone(selected); onIncreased(selected); } }}
+        onClick={() => { if (selected) setShowCallCheck(true); }}
         disabled={!selected}
         className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-500)] disabled:opacity-40 active:scale-[0.98] transition-all"
       >
         한도 상향 신청
       </button>
+
+      {showCallCheck && (
+        <CallSafetyCheck
+          actionLabel="이체한도 상향"
+          onClose={() => setShowCallCheck(false)}
+          onProceed={completeIncrease}
+        />
+      )}
     </div>
   );
 }

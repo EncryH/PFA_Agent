@@ -10,7 +10,7 @@ export interface DemoMessage {
 export const DEMO_MESSAGES: DemoMessage[] = [
   {
     sender: 'KB국민은행',
-    number: '15881688',
+    number: '15889999',
     body: '[KB국민은행] 이체 완료 안내입니다. 상세 내역 확인: https://kbstar.com/history?ref=tx9823',
     url: 'https://kbstar.com/history?ref=tx9823',
   },
@@ -43,6 +43,14 @@ export const DEMO_MESSAGES: DemoMessage[] = [
     number: '1544126',
     body: '[국세청] 세금 환급금 5만원이 있습니다. 수령하시려면 본인 확인: https://woori-verify.com/tax-refund',
     url: 'https://woori-verify.com/tax-refund',
+  },
+  // Google Safe Browsing 공식 테스트 URL — 실제 API가 악성으로 판정하는 걸 데모에서 보여주기 위한 항목.
+  // 룰 베이스(IP직접접속/블랙리스트/화이트리스트)에는 안 걸리게 만들어서 Safe Browsing까지 실제로 도달한다.
+  {
+    sender: '010-7777-2222',
+    number: '01077772222',
+    body: '[Web발신] 고객님의 택배가 통관 문제로 보류 중입니다. 배송지 재확인: http://testsafebrowsing.appspot.com/s/malware.html',
+    url: 'http://testsafebrowsing.appspot.com/s/malware.html',
   },
 ]
 

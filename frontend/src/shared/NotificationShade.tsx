@@ -65,7 +65,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
   // 받침에 따라 조사가 달라진다 — "따님과" / "어머니와"
   const familyWith = role === "parent" ? "따님과" : "어머니와";
 
-  // 보호 단계는 부모가 정하지만, 바뀐 사실은 양쪽 앱에 똑같이 남는다.
+  // 가족 보호 범위는 부모가 정하지만, 바뀐 사실은 양쪽 앱에 똑같이 남는다.
   const levelName = (level?: number) => PROTECTION_LEVELS[level ?? 2]?.name ?? "";
 
   const pairingNotices: Notice[] = readNotices()
@@ -75,7 +75,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
       if (e.type === "level-changed") {
         return {
           icon: "shield" as const,
-          title: "안심동행 보호 단계가 바뀌었어요",
+          title: "안심동행 가족 보호 범위가 바뀌었어요",
           body: role === "parent"
             ? `Lv.${getProtectionDisplayLevel(e.from)} ${levelName(e.from)} → Lv.${getProtectionDisplayLevel(e.to)} ${levelName(e.to)} 로 변경했어요.`
             : `어머니가 Lv.${getProtectionDisplayLevel(e.from)} ${levelName(e.from)} → Lv.${getProtectionDisplayLevel(e.to)} ${levelName(e.to)} 로 바꾸셨어요.`,

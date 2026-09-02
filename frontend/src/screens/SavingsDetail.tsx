@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MY_ACCOUNTS, SAVINGS_INFO } from "../shared/data";
 import { BankLogo } from "../shared/ui";
+import CallSafetyCheck from "../shared/CallSafetyCheck";
 
 type SavingsStep = "detail" | "confirm" | "done";
 
@@ -31,6 +32,7 @@ export default function SavingsDetail({
   isClosed?: boolean;
 }) {
   const [step, setStep] = useState<SavingsStep>("detail");
+  const [showCallCheck, setShowCallCheck] = useState(false);
 
   const clean = account.account.replace(/\D/g, "");
   const info = SAVINGS_INFO[clean];
@@ -193,11 +195,27 @@ export default function SavingsDetail({
         </p>
 
         <button
-          onClick={() => { onEarlyClosure(info.afterPenaltyBalance); setStep("done"); }}
-          className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-red-500 active:scale-[0.98] transition-all"
+          onClick={() => setShowCallCheck(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ac-600)] py-4 text-[15px] font-bold text-white shadow-sm active:scale-[0.98] transition-all"
         >
-          해지 확인
+          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+            <path d="M12 3l7 3v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          안심동행 AI 확인 후 해지
         </button>
+
+        {showCallCheck && (
+          <CallSafetyCheck
+            actionLabel="예·적금 중도해지"
+            onClose={() => setShowCallCheck(false)}
+            onProceed={() => {
+              setShowCallCheck(false);
+              onEarlyClosure(info.afterPenaltyBalance);
+              setStep("done");
+            }}
+          />
+        )}
       </div>
     );
   }

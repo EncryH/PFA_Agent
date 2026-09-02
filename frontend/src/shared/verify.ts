@@ -1,10 +1,38 @@
 // 상대방 검증 — 전화번호 / URL / 기관명 검증 로직
 
+import officialContacts from "../../../shared/official-contacts.json";
+
 export interface VerifyResult {
   status: "safe" | "caution" | "danger" | "unknown";
   label: string;
   detail: string;
+  institutionName?: string;
   thecheat?: TheCheAtResult | null;
+  maskedPhone?: string;
+  searchStatus?: "ready" | "partial" | "skipped" | "unavailable";
+  provider?: string;
+  listChecks?: PhoneListCheck[];
+  searchTotal?: number;
+  sources?: PhoneSearchSource[];
+}
+
+export interface PhoneListCheck {
+  type: "whitelist" | "blacklist";
+  matched: boolean;
+  available?: boolean;
+  label: string;
+  detail: string;
+}
+
+export interface PhoneSearchSource {
+  title: string;
+  url: string;
+  description: string;
+  signals: string[];
+  severity: "official" | "high" | "caution";
+  kind?: "official" | "risk";
+  institutionName?: string;
+  trusted: boolean;
 }
 
 export interface TheCheAtResult {
@@ -15,18 +43,9 @@ export interface TheCheAtResult {
 }
 
 // ─── 공식 번호 화이트리스트 ───────────────────────────────────────────────
-export const OFFICIAL_PHONES: Record<string, string> = {
-  "15881688": "KB국민은행",
-  "15444000": "신한은행",
-  "16448000": "우리은행",
-  "15990000": "하나은행",
-  "18991111": "NH농협은행",
-  "15999999": "IBK기업은행",
-  "15991500": "카카오뱅크",
-  "11001001": "금융감독원",
-  "18335500": "금융위원회",
-  "15884321": "경찰청 112",
-};
+export const OFFICIAL_PHONES: Record<string, string> = Object.fromEntries(
+  officialContacts.phones.map((p) => [p.value, p.name]),
+);
 
 // 공식 정부·감독·공공기관 화이트리스트 (FSC API에 없는 기관 포함)
 export const OFFICIAL_GOV_BODIES: Record<string, string> = {
@@ -160,12 +179,7 @@ export const INSTITUTION_ALIASES: Record<string, string> = {
 };
 
 // 공식 금융사 도메인 화이트리스트
-export const OFFICIAL_DOMAINS = [
-  "kbstar.com", "shinhan.com", "wooribank.com", "kebhana.com",
-  "nonghyup.com", "ibk.co.kr", "kakaobank.com", "tossbank.com",
-  "fss.or.kr", "fsc.go.kr", "bok.or.kr", "kdic.or.kr",
-  "krx.co.kr", "nts.go.kr", "police.go.kr",
-];
+export const OFFICIAL_DOMAINS = officialContacts.domains.map((d) => d.value);
 
 // 피싱 패턴 블랙리스트
 export const BLACKLISTED_DOMAINS = [
@@ -188,45 +202,42 @@ export async function callTheCheAt(query: string): Promise<TheCheAtResult> {
 
 // ─── 전화번호 검증 ──────────────────────────────────────────────────────────
 export async function verifyPhone(raw: string): Promise<VerifyResult> {
-  const clean = raw.replace(/[-\s]/g, "");
-
-  const official = OFFICIAL_PHONES[clean];
-  if (official) {
-    return { status: "safe", label: "공식 기관 번호", detail: `${official}의 공식 대표번호입니다.` };
-  }
-
-  // 070 인터넷전화 — 보이스피싱 다발
-  if (clean.startsWith("070")) {
-    const tc = await callTheCheAt(clean).catch(() => null);
+  try {
+    const response = await fetch("/api/counterparty/phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: raw }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json?.result) {
+      return {
+        status: "caution",
+        label: response.status === 400 ? "전화번호를 확인해 주세요" : "검색을 완료하지 못했어요",
+        detail: json?.error ?? "잠시 후 다시 시도하거나 해당 기관의 공식 앱·대표번호로 직접 확인하세요.",
+      };
+    }
+    return json.result as VerifyResult;
+  } catch {
     return {
-      status: "danger",
-      label: "070 인터넷전화",
-      detail: "공식 금융·정부기관은 070 번호를 사용하지 않습니다. 보이스피싱을 의심하세요.",
-      thecheat: tc,
+      status: "caution",
+      label: "검색 연결이 원활하지 않아요",
+      detail: "잠시 후 다시 시도하거나 해당 기관의 공식 앱·대표번호로 직접 확인하세요.",
     };
   }
+}
 
-  // 해외번호 (+로 시작)
-  if (raw.trim().startsWith("+") && !raw.startsWith("+82")) {
-    return { status: "danger", label: "해외번호", detail: "국내 금융기관은 해외번호로 연락하지 않습니다." };
+// Google Safe Browsing 호출 (실패 시 null 반환) — 백엔드 프록시(/api/safe-browsing/check)를 거친다.
+// 서비스키를 브라우저 번들에 넣지 않으려고 FSC_API_KEY와 같은 방식으로 옮겼다
+// (키는 루트 .env 의 GOOGLE_SAFE_BROWSING_API_KEY, backend/safebrowsing.js 에서만 쓰인다).
+async function fetchSafeBrowsing(url: string): Promise<{ threat: boolean; threatTypes?: string[] } | null> {
+  try {
+    const res = await fetch(`/api/safe-browsing/check?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.result ?? null;
+  } catch {
+    return null;
   }
-
-  const tc = await callTheCheAt(clean).catch(() => null);
-  if (tc?.found) {
-    return {
-      status: "danger",
-      label: `더치트 신고 ${tc.reportCount}건`,
-      detail: `사기 유형: ${tc.scamTypes.join(", ")} · 최근 신고: ${tc.lastReported}`,
-      thecheat: tc,
-    };
-  }
-
-  return {
-    status: "unknown",
-    label: "확인 불가",
-    detail: "공식 번호로 확인되지 않습니다. 직접 은행 앱으로 연락처를 확인하세요.",
-    thecheat: tc,
-  };
 }
 
 // ─── URL 검증 ───────────────────────────────────────────────────────────────
@@ -250,14 +261,34 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
     };
   }
 
-  // 화이트리스트 도메인
-  const whiteHit = OFFICIAL_DOMAINS.find((d) => lower.includes(d));
+  // 화이트리스트 도메인 — 반드시 호스트명 기준으로 비교한다. URL 전체 문자열에 대한
+  // includes()는 "gov.kr.evil-phish.tk" 같은 사칭 도메인도 "gov.kr"을 포함한다는 이유로
+  // 안전 판정을 내리는 구멍이 된다.
+  let hostname = "";
+  try {
+    hostname = new URL(lower.startsWith("http") ? lower : `https://${lower}`).hostname;
+  } catch {
+    hostname = "";
+  }
+  const whiteHit = OFFICIAL_DOMAINS.find((d) => hostname === d || hostname.endsWith(`.${d}`));
   if (whiteHit) {
     // HTTPS 여부도 확인
     if (!lower.startsWith("https")) {
       return { status: "caution", label: "공식 도메인 · HTTP", detail: `${whiteHit}의 공식 도메인이나 HTTPS가 아닙니다. 주소창을 다시 확인하세요.` };
     }
     return { status: "safe", label: "공식 도메인", detail: `${whiteHit}의 공식 도메인으로 확인됩니다.` };
+  }
+
+  // Google Safe Browsing — 화이트리스트에 없는 URL만 실시간 조회 (쿼터 절약)
+  const sb = await fetchSafeBrowsing(raw);
+  if (sb?.threat) {
+    const tc = await callTheCheAt(raw).catch(() => null);
+    return {
+      status: "danger",
+      label: "Google 안전 브라우징 위험 URL",
+      detail: `Google이 실제 수집한 악성 URL 데이터베이스와 일치합니다 (${sb.threatTypes?.join(", ") ?? "위협 감지"}).`,
+      thecheat: tc,
+    };
   }
 
   const tc = await callTheCheAt(raw).catch(() => null);
@@ -312,25 +343,15 @@ export const KNOWN_FN_COMPANIES: Record<string, string> = {
   "웰컴저축은행": "저축은행", "페퍼저축은행": "저축은행",
 };
 
-// FSC API 응답이 에러 포맷인지 확인
-function isFscError(json: unknown): boolean {
-  return !!(json && typeof json === "object" && "OpenAPI_ServiceResponse" in (json as object));
-}
-
-// FSC API 호출 (실패 시 null 반환)
+// FSC API 호출 (실패 시 null 반환) — 백엔드 프록시(/api/fsc/verify)를 거친다.
+// 서비스키를 브라우저 번들에 넣지 않으려고 GEMINI_API_KEY와 같은 방식으로 옮겼다
+// (키는 루트 .env 의 FSC_API_KEY, backend/fsc.js 에서만 쓰인다).
 async function fetchFscApi(name: string): Promise<{ fncoNm: string; corpRegNo?: string }[] | null> {
-  const key = import.meta.env.VITE_FSC_API_KEY as string | undefined;
-  if (!key) return null;
   try {
-    const url =
-      `https://apis.data.go.kr/1160100/service/GetFnCoBasiInfoService/getBasList` +
-      `?serviceKey=${key}&resultType=json&numOfRows=5&pageNo=1&fncoNm=${encodeURIComponent(name)}`;
-    const res = await fetch(url);
+    const res = await fetch(`/api/fsc/verify?name=${encodeURIComponent(name)}`);
+    if (!res.ok) return null;
     const json = await res.json();
-    if (isFscError(json)) return null;            // API 서비스 중단 등 에러
-    const items = json?.response?.body?.items?.item;
-    if (!items) return null;
-    return Array.isArray(items) ? items : [items];
+    return json?.items ?? null;
   } catch {
     return null;
   }
@@ -350,9 +371,11 @@ export async function verifyInstitution(name: string): Promise<VerifyResult> {
     return { status: "safe", label: "공식 감독·정부기관", detail: aliasNote + govHit };
   }
 
-  // 2차: 금융위원회 OpenAPI (성공 시 우선 사용)
+  // 2차: 금융위원회 OpenAPI (성공 시 우선 사용) — 빈 배열은 "API는 성공했지만 일치하는
+  // 기관이 없다"는 뜻이라 truthy로 걸러지면 안 된다. 빈 배열도 truthy라 걸러내지 않으면
+  // "유사 등록명: " 처럼 내용 없는 안내가 나가고 3차 로컬 DB 폴백도 못 탄다.
   const apiItems = await fetchFscApi(canonical);
-  if (apiItems) {
+  if (apiItems && apiItems.length > 0) {
     const exact = apiItems.find((it) => it.fncoNm === canonical);
     if (exact) {
       return {
