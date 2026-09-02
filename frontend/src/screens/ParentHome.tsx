@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MY_ACCOUNTS } from "../shared/data";
 import { BankLogo } from "../shared/ui";
-import { PROTECTION_LEVELS, useProtectionLevel } from "../shared/protection";
+import { PROTECTION_LEVELS, getProtectionDisplayLevel, useProtectionLevel } from "../shared/protection";
 
 const PRODUCTS = [
   { title: "안심 정기예금",    desc: "연 3.5% · 12개월" },
@@ -47,7 +47,7 @@ function AnsimBanner({ paired, onClick, onVerify, protectionLevel, protectionNam
         {protectionLevel !== undefined && protectionName && (
           <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
             <span className="text-[12px] text-white/60">현재 가족 보호</span>
-            <span className="text-[12px] font-semibold text-white">Lv.{protectionLevel} {protectionName}</span>
+            <span className="text-[12px] font-semibold text-white">Lv.{getProtectionDisplayLevel(protectionLevel)} {protectionName}</span>
           </div>
         )}
         {onVerify && (

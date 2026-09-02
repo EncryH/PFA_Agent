@@ -18,7 +18,7 @@ import PrivacyPolicy from "./PrivacyPolicy";
 import NotificationShade from "../shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "../shared/SearchOverlay";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./TabPages";
-import { PROTECTION_LEVELS, getProtectionPolicy, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
+import { PROTECTION_LEVELS, getProtectionDisplayLevel, getProtectionPolicy, useProtectionLevel, type ProtectionLevel } from "../shared/protection";
 import {
   markGuardianLogViewed, openGuardianLogEntry, recordGuardianDecision,
 } from "../shared/guardianLog";
@@ -97,7 +97,7 @@ function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert,
       </div>
       <div className="mt-3 pt-3 border-t border-[var(--ac-200)] flex items-center justify-between">
         <span className="text-[12px] text-[var(--ac-band-sub)]">현재 가족 보호</span>
-        <span className="text-[12px] font-semibold text-[var(--ac-600)]">Lv.{protectionLevel} {protectionName}</span>
+        <span className="text-[12px] font-semibold text-[var(--ac-600)]">Lv.{getProtectionDisplayLevel(protectionLevel)} {protectionName}</span>
       </div>
       <button
         type="button"
@@ -570,7 +570,7 @@ export default function ChildApp() {
                   const active = protectionLevel === item.level;
                   return (
                   <div key={item.level} className={`flex items-center gap-3 p-3 rounded-xl ${active ? "bg-blue-50 border border-blue-200" : "bg-gray-50"}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${active ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>Lv.{item.level}</div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${active ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>Lv.{getProtectionDisplayLevel(item.level)}</div>
                     <div>
                       <p className={`text-[13px] font-bold ${active ? "text-gray-900" : "text-gray-700"}`}>{item.name}{active && " (현재)"}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5">{item.desc}</p>

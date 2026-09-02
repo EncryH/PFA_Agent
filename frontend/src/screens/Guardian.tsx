@@ -13,6 +13,7 @@ import {
 import {
   AI_REVIEW_THRESHOLD_OPTIONS,
   PROTECTION_LEVELS,
+  getProtectionDisplayLevel,
   useAiReviewThreshold,
   useProtectionLevel,
   type AiReviewThreshold,
@@ -319,7 +320,7 @@ export default function Guardian({
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-xl border border-gray-100 px-3 py-3">
-                    <p className="text-[13px] font-bold text-gray-900">Lv.{protectionLevel} {protection.name}</p>
+                    <p className="text-[13px] font-bold text-gray-900">Lv.{getProtectionDisplayLevel(protectionLevel)} {protection.name}</p>
                     <p className="mt-1 text-[10px] text-gray-400">현재 가족 보호</p>
                   </div>
                   <div className="rounded-xl border border-gray-100 px-3 py-3">
@@ -717,7 +718,7 @@ export default function Guardian({
                     onClick={() => { if (item.level !== protectionLevel) setPendingLevel(item.level); }}
                     className={`flex w-full items-center gap-3 p-4 text-left transition-all ${appRole === "parent" ? "hover:bg-black/[0.02] active:scale-[0.99]" : "cursor-default"}`}
                   >
-                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--ac-500)] text-white" : "bg-gray-100 text-gray-500"}`}>Lv.{item.level}</span>
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${active ? "bg-[var(--ac-500)] text-white" : "bg-gray-100 text-gray-500"}`}>Lv.{getProtectionDisplayLevel(item.level)}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2 text-[14px] font-bold text-gray-900">
                         {item.name}
@@ -745,7 +746,7 @@ export default function Guardian({
                     <div id={`protection-detail-${item.level}`} className="border-t border-gray-100 bg-white/80 px-4 pb-4 pt-4" style={{ animation: "fade-in .18s ease-out" }}>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[13px] font-bold text-gray-900">이 설정에서는 이렇게 보호해요</p>
-                        <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-1 text-[9px] font-bold text-[var(--ac-600)]">Lv.{item.level} {item.name}</span>
+                        <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-1 text-[9px] font-bold text-[var(--ac-600)]">Lv.{getProtectionDisplayLevel(item.level)} {item.name}</span>
                       </div>
                       <ol className="mt-3 flex flex-col gap-3">
                         {item.detailSteps.map((detail, index) => (
@@ -782,9 +783,9 @@ export default function Guardian({
               <div className="relative w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl">
                 <p className="text-[17px] font-bold text-gray-900">가족 보호 범위를 바꿀까요?</p>
                 <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
-                  <span className="font-semibold text-gray-400">Lv.{protectionLevel} {protection.name}</span>
+                  <span className="font-semibold text-gray-400">Lv.{getProtectionDisplayLevel(protectionLevel)} {protection.name}</span>
                   {" → "}
-                  <span className="font-bold text-[var(--ac-600)]">Lv.{pendingLevel} {PROTECTION_LEVELS[pendingLevel].name}</span>
+                  <span className="font-bold text-[var(--ac-600)]">Lv.{getProtectionDisplayLevel(pendingLevel)} {PROTECTION_LEVELS[pendingLevel].name}</span>
                 </p>
                 <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
                   {PROTECTION_LEVELS[pendingLevel].desc}
