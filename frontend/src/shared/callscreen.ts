@@ -10,6 +10,8 @@ export interface CallScreenResult {
   scamTypes?: string[]
   reason: string
   detail: string
+  international?: boolean
+  countryCode?: string
 }
 
 // 보이스피싱 신고 번호 블랙리스트 (MVP용 임의 데이터셋)
@@ -28,19 +30,32 @@ export const CALL_BLACKLIST: Record<string, { reportCount: number; scamTypes: st
 
 // 심사위원 데모용 시나리오 (아이콘 탭할 때마다 순환)
 export const DEMO_SCENARIOS: { display: string; number: string; label: string }[] = [
-  { display: "1588-9999",     number: "15889999",    label: "KB국민은행" },
-  { display: "070-1234-1234", number: "07012341234", label: "070 기관사칭" },
-  { display: "1100-1001",     number: "11001001",    label: "금융감독원" },
-  { display: "010-1234-5678", number: "01012345678", label: "보이스피싱 신고번호" },
-  { display: "1544-4000",     number: "15444000",    label: "신한은행" },
-  { display: "010-9999-0000", number: "01099990000", label: "투자사기 번호" },
-  { display: "02-9876-5432",  number: "0298765432",  label: "알 수 없음" },
+  { display: "1588-9999",       number: "15889999",     label: "KB국민은행" },
+  { display: "070-1234-1234",   number: "07012341234",  label: "070 기관사칭" },
+  { display: "+63 947 123 4567", number: "+639471234567", label: "해외(필리핀) 발신 의심전화" },
+  { display: "1100-1001",       number: "11001001",     label: "금융감독원" },
+  { display: "010-1234-5678",   number: "01012345678",  label: "보이스피싱 신고번호" },
+  { display: "1544-4000",       number: "15444000",     label: "신한은행" },
+  { display: "010-9999-0000",   number: "01099990000",  label: "투자사기 번호" },
+  { display: "02-9876-5432",    number: "0298765432",   label: "알 수 없음" },
 ]
 
 export function screenCallImmediate(raw: string): CallScreenResult {
   const clean = raw.replace(/[-\s]/g, '')
 
-  // 1. 070 인터넷전화 — 공식 기관은 절대 사용 안 함
+  // 1. 국가코드(+) 해외 발신 — 국내 공식 기관은 국제전화로 연락하지 않음
+  if (clean.startsWith('+') && !clean.startsWith('+82')) {
+    const countryCode = clean.match(/^\+(\d{1,3})/)?.[1] ?? '?'
+    return {
+      status: 'danger',
+      international: true,
+      countryCode,
+      reason: `해외(+${countryCode}) 발신 국제전화`,
+      detail: '국내 공식 금융·정부기관은 국제전화로 연락하지 않습니다. 발신 국가를 위장한 보이스피싱일 가능성이 높으니 응답에 주의하세요.',
+    }
+  }
+
+  // 2. 070 인터넷전화 — 공식 기관은 절대 사용 안 함
   if (clean.startsWith('070')) {
     const hit = CALL_BLACKLIST[clean]
     return {
@@ -54,7 +69,7 @@ export function screenCallImmediate(raw: string): CallScreenResult {
     }
   }
 
-  // 2. 블랙리스트
+  // 3. 블랙리스트
   const blackHit = CALL_BLACKLIST[clean]
   if (blackHit) {
     return {
@@ -66,7 +81,7 @@ export function screenCallImmediate(raw: string): CallScreenResult {
     }
   }
 
-  // 3. 화이트리스트 — 수신 배너에 즉시 표시할 로컬 판정
+  // 4. 화이트리스트 — 수신 배너에 즉시 표시할 로컬 판정
   const institutionName = OFFICIAL_PHONES[clean]
   if (institutionName) {
     if (OFFICIAL_GOV_BODIES[institutionName]) {
@@ -92,7 +107,7 @@ export function screenCallImmediate(raw: string): CallScreenResult {
     }
   }
 
-  // 4. 알 수 없음
+  // 5. 알 수 없음
   return {
     status: 'unknown',
     reason: '알 수 없는 발신자',

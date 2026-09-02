@@ -24,16 +24,20 @@ import SearchOverlay, { type SearchItem } from "./shared/SearchOverlay";
 import LimitIncrease from "./screens/LimitIncrease";
 import CustomerCenter from "./screens/CustomerCenter";
 import PrivacyPolicy from "./screens/PrivacyPolicy";
+import LockScreen from "./screens/LockScreen";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
+import { useGlobalCooldown } from "./shared/cooldown";
+import CooldownPopup from "./shared/CooldownPopup";
 
 type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit" | "support" | "privacy";
 
 const DEFAULT_DAILY_LIMIT = 5_000_000;
 
 export default function App() {
+  const [unlocked, setUnlocked] = useState(false);
   const [role, setRole] = useState<Role>("parent");
   const [tab, setTab]   = useState<typeof parentTabs[number]>("홈");
   const [page, setPage] = useState<ParentPage>("home");
@@ -57,11 +61,23 @@ export default function App() {
   const [dailyLimit, setDailyLimit] = useState(DEFAULT_DAILY_LIMIT);
   const [dailyTransferred, setDailyTransferred] = useState(0);
   const [openProductKey, setOpenProductKey] = useState<string | null>(null);
+  const cooldownSecondsLeft = useGlobalCooldown();
+  const [showCooldownPopup, setShowCooldownPopup] = useState(false);
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
     balance: i in balanceOverrides ? balanceOverrides[i] : a.balance,
   }));
+
+  // 송금 진입 공통 관문 — 어디서 "송금" 버튼을 눌렀든 전역 쿨다운이 남아있으면
+  // 화면을 옮기지 않고 그 자리에서 팝업으로 막는다. 정지는 화면 하나가 아니라
+  // 앱 전체에 걸려야 우회가 안 되기 때문이다.
+  const goToTransfer = (fromIdx?: number) => {
+    if (cooldownSecondsLeft > 0) { setShowCooldownPopup(true); return; }
+    setResumeIntentChatId(null);
+    if (fromIdx !== undefined) setTransferFromIdx(fromIdx);
+    setPage("transfer");
+  };
 
   const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string, toAccount: string) => {
     setDailyTransferred((previous) => previous + amount);
@@ -150,7 +166,7 @@ export default function App() {
 
   const searchItems: SearchItem[] = [
     { label: "거래내역", desc: "한결은행 입출금통장 거래내역", keywords: ["내역", "이체", "입금", "출금"], onSelect: () => { setAccountIdx(0); setPage("history"); } },
-    { label: "송금", desc: "계좌이체 보내기", keywords: ["이체", "보내기"], onSelect: () => { setResumeIntentChatId(null); setTransferFromIdx(0); setPage("transfer"); } },
+    { label: "송금", desc: "계좌이체 보내기", keywords: ["이체", "보내기"], onSelect: () => goToTransfer(0) },
     { label: "이체한도 상향", desc: "1일 이체한도 관리", keywords: ["한도", "상향", "이체한도"], onSelect: () => setPage("limit") },
     { label: "상대방 검증", desc: "번호·링크·기관명 안전 여부 확인", keywords: ["검증", "사기", "확인"], onSelect: () => setPage("verify") },
     { label: "안심 정기예금", desc: "연 3.5% · 12개월 · 가입 신청", keywords: ["예금", "신청", "가입"], onSelect: () => { goHome(); setOpenProductKey("안심 정기예금"); } },
@@ -162,6 +178,10 @@ export default function App() {
     { label: "주식", desc: "관심 종목·포트폴리오", keywords: ["주식", "투자", "종목"], onSelect: () => goHome("주식") },
     { label: "안심동행 설정", desc: "가족 연동·권한 관리", keywords: ["가족", "설정", "권한"], onSelect: () => setPage("guardian") },
   ];
+
+  if (!unlocked) {
+    return <LockScreen onUnlock={() => setUnlocked(true)} />;
+  }
 
   return (
     <>
@@ -250,7 +270,7 @@ export default function App() {
               <SavingsDetail
                 account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => { setResumeIntentChatId(null); setTransferFromIdx(savingsIdx); setPage("transfer"); }}
+                onTransfer={() => goToTransfer(savingsIdx)}
                 isClosed={closedAccounts.has(savingsIdx)}
                 onEarlyClosure={(amount) => {
                   setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: s.savingsEarlyClose + 1 }));
@@ -275,14 +295,14 @@ export default function App() {
               <History
                 account={liveAccounts[accountIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => { setResumeIntentChatId(null); setPage("transfer"); }}
+                onTransfer={() => goToTransfer()}
                 onGuardian={() => setPage("guardian")}
                 extraRows={extraTxns[liveAccounts[accountIdx].account] ?? []}
               />
             )}
             {page === "home" && tab === "홈" && (
               <ParentHome
-                onTransfer={(i) => { setResumeIntentChatId(null); setTransferFromIdx(i); setPage("transfer"); }}
+                onTransfer={(i) => goToTransfer(i)}
                 largeText={largeText}
                 onGuardian={() => setPage("guardian")}
                 onAccount={(i) => {
@@ -351,6 +371,10 @@ export default function App() {
             onClose={() => setShowNotifications(false)}
             extraTxns={extraTxns[liveAccounts[0].account] ?? []}
           />
+        )}
+
+        {showCooldownPopup && cooldownSecondsLeft > 0 && (
+          <CooldownPopup secondsLeft={cooldownSecondsLeft} onClose={() => setShowCooldownPopup(false)} />
         )}
 
         {/* 수신 전화 / 수신 문자 배너 */}

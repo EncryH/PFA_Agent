@@ -80,7 +80,14 @@ export default function IncomingCall({ call, onDismiss }: Props) {
               <p className="text-[8px] text-white/45">수신 전 자동 검증했어요</p>
             </div>
           </div>
-          <span className={`rounded-full border px-2 py-0.5 text-[8px] font-bold ${statusClass}`}>{statusLabel}</span>
+          <div className="flex items-center gap-1">
+            {result.international && (
+              <span className="rounded-full border border-sky-400/30 bg-sky-400/15 px-2 py-0.5 text-[8px] font-bold text-sky-300">
+                🌐 국제전화
+              </span>
+            )}
+            <span className={`rounded-full border px-2 py-0.5 text-[8px] font-bold ${statusClass}`}>{statusLabel}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5 px-3 py-2.5">

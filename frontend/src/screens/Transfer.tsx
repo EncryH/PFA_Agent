@@ -23,6 +23,7 @@ import { fetchRiskScore, type RiskResult } from "../api/riskScore";
 import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
+import { startGlobalCooldown } from "../shared/cooldown";
 import { formatAiSpeechText, ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
@@ -107,19 +108,22 @@ function RiskGradeCard({
         )}
       </div>
 
-      {/* 액션 버튼 */}
+      {/* 액션 버튼
+          B등급도 위험 신호가 감지된 상태다 — "확인 후 송금하기" 한 번으로 의도 분석을 건너뛰고
+          바로 완료되던 예전 동작은 사실상 우회로였다. B·C 모두 AI 확인 대화를 반드시 거치게 한다. */}
       {result.grade === "A" ? (
         <div className="flex items-center justify-center gap-2 py-1.5 text-green-600">
           <div className="w-3.5 h-3.5 rounded-full border-2 border-green-300 border-t-green-600 animate-spin" />
           <span className="text-[13px]">안전 확인 — 송금을 진행합니다</span>
         </div>
-      ) : result.grade === "B" ? (
-        <button onClick={onProceed} className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-amber-500 active:scale-[0.98] transition-all">
-          확인 후 송금하기
-        </button>
-      ) : result.grade === "C" ? (
+      ) : result.grade === "B" || result.grade === "C" ? (
         <>
-          <button onClick={onProceed} className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
+          <button
+            onClick={onProceed}
+            className={`w-full py-3.5 rounded-xl text-[15px] font-bold text-white active:scale-[0.98] transition-all ${
+              result.grade === "B" ? "bg-amber-500" : "bg-[var(--ac-500)]"
+            }`}
+          >
             AI와 거래 목적 확인하기
           </button>
           <p className="text-[12px] text-gray-400 text-center">위험 신호가 감지됐어요 — AI가 목적을 여쭤볼게요</p>
@@ -355,7 +359,10 @@ export default function Transfer({
     setOfficial(session.official ?? null);
     // 냉각 중 저장한 상담이면 남은 시간도 그대로 되살린다 — 안 그러면 그 사이 보호 단계를
     // 낮춰서 재개하는 것만으로 냉각·가족 확인 게이트를 건너뛸 수 있었다.
-    if (session.analysisHold) setFreezeSecsLeft(session.freezeSecsLeft ?? null);
+    if (session.analysisHold) {
+      setFreezeSecsLeft(session.freezeSecsLeft ?? null);
+      if (session.freezeSecsLeft) startGlobalCooldown(session.freezeSecsLeft);
+    }
     setPlayingVideo(null);
     setInput("");
     setStep(resumeToHold ? "hold" : "ai-chat");
@@ -384,6 +391,10 @@ export default function Transfer({
   useEffect(() => {
     if (step !== "checking") return;
 
+    // 뒤로가기 등으로 이 단계를 벗어나면 아래 지연 콜백들이 더 이상 화면 상태를 바꾸지 못하게 막는다.
+    // (분석 API가 늦게 응답해도, 이미 떠난 화면에 몰래 결제·정지를 걸지 않기 위함)
+    let cancelled = false;
+
     setCheckPhase("analyzing");
     setAnalyzeStep(0);
     setRiskResult(null);
@@ -409,6 +420,7 @@ export default function Transfer({
     const startTs = Date.now();
 
     const goAiChat = () => {
+      if (cancelled) return;
       setMessages([{ role: "ai", text: FIRST_QUESTION }]);
       setTurnCount(0); setChatDone(false);
       setStep("ai-chat");
@@ -426,6 +438,7 @@ export default function Transfer({
     }).then((result) => {
       const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
       setTimeout(() => {
+        if (cancelled) return;
         // 1층(상대방 검증)이 더치트 신고 이력으로 즉시 차단한 경우다. 이미 신고가 확정된
         // 계좌라 대화로 목적을 물어볼 필요가 없다 — 점수 기반 D등급과 달리 바로 db-warning으로 간다.
         if (result.thecheat) {
@@ -435,11 +448,12 @@ export default function Transfer({
         }
         setRiskResult(result);
         setCheckPhase("result");
-        if (result.grade === "A") setTimeout(() => setStep("success"), 1500);
+        if (result.grade === "A") setTimeout(() => { if (!cancelled) setStep("success"); }, 1500);
         else if (result.grade === "D") {
           // 5분 냉각을 걸어두고 곧바로 의도 분석 대화로 넘어간다.
-          // 냉각은 송금을 막는 장치이고, 그 시간을 AI 대화로 채워 판단 근거를 만든다.
+          // 냉각은 송금을 막는 장치이고, 그 시간을 AI 대화로 채운다.
           setFreezeSecsLeft(300);
+          startGlobalCooldown(300); // 화면을 벗어나도(뒤로가기·홈) 앱 전체에서 정지가 유지된다
           setRiskLabels((prev) => (prev.length ? prev : result.reasons));
           setTimeout(goAiChat, 2200);
         }
@@ -448,6 +462,7 @@ export default function Transfer({
       // API 장애 시 기존 로직으로 폴백
       const delay = Math.max(0, MIN_DISPLAY - (Date.now() - startTs));
       setTimeout(() => {
+        if (cancelled) return;
         const r = runIntentPrefilter(account, parseAmt(amt), name);
         if (r === "success") setStep("success");
         else if (r === "db-warning") setStep("db-warning");
@@ -455,7 +470,7 @@ export default function Transfer({
       }, delay);
     });
 
-    return () => { clearTimeout(pt1); clearTimeout(pt2); };
+    return () => { cancelled = true; clearTimeout(pt1); clearTimeout(pt2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -481,8 +496,16 @@ export default function Transfer({
   }, [freezeSecsLeft]);
 
   // 송금 성공 시 잔액 차감 콜백
+  // 쿨다운(freezeSecsLeft)이 아직 남아 있다면 어떤 경로로 "success"에 도달했더라도
+  // 실제 송금(onSuccess, 잔액 차감)은 절대 실행하지 않는다 — 우회 불가 정지는 화면 전환이
+  // 아니라 실제로 돈이 움직이는 이 지점에서 강제한다.
   useEffect(() => {
-    if (step === "success") onSuccess?.(fromIdx, parseAmt(amt), name, account);
+    if (step !== "success") return;
+    if (freezeSecsLeft !== null && freezeSecsLeft > 0) {
+      setStep("hold");
+      return;
+    }
+    onSuccess?.(fromIdx, parseAmt(amt), name, account);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -676,6 +699,7 @@ export default function Transfer({
       setAnalysisHold(verdict.hold);
       if (verdict.hold && protectionPolicy.delaySeconds > 0) {
         setFreezeSecsLeft((current) => Math.max(current ?? 0, protectionPolicy.delaySeconds));
+        startGlobalCooldown(protectionPolicy.delaySeconds);
       }
     }
   };
@@ -1075,7 +1099,10 @@ export default function Transfer({
             freezeSecsLeft={freezeSecsLeft}
             onSkipFreeze={() => { setRiskLabels((prev) => prev.length ? prev : (riskResult?.reasons ?? [])); setStep("hold"); }}
             onProceed={() => {
-              if (riskResult.grade === "A" || riskResult.grade === "B") {
+              // A등급은 버튼 없이 자동 진행되므로 여기 도달하지 않는다.
+              // B·C·D 등급은 전부 AI 확인 대화를 거쳐야 한다 — 한 번의 클릭으로
+              // 의도 분석을 건너뛰고 송금을 완료시키는 경로는 남겨두지 않는다.
+              if (riskResult.grade === "A") {
                 setStep("success");
               } else {
                 setMessages([{ role: "ai", text: FIRST_QUESTION }]);
