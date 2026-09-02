@@ -37,7 +37,7 @@ export const DEMO_SCENARIOS: { display: string; number: string; label: string }[
   { display: "02-9876-5432",  number: "0298765432",  label: "알 수 없음" },
 ]
 
-export async function screenCall(raw: string): Promise<CallScreenResult> {
+export function screenCallImmediate(raw: string): CallScreenResult {
   const clean = raw.replace(/[-\s]/g, '')
 
   // 1. 070 인터넷전화 — 공식 기관은 절대 사용 안 함
@@ -66,10 +66,9 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
     }
   }
 
-  // 3. 화이트리스트 (OFFICIAL_PHONES) + FSC API 2차 검증
+  // 3. 화이트리스트 — 수신 배너에 즉시 표시할 로컬 판정
   const institutionName = OFFICIAL_PHONES[clean]
   if (institutionName) {
-    // 정부기관은 FSC API 조회 없이 바로 안전 처리
     if (OFFICIAL_GOV_BODIES[institutionName]) {
       return {
         status: 'safe',
@@ -80,21 +79,7 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
       }
     }
 
-    // 금융사 → FSC API 검증(백엔드 프록시 /api/fsc/verify — verify.ts 와 같은 경로) → 실패 시 로컬 DB 폴백
-    let fsaVerified = false
-    try {
-      const res = await fetch(`/api/fsc/verify?name=${encodeURIComponent(institutionName)}`)
-      if (res.ok) {
-        const json = await res.json()
-        const items: { fncoNm: string }[] | null = json?.items ?? null
-        fsaVerified = !!items?.some((it) => it.fncoNm === institutionName)
-      }
-    } catch { /* FSC API 네트워크 오류 */ }
-
-    // API 실패 시 로컬 DB로 대체 검증
-    if (!fsaVerified) {
-      fsaVerified = institutionName in KNOWN_FN_COMPANIES
-    }
+    const fsaVerified = institutionName in KNOWN_FN_COMPANIES
 
     return {
       status: 'safe',
@@ -112,5 +97,35 @@ export async function screenCall(raw: string): Promise<CallScreenResult> {
     status: 'unknown',
     reason: '알 수 없는 발신자',
     detail: '등록되지 않은 번호입니다. 중요한 연락이라면 직접 공식 번호로 확인하세요.',
+  }
+}
+
+export async function screenCall(raw: string): Promise<CallScreenResult> {
+  const immediate = screenCallImmediate(raw)
+
+  // 위험·미확인 번호와 정부기관은 로컬 근거만으로 판정이 끝난다.
+  if (immediate.status !== 'safe' || !immediate.institutionName || OFFICIAL_GOV_BODIES[immediate.institutionName]) {
+    return immediate
+  }
+
+  // 금융사는 수신 배너를 즉시 띄운 뒤 FSC API 결과로 근거만 갱신한다.
+  let fsaVerified = false
+  try {
+    const res = await fetch(`/api/fsc/verify?name=${encodeURIComponent(immediate.institutionName)}`)
+    if (res.ok) {
+      const json = await res.json()
+      const items: { fncoNm: string }[] | null = json?.items ?? null
+      fsaVerified = !!items?.some((it) => it.fncoNm === immediate.institutionName)
+    }
+  } catch { /* FSC API 네트워크 오류 */ }
+
+  if (!fsaVerified) fsaVerified = immediate.institutionName in KNOWN_FN_COMPANIES
+
+  return {
+    ...immediate,
+    fsaVerified,
+    detail: fsaVerified
+      ? '금융위원회 등록 금융사 · 공식 대표번호'
+      : '공식 대표번호 화이트리스트에 등록된 번호',
   }
 }

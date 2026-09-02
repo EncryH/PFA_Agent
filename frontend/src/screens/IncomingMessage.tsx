@@ -2,22 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import type { DemoMessage } from '../shared/messages'
-import { screenCall, type CallScreenResult } from '../shared/callscreen'
+import { screenCall, screenCallImmediate, type CallScreenResult } from '../shared/callscreen'
 import { verifyUrl, type VerifyResult } from '../shared/verify'
 
 interface Props {
   message: DemoMessage
   onDismiss: () => void
-}
-
-function senderColor(sender: string): string {
-  const colors = [
-    '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b',
-    '#10b981', '#06b6d4', '#6366f1', '#ef4444',
-  ]
-  let h = 0
-  for (const c of sender) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
-  return colors[Math.abs(h) % colors.length]
 }
 
 function splitBody(body: string, url: string | null): [string, string, string] {
@@ -28,27 +18,17 @@ function splitBody(body: string, url: string | null): [string, string, string] {
 }
 
 // 스크리닝 결과 한 줄 배지
-function ScreenBadge({ result }: { result: CallScreenResult | null }) {
-  if (!result) {
-    return (
-      <div className="flex items-center gap-1 mt-0.5 mb-1">
-        <div className="w-2.5 h-2.5 rounded-full border border-gray-300 border-t-gray-500 animate-spin" style={{ borderWidth: 1.5 }} />
-        <span className="text-[11px] text-gray-400">발신자 검증 중…</span>
-      </div>
-    )
-  }
-
+function ScreenBadge({ result }: { result: CallScreenResult }) {
   const isSafe   = result.status === 'safe'
   const isDanger = result.status === 'danger'
 
-  const icon   = isSafe ? '✅' : isDanger ? '🚨' : '❓'
-  const color  = isSafe ? 'text-green-600' : isDanger ? 'text-red-500' : 'text-gray-400'
-  const bgColor= isSafe ? 'bg-green-50'   : isDanger ? 'bg-red-50'    : 'bg-gray-100'
+  const color  = isSafe ? 'text-emerald-300' : isDanger ? 'text-red-300' : 'text-white/55'
+  const bgColor= isSafe ? 'bg-emerald-400/15' : isDanger ? 'bg-red-400/15' : 'bg-white/10'
 
   return (
-    <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 mt-0.5 mb-1 ${bgColor}`}>
-      <span className="text-[10px]">{icon}</span>
-      <span className={`text-[11px] font-medium leading-tight ${color}`}>
+    <div className={`my-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${bgColor}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${isSafe ? 'bg-green-500' : isDanger ? 'bg-red-500' : 'bg-gray-400'}`} />
+      <span className={`text-[9px] font-semibold leading-tight ${color}`}>
         {result.institutionName ? `${result.institutionName} · ` : ''}{result.reason}
         {result.fsaVerified ? ' · 금융위인증' : ''}
         {result.reportCount ? ` · 신고 ${result.reportCount}건` : ''}
@@ -144,7 +124,7 @@ function LinkCheckSheet({ url, result, onClose }: { url: string; result: VerifyR
 
 export default function IncomingMessage({ message, onDismiss }: Props) {
   const [visible, setVisible] = useState(false)
-  const [screen, setScreen]   = useState<CallScreenResult | null>(null)
+  const [screen, setScreen]   = useState<CallScreenResult>(() => screenCallImmediate(message.number))
   const [urlCheck, setUrlCheck] = useState<VerifyResult | null>(null)
   const [linkSheetOpen, setLinkSheetOpen] = useState(false)
 
@@ -155,7 +135,10 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
 
   // 발신번호 스크리닝 (전화와 동일 로직)
   useEffect(() => {
-    screenCall(message.number).then(setScreen)
+    let active = true
+    setScreen(screenCallImmediate(message.number))
+    screenCall(message.number).then((next) => { if (active) setScreen(next) })
+    return () => { active = false }
   }, [message.number])
 
   // 본문 속 링크를 사용자가 누르기 전에 미리 검사해둔다 (Google Safe Browsing + 룰 베이스).
@@ -181,8 +164,6 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
 
   const isDanger = screen?.status === 'danger' || urlCheck?.status === 'danger'
 
-  const initial   = message.sender.charAt(0).toUpperCase()
-  const avatarBg  = senderColor(message.sender)
   const [before, url, after] = splitBody(message.body, message.url)
 
   const now     = new Date()
@@ -191,7 +172,7 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
   return (
     <>
     <div
-      className={`absolute top-0 left-0 right-0 z-[100] px-3 pt-3 transition-transform duration-300 ease-out ${
+      className={`absolute top-0 left-0 right-0 z-[100] px-2 pt-2 transition-transform duration-300 ease-out ${
         visible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
@@ -208,31 +189,23 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <div
-          className="rounded-[20px] px-4 py-3 flex items-start gap-3"
+          className={`rounded-[20px] border px-3 py-2.5 flex items-start gap-2.5 ${isDanger ? 'border-red-400/35' : 'border-white/15'}`}
           style={{
-            background: 'rgba(242,242,247,0.92)',
-            backdropFilter: 'blur(40px)',
-            WebkitBackdropFilter: 'blur(40px)',
+            background: 'rgba(64,64,70,0.94)',
+            backdropFilter: 'blur(36px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(36px) saturate(140%)',
             boxShadow: isDanger
-              ? '0 8px 40px rgba(239,68,68,0.18), 0 1px 4px rgba(0,0,0,0.08)'
-              : '0 8px 40px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08)',
-            // 위험 발신자는 왼쪽 테두리로 강조
-            borderLeft: isDanger ? '3px solid #ef4444' : '3px solid transparent',
+              ? '0 12px 38px rgba(239,68,68,0.2), inset 0 1px 0 rgba(255,255,255,0.08)'
+              : '0 12px 38px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
           }}
         >
-          {/* 아바타 + Messages 배지 */}
+          {/* 안심동행 AI 프로필 */}
           <div className="relative flex-shrink-0 mt-0.5">
+            <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-9 w-9 rounded-full border border-white/20 bg-white object-cover shadow-sm" />
             <div
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white text-[17px] font-semibold"
-              style={{ backgroundColor: avatarBg }}
+              className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ac-500)] ring-2 ring-[#404046]"
             >
-              {initial}
-            </div>
-            <div
-              className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center"
-              style={{ backgroundColor: '#34c759' }}
-            >
-              <svg viewBox="0 0 12 12" fill="white" style={{ width: 10, height: 10 }}>
+              <svg viewBox="0 0 12 12" fill="white" className="h-2.5 w-2.5">
                 <path d="M1 1h10a1 1 0 011 1v6a1 1 0 01-1 1H4L1 12V2a1 1 0 011-1z"/>
               </svg>
             </div>
@@ -240,19 +213,34 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
 
           {/* 텍스트 영역 */}
           <div className="flex-1 min-w-0">
-            {/* 발신자명 + 시각 */}
+            {/* AI 확인 헤더 + 시각 */}
             <div className="flex items-baseline justify-between gap-2">
-              <p className="text-[14px] font-semibold text-gray-900 truncate leading-tight">
-                {message.sender}
+              <p className="flex items-center gap-1.5 text-[10px] font-extrabold text-[var(--ac-200)] truncate leading-tight">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--ac-300)]" />
+                안심동행 AI 문자 확인
               </p>
-              <span className="text-[12px] text-gray-400 flex-shrink-0">{timeStr}</span>
+              <span className="text-[10px] text-white/40 flex-shrink-0">{timeStr}</span>
             </div>
 
-            {/* 스크리닝 결과 배지 */}
-            <ScreenBadge result={screen} />
+            {urlCheck?.status === 'danger' ? (
+              <div className="my-1 flex items-center justify-between gap-2 rounded-lg bg-red-400/15 px-2 py-1">
+                <span className="flex items-center gap-1 text-[9px] font-extrabold text-red-200">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+                    <path d="M12 3l8 14H4L12 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                    <path d="M12 8v4m0 2.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                  위험 링크 감지
+                </span>
+                <span className="shrink-0 text-[8px] font-bold text-red-300">열지 마세요</span>
+              </div>
+            ) : (
+              <ScreenBadge result={screen} />
+            )}
+
+            <p className="text-[12px] font-bold leading-tight text-white">{message.sender}</p>
 
             {/* 메시지 본문 */}
-            <p className="text-[13px] text-gray-600 leading-snug line-clamp-2 break-all">
+            <p className="mt-0.5 text-[11px] text-white/70 leading-snug line-clamp-2 break-all">
               {before}
               {url && (
                 <button
@@ -262,7 +250,7 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
                     setLinkSheetOpen(true)
                   }}
                   className={`inline appearance-none border-0 bg-transparent p-0 m-0 align-baseline underline underline-offset-1 ${
-                    urlCheck?.status === 'danger' ? 'text-red-500' : urlCheck?.status === 'safe' ? 'text-blue-500' : 'text-amber-600'
+                    urlCheck?.status === 'danger' ? 'text-red-300' : urlCheck?.status === 'safe' ? 'text-[var(--ac-200)]' : 'text-amber-300'
                   }`}
                   style={{ font: 'inherit' }}
                 >
