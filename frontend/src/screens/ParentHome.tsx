@@ -149,7 +149,7 @@ const SPENDING_BREAKDOWN = [
 const SPENDING_TOTAL = SPENDING_BREAKDOWN.reduce((s, x) => s + x.amount, 0);
 
 export default function ParentHome({
-  onTransfer, onGuardian, onAccount, onVerify, onSupport, onLimitIncrease,
+  onTransfer, onGuardian, onAccount, onVerify, onSupport, onPrivacy, onLimitIncrease,
   onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS, largeText,
   onSubscribe, openProductKey, onProductOpened,
 }: {
@@ -158,6 +158,7 @@ export default function ParentHome({
   onAccount: (i: number) => void;
   onVerify: () => void;
   onSupport: () => void;
+  onPrivacy: () => void;
   onLimitIncrease: () => void;
   onAllAccounts?: () => void;
   onMonthlyDetail?: () => void;
@@ -173,7 +174,6 @@ export default function ParentHome({
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [spendingOpen, setSpendingOpen] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
   const [applyStep, setApplyStep] = useState<"detail" | "amount" | "done">("detail");
   const [applyAmount, setApplyAmount] = useState("");
@@ -245,34 +245,9 @@ export default function ParentHome({
           <span className="text-[16px] font-bold text-blue-600">문의하기 ›</span>
         </button>
 
-        <button onClick={() => setPrivacyOpen(true)} className="py-3 text-[13px] text-gray-300 text-center active:scale-95 transition-transform">
+        <button onClick={onPrivacy} className="py-3 text-[13px] text-gray-300 text-center active:scale-95 transition-transform">
           개인정보처리방침
         </button>
-
-        {privacyOpen && (
-          <div className="fixed inset-0 z-50">
-            <div
-              className="absolute inset-0 bg-black/40"
-              style={{ animation: "fade-in 180ms ease-out both" }}
-              onClick={() => setPrivacyOpen(false)}
-            />
-            <div
-              className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
-              style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-              <p className="text-[20px] font-bold text-gray-900">개인정보처리방침</p>
-              <p className="mt-3 text-[15px] text-gray-500 leading-relaxed">방침 내용을 준비 중이에요. 곧 업데이트할게요.</p>
-              <button
-                onClick={() => setPrivacyOpen(false)}
-                className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
-                style={{ background: "var(--ac-500)" }}
-              >
-                확인
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -381,34 +356,9 @@ export default function ParentHome({
         </div>
       </div>
 
-      <button onClick={() => setPrivacyOpen(true)} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
+      <button onClick={onPrivacy} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
         개인정보처리방침
       </button>
-
-      {privacyOpen && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setPrivacyOpen(false)}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
-            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
-          >
-            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[18px] font-bold text-gray-900">개인정보처리방침</p>
-            <p className="mt-3 text-[13px] text-gray-500 leading-relaxed">방침 내용을 준비 중이에요. 곧 업데이트할게요.</p>
-            <button
-              onClick={() => setPrivacyOpen(false)}
-              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
-              style={{ background: "var(--ac-500)" }}
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ─── 월별 지출 바텀시트 ───────────────────────────────────────────── */}
       {spendingOpen && (

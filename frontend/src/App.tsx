@@ -23,12 +23,13 @@ import NotificationShade from "./shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "./shared/SearchOverlay";
 import LimitIncrease from "./screens/LimitIncrease";
 import CustomerCenter from "./screens/CustomerCenter";
+import PrivacyPolicy from "./screens/PrivacyPolicy";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
 
-type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit" | "support";
+type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit" | "support" | "privacy";
 
 const DEFAULT_DAILY_LIMIT = 5_000_000;
 
@@ -235,6 +236,7 @@ export default function App() {
             )}
             {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
             {page === "support"  && <CustomerCenter onBack={() => setPage("home")} bankName="한결은행" />}
+            {page === "privacy"  && <PrivacyPolicy onBack={() => setPage("home")} />}
             {page === "limit"    && (
               <LimitIncrease
                 currentLimit={dailyLimit}
@@ -295,6 +297,7 @@ export default function App() {
                 }}
                 onVerify={() => setPage("verify")}
                 onSupport={() => setPage("support")}
+                onPrivacy={() => setPage("privacy")}
                 onLimitIncrease={() => setPage("limit")}
                 onAllAccounts={() => setTab("금융")}
                 onMonthlyDetail={() => setTab("금융")}

@@ -14,6 +14,7 @@ import Transfer from "./Transfer";
 import Guardian from "./Guardian";
 import Verify from "./Verify";
 import CustomerCenter from "./CustomerCenter";
+import PrivacyPolicy from "./PrivacyPolicy";
 import NotificationShade from "../shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "../shared/SearchOverlay";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./TabPages";
@@ -128,7 +129,7 @@ export default function ChildApp() {
   // 자녀 앱도 은행 앱이므로 하단 탭은 부모 앱과 같다.
   // 안심동행 관련 화면(알림·설정)은 헤더 아이콘으로 들어간다.
   const [tab, setTab] = useState<Tab>("홈");
-  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "support" | "emergency-loan" | "benefits">("home");
+  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "support" | "privacy" | "emergency-loan" | "benefits">("home");
   // 페어링 완료 여부 — 완료 전에는 은행 앱만 보이고 안심동행 기능은 숨는다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [response, setResponse] = useState<AlertResponse>(null);
@@ -393,7 +394,7 @@ export default function ChildApp() {
 
             </>)}
 
-            <button onClick={() => setComingSoon("개인정보처리방침")} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
+            <button onClick={() => setPage("privacy")} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
               개인정보처리방침
             </button>
           </div>
@@ -430,6 +431,7 @@ export default function ChildApp() {
         )}
         {page === "verify" && <Verify onBack={() => setPage("home")} />}
         {page === "support" && <CustomerCenter onBack={() => setPage("home")} bankName="나눔은행" />}
+        {page === "privacy" && <PrivacyPolicy onBack={() => setPage("home")} />}
 
         {/* ── 위험 이벤트 상세 ── */}
         {page === "alert-detail" && alert && (
