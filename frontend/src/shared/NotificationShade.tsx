@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readNotices, TRANSACTIONS, MY_ACCOUNTS, CHILD_ACCOUNT, type TxnRow } from "./data";
-import { PROTECTION_LEVELS } from "./protection";
+import { PROTECTION_LEVELS, getProtectionDisplayLevel } from "./protection";
 
 type NotificationShadeProps = {
   role: "parent" | "child";
@@ -77,8 +77,8 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           icon: "shield" as const,
           title: "안심동행 보호 단계가 바뀌었어요",
           body: role === "parent"
-            ? `Lv.${e.from} ${levelName(e.from)} → Lv.${e.to} ${levelName(e.to)} 로 변경했어요.`
-            : `어머니가 Lv.${e.from} ${levelName(e.from)} → Lv.${e.to} ${levelName(e.to)} 로 바꾸셨어요.`,
+            ? `Lv.${getProtectionDisplayLevel(e.from)} ${levelName(e.from)} → Lv.${getProtectionDisplayLevel(e.to)} ${levelName(e.to)} 로 변경했어요.`
+            : `어머니가 Lv.${getProtectionDisplayLevel(e.from)} ${levelName(e.from)} → Lv.${getProtectionDisplayLevel(e.to)} ${levelName(e.to)} 로 바꾸셨어요.`,
           date: stamp(e.at),
         };
       }

@@ -64,6 +64,10 @@ export type ProtectionPolicy = {
 
 export type AiReviewThreshold = number;
 
+export function getProtectionDisplayLevel(level?: ProtectionLevel | number): number {
+  return (level ?? 2) + 1;
+}
+
 export const AI_REVIEW_THRESHOLD_OPTIONS = [
   { amount: 1_000_000 as const, label: "100만원", desc: "조금만 이상해도 확인" },
   { amount: 3_000_000 as const, label: "300만원", desc: "큰돈부터 확인" },
