@@ -165,7 +165,7 @@ const TITLES: Record<TransferStep, string> = {
 export default function Transfer({
   onExit, accounts = MY_ACCOUNTS, resumeSessionId = null, resumeToHold = false, onResumeHandled, initialStep = "input",
   behaviorSignals = { historyVisits: 0, verifyVisited: false, savingsEarlyClose: 0, limitIncreased: 0 },
-  onSuccess, defaultFromIdx = 0,
+  onSuccess, defaultFromIdx = 0, dailyLimit = Number.POSITIVE_INFINITY, dailyTransferred = 0,
 }: {
   onExit: () => void;
   accounts?: typeof MY_ACCOUNTS;
@@ -176,6 +176,8 @@ export default function Transfer({
   behaviorSignals?: BehaviorSignals;
   onSuccess?: (fromIdx: number, amount: number, recipientName: string, toAccount: string) => void;
   defaultFromIdx?: number;
+  dailyLimit?: number;
+  dailyTransferred?: number;
 }) {
   const [step, setStep] = useState<TransferStep>(initialStep);
   const [account, setAccount] = useState("");
@@ -613,7 +615,11 @@ export default function Transfer({
   }, [account]);
 
   const accountReady = account.replace(/\D/g, "").length >= 8 && !!bank;
-  const canSubmit = accountReady && parseAmt(amt) > 0;
+  const amountValue = parseAmt(amt);
+  const hasDailyLimit = Number.isFinite(dailyLimit);
+  const remainingDailyLimit = hasDailyLimit ? Math.max(dailyLimit - dailyTransferred, 0) : Number.POSITIVE_INFINITY;
+  const exceedsDailyLimit = hasDailyLimit && amountValue > remainingDailyLimit;
+  const canSubmit = accountReady && amountValue > 0 && !exceedsDailyLimit;
   const completedEmergencyFollowups = [reliefSigned, policeReportDone, evidenceSaved, safetyConfirmed, bankFollowupConfirmed].filter(Boolean).length;
   const reliefPdfScale = typeof window === "undefined" ? 0.57 : Math.min(0.57, Math.max(0.42, (window.innerWidth - 24) / 680));
 
@@ -889,6 +895,16 @@ export default function Transfer({
           </div>
 
           {/* 실시간 위험 미리보기도 안심동행 기능 — 연결 전에는 띄우지 않는다 */}
+          {exceedsDailyLimit && (
+            <div className="mt-2 flex shrink-0 items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[12px] font-black text-red-600">!</span>
+              <div>
+                <p className="text-[12px] font-bold text-red-700">1일 이체한도를 초과했어요</p>
+                <p className="mt-0.5 text-[11px] text-red-600">오늘 남은 한도는 {remainingDailyLimit.toLocaleString()}원이에요.</p>
+              </div>
+            </div>
+          )}
+
           {paired && liveRisk && (
             <div className="mt-2 flex shrink-0 items-center gap-3 rounded-2xl border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-4 py-3 shadow-sm">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--ac-100)] bg-[var(--ac-50)] shadow-sm">
@@ -922,7 +938,7 @@ export default function Transfer({
             disabled={!canSubmit}
             className="w-full py-3.5 mt-2 shrink-0 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-500)] hover:bg-[var(--ac-600)] active:scale-[0.98] transition-all disabled:bg-gray-200 disabled:text-gray-400"
           >
-            {canSubmit ? `${amt}원 보내기` : "다음"}
+            {exceedsDailyLimit ? "이체한도 초과" : canSubmit ? `${amt}원 보내기` : "다음"}
           </button>
         </div>
       )}
@@ -964,7 +980,13 @@ export default function Transfer({
           </div>
 
           <button
-            onClick={() => setStep("checking")}
+            onClick={() => {
+              if (parseAmt(amt) > remainingDailyLimit) {
+                setStep("amount");
+                return;
+              }
+              setStep("checking");
+            }}
             className="w-full py-4 mt-4 shrink-0 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-500)] hover:bg-[var(--ac-600)] active:scale-[0.98] transition-all"
           >
             보내기

@@ -55,6 +55,7 @@ export default function App() {
   const [extraTxns, setExtraTxns] = useState<Record<string, TxnRow[]>>({});
   const [showSearch, setShowSearch] = useState(false);
   const [dailyLimit, setDailyLimit] = useState(DEFAULT_DAILY_LIMIT);
+  const [dailyTransferred, setDailyTransferred] = useState(0);
   const [openProductKey, setOpenProductKey] = useState<string | null>(null);
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
@@ -63,6 +64,7 @@ export default function App() {
   }));
 
   const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string, toAccount: string) => {
+    setDailyTransferred((previous) => previous + amount);
     const acc = liveAccounts[fromIdx];
     const current = parseAmt(acc.balance);
     const next = Math.max(0, current - amount);
@@ -211,6 +213,8 @@ export default function App() {
                 accounts={liveAccounts}
                 onSuccess={handleTransferSuccess}
                 defaultFromIdx={transferFromIdx}
+                dailyLimit={dailyLimit}
+                dailyTransferred={dailyTransferred}
               />
             )}
             {page === "guardian" && (
@@ -226,11 +230,6 @@ export default function App() {
                   setResumeIntentToHold(true);
                   setResumeIntentChatId(id);
                   setPage("transfer");
-                }}
-                onOpenEmergency={() => {
-                  setResumeIntentToHold(false);
-                  setResumeIntentChatId(null);
-                  setPage("emergency");
                 }}
               />
             )}

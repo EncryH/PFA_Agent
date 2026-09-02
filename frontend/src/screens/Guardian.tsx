@@ -66,14 +66,13 @@ const PROMISES = [
 ];
 
 export default function Guardian({
-  onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest, onOpenEmergency,
+  onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest,
 }: {
   onExit: () => void;
   appRole: "parent" | "child";
   onResumeIntentChat?: (id: string) => void;
   onOpenPendingConfirmation?: (id: string) => void;
   onOpenPendingRequest?: () => void;
-  onOpenEmergency?: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
   const [pairRole, setPairRole] = useState<"parent" | "child" | null>(null);
@@ -98,18 +97,23 @@ export default function Guardian({
   const [openEmergencyReceipt, setOpenEmergencyReceipt] = useState<EmergencyReceipt | null>(null);
   const [showPairDetails, setShowPairDetails] = useState(false);
   const [showManageMenu, setShowManageMenu] = useState(false);
+  const [draftAiReviewThreshold, setDraftAiReviewThreshold] = useState<AiReviewThreshold>(aiReviewThreshold);
   const [customThresholdManwon, setCustomThresholdManwon] = useState(() => String(Math.floor(aiReviewThreshold / 10_000)));
 
-  const changeAiReviewThreshold = (amount: AiReviewThreshold) => {
+  useEffect(() => {
+    setDraftAiReviewThreshold(aiReviewThreshold);
+    setCustomThresholdManwon(String(Math.floor(aiReviewThreshold / 10_000)));
+  }, [aiReviewThreshold]);
+
+  const selectAiReviewThreshold = (amount: AiReviewThreshold) => {
     if (appRole !== "parent") return;
-    setAiReviewThreshold(amount);
+    setDraftAiReviewThreshold(amount);
     setCustomThresholdManwon(String(Math.floor(amount / 10_000)));
   };
 
-  const saveCustomAiReviewThreshold = () => {
-    if (appRole !== "parent") return;
-    const amount = Math.max(1, Number(customThresholdManwon.replace(/\D/g, ""))) * 10_000;
-    changeAiReviewThreshold(amount);
+  const applyAiReviewThreshold = () => {
+    if (appRole !== "parent" || !customThresholdManwon) return;
+    setAiReviewThreshold(draftAiReviewThreshold);
   };
 
   const confirmLevelChange = () => {
@@ -610,18 +614,6 @@ export default function Guardian({
                   </svg>
                 </button>
 
-                {appRole === "parent" && (
-                  <button onClick={onOpenEmergency} className="flex w-full items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-left active:scale-[0.98] transition-all">
-                    <span>
-                      <span className="block text-[13px] font-bold text-red-600">이미 송금했어요 · 긴급 대응</span>
-                      <span className="mt-0.5 block text-[10px] text-red-400">지급정지·신고·피해구제 절차</span>
-                    </span>
-                    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-red-300">
-                      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                )}
-
                 <button onClick={disconnectFamily} className="w-full rounded-xl border border-gray-200 bg-white py-3 text-[12px] font-semibold text-red-500 active:scale-[0.98] transition-all">
                   {appRole === "parent" ? "자녀 연결 해제" : "부모님 연결 해제"}
                 </button>
@@ -657,13 +649,13 @@ export default function Guardian({
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {AI_REVIEW_THRESHOLD_OPTIONS.map((option) => {
-                const active = aiReviewThreshold === option.amount;
+                const active = draftAiReviewThreshold === option.amount;
                 return (
                   <button
                     key={option.amount}
                     type="button"
                     disabled={appRole !== "parent"}
-                    onClick={() => changeAiReviewThreshold(option.amount)}
+                    onClick={() => selectAiReviewThreshold(option.amount)}
                     className={`rounded-xl border px-3 py-3 text-left transition-all active:scale-[0.98] ${
                       active
                         ? "border-[var(--ac-400)] bg-[var(--ac-50)]"
@@ -681,7 +673,11 @@ export default function Guardian({
               <div className="mt-2 flex items-center gap-2">
                 <input
                   value={customThresholdManwon}
-                  onChange={(event) => setCustomThresholdManwon(event.target.value.replace(/\D/g, ""))}
+                  onChange={(event) => {
+                    const value = event.target.value.replace(/\D/g, "");
+                    setCustomThresholdManwon(value);
+                    if (value) setDraftAiReviewThreshold(Math.max(1, Number(value)) * 10_000);
+                  }}
                   inputMode="numeric"
                   disabled={appRole !== "parent"}
                   className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-right text-[15px] font-bold text-gray-900 outline-none focus:border-[var(--ac-400)] disabled:opacity-70"
@@ -690,8 +686,8 @@ export default function Guardian({
                 <span className="shrink-0 text-[13px] font-semibold text-gray-600">만원 이상</span>
                 <button
                   type="button"
-                  disabled={appRole !== "parent" || !customThresholdManwon}
-                  onClick={saveCustomAiReviewThreshold}
+                  disabled={appRole !== "parent" || !customThresholdManwon || draftAiReviewThreshold === aiReviewThreshold}
+                  onClick={applyAiReviewThreshold}
                   className="h-11 shrink-0 rounded-xl bg-[var(--ac-600)] px-4 text-[13px] font-bold text-white disabled:bg-gray-300 active:scale-[0.98] transition-all"
                 >
                   적용
