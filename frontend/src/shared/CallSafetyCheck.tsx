@@ -18,19 +18,40 @@ export default function CallSafetyCheck({
       aria-modal="true"
       aria-labelledby="call-safety-title"
     >
-      <div className="w-full rounded-[24px] bg-white p-5 shadow-2xl">
+      <div className="w-full overflow-hidden rounded-[26px] border border-[var(--ac-100)] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[var(--ac-100)] bg-gradient-to-r from-[var(--ac-50)] to-white px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/ansim-ai-profile.png"
+              alt="안심동행 AI"
+              className="h-10 w-10 rounded-full border border-[var(--ac-100)] bg-white object-cover shadow-sm"
+            />
+            <div>
+              <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-[var(--ac-700)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                안심동행 AI 행동 감지
+              </p>
+              <p className="mt-0.5 text-[10px] text-gray-500">금융 행동을 안전하게 확인하고 있어요</p>
+            </div>
+          </div>
+          <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700">
+            위험 행동 감지
+          </span>
+        </div>
+
+        <div className="p-5">
         {!onCall ? (
           <>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-              <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            <div className="rounded-xl border border-[var(--ac-100)] bg-[var(--ac-50)] px-4 py-3">
+              <p className="text-[10px] font-bold text-[var(--ac-500)]">탐지된 행동</p>
+              <p className="mt-1 text-[14px] font-extrabold text-[var(--ac-700)]">{actionLabel} 실행</p>
             </div>
             <h2 id="call-safety-title" className="mt-4 text-[19px] font-black text-gray-900">
-              혹시 지금 통화 중이신가요?
+              안전을 위해 한 번 더 확인할게요
             </h2>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-600">
-              통화 상대가 <strong>{actionLabel}</strong>을 요청했다면 보이스피싱일 수 있어요.
+              혹시 지금 누군가와 <strong>통화 중이신가요?</strong><br />
+              통화 상대가 이 행동을 요청했다면 보이스피싱일 수 있어요.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2.5">
               <button
@@ -38,7 +59,7 @@ export default function CallSafetyCheck({
                 onClick={() => setOnCall(true)}
                 className="rounded-xl border border-red-200 bg-red-50 py-3.5 text-[14px] font-bold text-red-700 active:scale-[0.98]"
               >
-                예
+                예, 통화 중이에요
               </button>
               <button
                 type="button"
@@ -83,6 +104,7 @@ export default function CallSafetyCheck({
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
