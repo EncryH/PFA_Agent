@@ -1,6 +1,6 @@
 // 자녀 앱 — 홈 / 알림 / 설정
 //
-// 부모 앱과는 localStorage("ansimAlert") 로만 연결된다.
+// 부모 앱과는 localStorage(ansimAlert·ansimPaired·ansimProtectionLevel 등 여러 키)로 연결된다.
 // 실서비스에서는 Supabase Realtime 등 푸시 채널이 들어갈 자리.
 //
 // 프라이버시 원칙: 자녀는 어떤 레벨에서도 잔액·거래내역을 볼 수 없다.
@@ -13,6 +13,7 @@ import History from "./History";
 import Transfer from "./Transfer";
 import Guardian from "./Guardian";
 import Verify from "./Verify";
+import CustomerCenter from "./CustomerCenter";
 import NotificationShade from "../shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "../shared/SearchOverlay";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./TabPages";
@@ -127,7 +128,7 @@ export default function ChildApp() {
   // 자녀 앱도 은행 앱이므로 하단 탭은 부모 앱과 같다.
   // 안심동행 관련 화면(알림·설정)은 헤더 아이콘으로 들어간다.
   const [tab, setTab] = useState<Tab>("홈");
-  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "emergency-loan" | "benefits">("home");
+  const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "support" | "emergency-loan" | "benefits">("home");
   // 페어링 완료 여부 — 완료 전에는 은행 앱만 보이고 안심동행 기능은 숨는다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [response, setResponse] = useState<AlertResponse>(null);
@@ -361,6 +362,20 @@ export default function ChildApp() {
               ))}
             </div>
 
+            <button onClick={() => setPage("support")} className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5-1.338A9.955 9.955 0 0012 22z" />
+                  <path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3.5M12 16.5h.01" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-[14px] font-bold text-gray-900">고객센터</p>
+                <p className="text-[12px] text-gray-400 mt-0.5">자주 묻는 질문 · 전화 상담 · 1:1 문의</p>
+              </div>
+              <span className="text-[12px] font-semibold" style={{ color: "var(--ac-600)" }}>문의하기</span>
+            </button>
+
             {/* ── 안심동행 기능 — 페어링 완료 후에만 나타난다 ── */}
             {paired && (<>
             {response ? (
@@ -377,6 +392,10 @@ export default function ChildApp() {
             ) : null}
 
             </>)}
+
+            <button onClick={() => setComingSoon("개인정보처리방침")} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
+              개인정보처리방침
+            </button>
           </div>
         )}
 
@@ -397,7 +416,7 @@ export default function ChildApp() {
             theme="child"
             onBack={() => setPage("home")}
             onTransfer={() => setPage("transfer")}
-            onGuardian={() => setPage("settings")}
+            onGuardian={() => setPage("guardian")}
             extraRows={extraTxns}
           />
         )}
@@ -410,6 +429,7 @@ export default function ChildApp() {
           />
         )}
         {page === "verify" && <Verify onBack={() => setPage("home")} />}
+        {page === "support" && <CustomerCenter onBack={() => setPage("home")} bankName="나눔은행" />}
 
         {/* ── 위험 이벤트 상세 ── */}
         {page === "alert-detail" && alert && (
@@ -486,7 +506,7 @@ export default function ChildApp() {
                 <p className="text-[12px] text-gray-500 mt-1">최종 송금 여부는 어머니가 다시 확인해요.</p>
                 <button onClick={() => setPage("home")} className="mt-3 text-[13px] text-gray-900 font-medium">홈으로 돌아가기</button>
               </div>
-            ) : !alert ? (
+            ) : !requestPolicy.allowFamilyDecision ? (
               <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
                 <p className="text-[14px] font-bold text-blue-700">확인용 알림이에요</p>
                 <p className="mt-1 text-[12px] text-gray-500">현재 가족 보호 설정에서는 자녀가 송금을 승인하거나 보류할 수 없어요.</p>

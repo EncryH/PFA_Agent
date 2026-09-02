@@ -3,7 +3,7 @@
 //   already-sent 는 별도 진입 (골든타임 사후 대응)
 //
 // 진행 중 상태는 이 파일이 소유하고, 사용자가 보류한 상담만 로컬 기록으로 저장한다.
-// 자녀 앱과는 localStorage("ansimAlert") 로만 연결된다.
+// 자녀 앱과는 localStorage(ansimAlert·ansimPaired·ansimProtectionLevel 등 여러 키)로 연결된다.
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { takeTurn, FIRST_QUESTION, type ChatMessage, type OfficialContent } from "../api/guardian";
@@ -18,6 +18,7 @@ import {
   saveIntentChatSession,
   type IntentChatSession,
 } from "../shared/intentChat";
+import officialContacts from "../../../shared/official-contacts.json";
 import { fetchRiskScore, type RiskResult } from "../api/riskScore";
 import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
@@ -25,6 +26,10 @@ import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/em
 import { formatAiSpeechText, ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
+
+// 골든타임 화면의 "은행" 버튼 번호 — 공식 연락처 정본(official-contacts.json) 하나만 보고 걸도록,
+// 여기서도 하드코딩하지 않고 같은 데이터를 참조한다.
+const BANK_SUPPORT_PHONE = officialContacts.phones.find((p) => p.name === "한결은행")?.value ?? "15885000";
 
 // ── 보안 분석 결과 카드 ─────────────────────────────────────────────────────
 const GRADE_STYLE = {
@@ -294,11 +299,11 @@ export default function Transfer({
     if (isMyAccount(account))
       return { score: 0, label: "내 계좌", msg: "본인 명의 계좌 — 확인 없이 바로 보내드려요" };
 
-    if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7))))
+    if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.startsWith(b.slice(0, 7))))
       return { score: 100, label: "DB 경고", msg: "신고된 계좌예요 — 즉시 차단됩니다" };
 
     const known = KNOWN_RECIPIENTS.find(
-      (k) => (clean.length >= 8 && clean.includes(k.account.slice(0, 8))) || name === k.name
+      (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name
     );
     let score = 0;
     if (!known && clean.length >= 8) score += 25;
@@ -346,6 +351,9 @@ export default function Transfer({
     setChatDone(session.analysisDone ?? false);
     setAnalysisHold(session.analysisHold ?? false);
     setOfficial(session.official ?? null);
+    // 냉각 중 저장한 상담이면 남은 시간도 그대로 되살린다 — 안 그러면 그 사이 보호 단계를
+    // 낮춰서 재개하는 것만으로 냉각·가족 확인 게이트를 건너뛸 수 있었다.
+    if (session.analysisHold) setFreezeSecsLeft(session.freezeSecsLeft ?? null);
     setPlayingVideo(null);
     setInput("");
     setStep(resumeToHold ? "hold" : "ai-chat");
@@ -385,18 +393,15 @@ export default function Transfer({
     const localRisk = runIntentPrefilter(account, amountValue, name);
     if (localRisk === "db-warning") { setStep("db-warning"); return; }
     if (amountValue < aiReviewThreshold) { setStep("success"); return; }
-    const clean = account.replace(/\D/g, "");
-    if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.includes(b.slice(0, 7)))) {
-      setStep("db-warning"); return;
-    }
 
     // 분석 단계 애니메이션 (3단계 × 900ms)
     const pt1 = setTimeout(() => setAnalyzeStep(1), 900);
     const pt2 = setTimeout(() => setAnalyzeStep(2), 1800);
 
     const sessionSec = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+    const clean = account.replace(/\D/g, "");
     const known = KNOWN_RECIPIENTS.find(
-      (k) => (clean.length >= 8 && clean.includes(k.account.slice(0, 8))) || name === k.name,
+      (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name,
     );
     const MIN_DISPLAY = 2700;
     const startTs = Date.now();
@@ -463,7 +468,12 @@ export default function Transfer({
   useEffect(() => {
     if (freezeSecsLeft !== 0 || riskResult?.grade !== "D") return;
     setRiskLabels((prev) => prev.length ? prev : (riskResult?.reasons ?? []));
-    const t = setTimeout(() => setStep("hold"), 600);
+    const t = setTimeout(() => {
+      // 수동 보류(requestFamilyConfirmation)와 똑같이 상담을 저장해야 sessionId가 남는다.
+      // 저장을 빼먹으면 Guardian의 "확인하러 가기"가 이 자동 보류 건을 못 찾는다.
+      saveCurrentIntentChat();
+      setStep("hold");
+    }, 600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [freezeSecsLeft]);
@@ -474,9 +484,9 @@ export default function Transfer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // hold 화면 도달 시 자녀 탭에 알림 공유
+  // hold 화면 도달 시 자녀 탭에 알림 공유 — 페어링 전에는 알림을 받을 자녀가 없으므로 쓰지 않는다.
   useEffect(() => {
-    if (step !== "hold") return;
+    if (step !== "hold" || !paired) return;
     localStorage.setItem("ansimAlert", JSON.stringify({
       amount: parseAmt(amt),
       account: `${bank} ${account}`,
@@ -529,6 +539,7 @@ export default function Transfer({
       analysisDone: chatDone,
       analysisHold,
       official,
+      freezeSecsLeft,
     };
     saveIntentChatSession(session);
     setIntentSessionId(session.id);
@@ -1142,7 +1153,6 @@ export default function Transfer({
             </div>
           </div>
           <button onClick={goHome} className="w-full py-3.5 rounded-xl text-[15px] font-semibold text-white bg-red-500 active:scale-[0.98] transition-all">보내지 않을게요</button>
-          <button className="text-[13px] text-gray-400 text-center active:scale-95 py-1">그래도 보낼게요 (본인 책임)</button>
         </div>
       )}
 
@@ -1364,8 +1374,8 @@ export default function Transfer({
                 <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-7 h-7"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /></svg>
               </div>
               <div>
-                <p className="text-white font-bold text-[17px]">따님에게 확인을 요청했어요</p>
-                <p className="text-white/80 text-[12px] mt-0.5">차단이 아니에요 — 함께 확인하는 거예요</p>
+                <p className="text-white font-bold text-[17px]">{paired ? "따님에게 확인을 요청했어요" : "5분 동안 송금이 멈췄어요"}</p>
+                <p className="text-white/80 text-[12px] mt-0.5">{paired ? "차단이 아니에요 — 함께 확인하는 거예요" : "그 사이에 아래 내용을 꼭 확인해 주세요"}</p>
               </div>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 flex flex-col gap-1.5">
@@ -1394,15 +1404,17 @@ export default function Transfer({
                   <p className="text-[11px] text-red-400 mt-0.5">수사기관은 전화로 송금을 요구하지 않아요</p>
                 </div>
               </button>
-              <button className="flex items-center gap-3.5 w-full rounded-xl border border-[var(--ac-200)] bg-[var(--ac-50)] px-4 py-3.5 text-left active:scale-[0.98] transition-all">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ac-100)]">
-                  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="var(--ac-600)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-gray-900">자녀에게 직접 전화하기</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">확인 알림을 보냈지만 직접 통화가 가장 빨라요</p>
-                </div>
-              </button>
+              {paired && (
+                <a href="tel:010-0000-0000" className="flex items-center gap-3.5 w-full rounded-xl border border-[var(--ac-200)] bg-[var(--ac-50)] px-4 py-3.5 text-left active:scale-[0.98] transition-all">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ac-100)]">
+                    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="var(--ac-600)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-gray-900">자녀에게 직접 전화하기</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">확인 알림을 보냈지만 직접 통화가 가장 빨라요</p>
+                  </div>
+                </a>
+              )}
               <button onClick={goHome} className="flex items-center gap-3.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-left active:scale-[0.98] transition-all">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
                   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M18 6L6 18M6 6l12 12" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -1820,7 +1832,7 @@ export default function Transfer({
               <div className="flex gap-1.5">
                 <a href="tel:112" className="rounded-lg border border-gray-200 px-2.5 py-2 text-[11px] font-bold text-gray-700">112</a>
                 <a href="tel:1332" className="rounded-lg border border-gray-200 px-2.5 py-2 text-[11px] font-bold text-gray-700">1332</a>
-                <a href="tel:1588-5000" className="rounded-lg bg-[var(--ac-500)] px-2.5 py-2 text-[11px] font-bold text-white">은행</a>
+                <a href={`tel:${BANK_SUPPORT_PHONE}`} className="rounded-lg bg-[var(--ac-500)] px-2.5 py-2 text-[11px] font-bold text-white">은행</a>
               </div>
             </div>
           </div>

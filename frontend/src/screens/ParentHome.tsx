@@ -149,7 +149,7 @@ const SPENDING_BREAKDOWN = [
 const SPENDING_TOTAL = SPENDING_BREAKDOWN.reduce((s, x) => s + x.amount, 0);
 
 export default function ParentHome({
-  onTransfer, onGuardian, onAccount, onVerify, onLimitIncrease,
+  onTransfer, onGuardian, onAccount, onVerify, onSupport, onLimitIncrease,
   onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS, largeText,
   onSubscribe, openProductKey, onProductOpened,
 }: {
@@ -157,6 +157,7 @@ export default function ParentHome({
   onGuardian: () => void;
   onAccount: (i: number) => void;
   onVerify: () => void;
+  onSupport: () => void;
   onLimitIncrease: () => void;
   onAllAccounts?: () => void;
   onMonthlyDetail?: () => void;
@@ -172,6 +173,7 @@ export default function ParentHome({
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [spendingOpen, setSpendingOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
   const [applyStep, setApplyStep] = useState<"detail" | "amount" | "done">("detail");
   const [applyAmount, setApplyAmount] = useState("");
@@ -238,6 +240,39 @@ export default function ParentHome({
           <button className="mt-3 min-h-14 w-full rounded-2xl border-2 border-gray-200 text-[17px] font-bold text-gray-700">금융상품 모두 보기</button>
         </section>
 
+        <button onClick={onSupport} className="min-h-16 w-full rounded-2xl bg-white p-5 shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+          <span className="text-[18px] font-bold text-gray-900">고객센터</span>
+          <span className="text-[16px] font-bold text-blue-600">문의하기 ›</span>
+        </button>
+
+        <button onClick={() => setPrivacyOpen(true)} className="py-3 text-[13px] text-gray-300 text-center active:scale-95 transition-transform">
+          개인정보처리방침
+        </button>
+
+        {privacyOpen && (
+          <div className="fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-black/40"
+              style={{ animation: "fade-in 180ms ease-out both" }}
+              onClick={() => setPrivacyOpen(false)}
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+              style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+            >
+              <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+              <p className="text-[20px] font-bold text-gray-900">개인정보처리방침</p>
+              <p className="mt-3 text-[15px] text-gray-500 leading-relaxed">방침 내용을 준비 중이에요. 곧 업데이트할게요.</p>
+              <button
+                onClick={() => setPrivacyOpen(false)}
+                className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+                style={{ background: "var(--ac-500)" }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -311,6 +346,20 @@ export default function ParentHome({
         <span className="text-[12px] font-semibold text-blue-500">관리하기</span>
       </button>
 
+      <button onClick={onSupport} className="w-full mt-3 bg-white rounded-2xl p-4 flex items-center gap-4 text-left hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all">
+        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5-1.338A9.955 9.955 0 0012 22z" />
+            <path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3.5M12 16.5h.01" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-bold text-gray-900">고객센터</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">자주 묻는 질문 · 전화 상담 · 1:1 문의</p>
+        </div>
+        <span className="text-[12px] font-semibold text-blue-500">문의하기</span>
+      </button>
+
       <div className="mt-3 bg-white rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
         <p className="text-[16px] font-bold text-gray-900 mb-4">금융상품</p>
         <div className="grid grid-cols-2 gap-3">
@@ -331,6 +380,35 @@ export default function ParentHome({
           ))}
         </div>
       </div>
+
+      <button onClick={() => setPrivacyOpen(true)} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
+        개인정보처리방침
+      </button>
+
+      {privacyOpen && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            style={{ animation: "fade-in 180ms ease-out both" }}
+            onClick={() => setPrivacyOpen(false)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+          >
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+            <p className="text-[18px] font-bold text-gray-900">개인정보처리방침</p>
+            <p className="mt-3 text-[13px] text-gray-500 leading-relaxed">방침 내용을 준비 중이에요. 곧 업데이트할게요.</p>
+            <button
+              onClick={() => setPrivacyOpen(false)}
+              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+              style={{ background: "var(--ac-500)" }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── 월별 지출 바텀시트 ───────────────────────────────────────────── */}
       {spendingOpen && (
@@ -404,6 +482,8 @@ export default function ParentHome({
             {applyStep === "amount" && (() => {
               const amt = parseInt(applyAmount.replace(/,/g, ""), 10) || 0;
               const belowMin = !!selectedProduct.minAmount && amt < selectedProduct.minAmount;
+              const mainBalance = parseInt(accounts[0].balance.replace(/,/g, ""), 10) || 0;
+              const exceedsBalance = amt > mainBalance;
               return (
                 <>
                   <p className="text-[18px] font-bold text-gray-900">{selectedProduct.title} 가입</p>
@@ -430,10 +510,15 @@ export default function ParentHome({
                       최소 {selectedProduct.minAmount.toLocaleString()}원부터 가입 가능해요
                     </p>
                   )}
+                  {exceedsBalance && applyAmount && (
+                    <p className="text-[11px] text-center mb-4 text-red-500">
+                      입출금 계좌 잔액({mainBalance.toLocaleString()}원)을 넘을 수 없어요
+                    </p>
+                  )}
                   <p className="text-[12px] text-gray-400 text-center mb-4">가입 즉시 입출금 계좌에서 이체돼요</p>
                   <button
                     onClick={() => { onSubscribe(amt, selectedProduct.title); setApplyStep("done"); }}
-                    disabled={!applyAmount || belowMin}
+                    disabled={!applyAmount || belowMin || exceedsBalance}
                     className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 disabled:opacity-40 active:scale-[0.98] transition-all"
                   >
                     가입 확정

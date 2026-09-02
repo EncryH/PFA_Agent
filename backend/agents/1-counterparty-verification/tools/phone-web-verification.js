@@ -202,6 +202,17 @@ export async function verifyPhoneWithNaverSearch(rawPhone, config = {}) {
     throw error;
   }
 
+  // 070 인터넷전화 — 공식 금융·정부기관은 쓰지 않는 채널이라 검색 근거 없이도 바로 위험 처리한다.
+  // (수신전화 화면의 callscreen.ts와 같은 판정을 여기서도 유지한다.)
+  if (phone.normalized.startsWith("070")) {
+    return {
+      status: "danger",
+      label: "070 인터넷전화",
+      maskedPhone: phone.masked,
+      detail: "공식 금융·정부기관은 070 번호를 사용하지 않습니다. 보이스피싱을 의심하세요.",
+    };
+  }
+
   const localOfficial = matchWhitelist({ phone: phone.normalized });
   const blacklisted = matchBlacklist(phone.normalized);
   let kdicEvidence = null;

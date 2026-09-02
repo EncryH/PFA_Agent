@@ -1,6 +1,6 @@
 // 상대방 검증 화면 — 전화번호·URL·기관명을 검증해 안전 여부를 알린다.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 function formatPhoneNumber(raw: string): string {
   const d = raw.replace(/\D/g, '');
@@ -61,10 +61,15 @@ export default function Verify({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [checkedPhone, setCheckedPhone] = useState("");
+  // 검증 요청은 fetch를 거치므로 순서대로 끝난다는 보장이 없다 — 탭을 바꿔 다른 검증을
+  // 새로 돌리는 사이에 먼저 보낸 요청이 늦게 돌아오면, 화면에는 최신 검증 결과인데
+  // 응답만 예전 것으로 덮어써질 수 있다. 요청마다 번호를 매겨 최신 요청의 응답만 반영한다.
+  const requestIdRef = useRef(0);
 
   const handleVerify = async () => {
     const q = input.trim();
     if (!q) return;
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setResult(null);
     setCheckedPhone(tab === "전화번호" ? formatPhoneNumber(q) : "");
@@ -73,13 +78,14 @@ export default function Verify({ onBack }: { onBack: () => void }) {
       if (tab === "전화번호") r = await verifyPhone(q);
       else if (tab === "링크·URL") r = await verifyUrl(q);
       else r = await verifyInstitution(q);
+      if (requestId !== requestIdRef.current) return;
       setResult(r);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
-  const reset = () => { setInput(""); setResult(null); setCheckedPhone(""); };
+  const reset = () => { requestIdRef.current++; setInput(""); setResult(null); setCheckedPhone(""); };
 
   return (
     <div className="flex flex-col gap-4 pb-6">

@@ -83,7 +83,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   });
   const fraudType = classifyFraudType({
     llm,
-    signals: risk.codes || observedSignals,
+    signals: risk.codes,
     messages: safeMessages,
   });
   const officialContent = retrieveOfficialContent(fraudType.code);
@@ -103,7 +103,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   const verdictReady = outOfTurns
     || (minimumEvidenceTurnsReached && !evidenceGapQuestion);
 
-  if (risk.level === "HIGH" && !verdictReady) {
+  if (risk.level !== "LOW" && risk.score > 0 && !verdictReady) {
     const probeQuestion = selectProbeQuestion(llm, risk, safeMessages, safeTransfer);
     const fallbackMessage = buildProbeMessage(risk, fraudType, llm, safeMessages, probeQuestion);
     const response = await personalizeResponse({
@@ -223,11 +223,8 @@ const pickIntent = (llm) => ({
 });
 
 /**
- * 결론 전 중간 응답 — 지금 걱정되는 점을 먼저 알려주고 한 가지 더 묻는다.
- * 판정을 미루는 것이지 위험을 숨기는 것이 아니므로, 경고는 이 시점에 이미 전달한다.
- */
-/**
  * 근거 결합 뒤 남은 공백 중 판정에 가장 큰 영향을 주는 것 하나만 묻는다.
+ * 결론을 미루는 것이지 위험을 숨기는 것이 아니므로, 걱정되는 점은 이 시점에 이미 전달한다.
  *
  * - RAG: 현재 대화와 유사 사기 수법을 비교할 요청자·접촉 경로·요구 행동
  * - 거래 패턴: 송금 화면에서 이미 아는 금액·신규 수취인·계좌 표시는 다시 묻지 않음

@@ -43,7 +43,9 @@ export function formatReadableAiMessage(value: string) {
     ].filter(Boolean).join("\n\n");
   }
 
-  if (!text.includes("한 가지만 확인할게요") && text !== FIRST_QUESTION && /[?？]/.test(text)) {
+  // 위 블록이 이미 "확인한 내용이에요" 구조로 재구성했다면 다시 문장분리를 돌리지 않는다.
+  // 다시 돌리면 구두점 없는 제목 줄이 옆 문장에 그대로 붙어버려 제목이 뭉개진다.
+  if (!text.includes("한 가지만 확인할게요") && !text.includes("확인한 내용이에요") && text !== FIRST_QUESTION && /[?？]/.test(text)) {
     const sentences = text
       .replace(/\n+/g, " ")
       .match(/[^.!?]+(?:[.!?]+|$)/g)

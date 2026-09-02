@@ -1,3 +1,6 @@
+// 이 파일의 evaluateFamilyProtection은 채점 로직만 구현돼 있고 어떤 /api 라우트에도 연결돼
+// 있지 않다 — 프론트(shared/protection.ts)가 같은 정책 JSON을 직접 읽어 동일한 판단을
+// 클라이언트에서 내리므로 왕복 호출이 필요 없기 때문이다. 유닛 테스트로만 검증한다.
 import familyProtectionConfig from "../../../shared/family-protection-policy.json" with { type: "json" };
 
 export const feature = Object.freeze({ ...familyProtectionConfig.feature });

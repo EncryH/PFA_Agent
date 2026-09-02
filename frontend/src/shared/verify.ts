@@ -261,8 +261,16 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
     };
   }
 
-  // 화이트리스트 도메인
-  const whiteHit = OFFICIAL_DOMAINS.find((d) => lower.includes(d));
+  // 화이트리스트 도메인 — 반드시 호스트명 기준으로 비교한다. URL 전체 문자열에 대한
+  // includes()는 "gov.kr.evil-phish.tk" 같은 사칭 도메인도 "gov.kr"을 포함한다는 이유로
+  // 안전 판정을 내리는 구멍이 된다.
+  let hostname = "";
+  try {
+    hostname = new URL(lower.startsWith("http") ? lower : `https://${lower}`).hostname;
+  } catch {
+    hostname = "";
+  }
+  const whiteHit = OFFICIAL_DOMAINS.find((d) => hostname === d || hostname.endsWith(`.${d}`));
   if (whiteHit) {
     // HTTPS 여부도 확인
     if (!lower.startsWith("https")) {
@@ -363,9 +371,11 @@ export async function verifyInstitution(name: string): Promise<VerifyResult> {
     return { status: "safe", label: "공식 감독·정부기관", detail: aliasNote + govHit };
   }
 
-  // 2차: 금융위원회 OpenAPI (성공 시 우선 사용)
+  // 2차: 금융위원회 OpenAPI (성공 시 우선 사용) — 빈 배열은 "API는 성공했지만 일치하는
+  // 기관이 없다"는 뜻이라 truthy로 걸러지면 안 된다. 빈 배열도 truthy라 걸러내지 않으면
+  // "유사 등록명: " 처럼 내용 없는 안내가 나가고 3차 로컬 DB 폴백도 못 탄다.
   const apiItems = await fetchFscApi(canonical);
-  if (apiItems) {
+  if (apiItems && apiItems.length > 0) {
     const exact = apiItems.find((it) => it.fncoNm === canonical);
     if (exact) {
       return {

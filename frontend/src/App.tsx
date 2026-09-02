@@ -5,7 +5,7 @@
 //                        └─ Guardian  (안심동행 설정)
 //   자녀 앱: ChildApp
 //
-// 부모↔자녀는 localStorage("ansimAlert") 로만 연결된다.
+// 부모↔자녀는 localStorage(ansimAlert·ansimPaired·ansimProtectionLevel 등 여러 키)로 연결된다.
 
 import { useEffect, useState } from "react";
 import { parentTabs, parentIcons } from "./shared/ui";
@@ -22,12 +22,13 @@ import IncomingMessage from "./screens/IncomingMessage";
 import NotificationShade from "./shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "./shared/SearchOverlay";
 import LimitIncrease from "./screens/LimitIncrease";
+import CustomerCenter from "./screens/CustomerCenter";
 import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
 
-type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit";
+type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit" | "support";
 
 const DEFAULT_DAILY_LIMIT = 5_000_000;
 
@@ -233,6 +234,7 @@ export default function App() {
               />
             )}
             {page === "verify"   && <Verify onBack={() => { setPage("home"); setBehaviorSignals((s) => ({ ...s, verifyVisited: true })); }} />}
+            {page === "support"  && <CustomerCenter onBack={() => setPage("home")} bankName="한결은행" />}
             {page === "limit"    && (
               <LimitIncrease
                 currentLimit={dailyLimit}
@@ -247,7 +249,7 @@ export default function App() {
               <SavingsDetail
                 account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => { setTransferFromIdx(savingsIdx); setPage("transfer"); }}
+                onTransfer={() => { setResumeIntentChatId(null); setTransferFromIdx(savingsIdx); setPage("transfer"); }}
                 isClosed={closedAccounts.has(savingsIdx)}
                 onEarlyClosure={(amount) => {
                   setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: s.savingsEarlyClose + 1 }));
@@ -292,6 +294,7 @@ export default function App() {
                   }
                 }}
                 onVerify={() => setPage("verify")}
+                onSupport={() => setPage("support")}
                 onLimitIncrease={() => setPage("limit")}
                 onAllAccounts={() => setTab("금융")}
                 onMonthlyDetail={() => setTab("금융")}

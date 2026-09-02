@@ -112,6 +112,7 @@ const RECOMMEND = [
 ];
 
 export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: number) => void; showOwned?: boolean }) {
+  const [comingSoon, setComingSoon] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-3">
       {showOwned && (
@@ -151,9 +152,11 @@ export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: n
         <p className="text-[14px] font-bold text-gray-900 mb-3">추천 상품</p>
         <div className="grid grid-cols-2 gap-3">
           {RECOMMEND.map((p) => (
-            <div
+            <button
               key={p.title}
-              className="rounded-xl bg-blue-50/60 p-4 cursor-pointer hover:bg-blue-100/60 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all"
+              type="button"
+              onClick={() => setComingSoon(p.title)}
+              className="rounded-xl bg-blue-50/60 p-4 text-left cursor-pointer hover:bg-blue-100/60 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all"
             >
               <span
                 className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md mb-2 text-white"
@@ -163,10 +166,35 @@ export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: n
               </span>
               <p className="text-[13px] font-semibold text-gray-900">{p.title}</p>
               <p className="text-[11px] text-gray-400 mt-1">{p.desc}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
+
+      {comingSoon && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            style={{ animation: "fade-in 180ms ease-out both" }}
+            onClick={() => setComingSoon(null)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+          >
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+            <p className="text-[18px] font-bold text-gray-900">{comingSoon}</p>
+            <p className="text-[13px] text-gray-500 mt-2">곧 만나보실 수 있어요. 조금만 기다려주세요!</p>
+            <button
+              onClick={() => setComingSoon(null)}
+              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+              style={{ background: "var(--ac-500)" }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

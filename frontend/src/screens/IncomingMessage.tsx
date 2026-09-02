@@ -120,7 +120,11 @@ function LinkCheckSheet({ url, result, onClose }: { url: string; result: VerifyR
             >
               🚨 위험한 링크 — 열지 않기
             </button>
-            <button type="button" onClick={onClose} className="mt-2 w-full py-2 text-[12px] font-medium text-gray-300">
+            <button
+              type="button"
+              onClick={() => { window.open(url, '_blank', 'noopener,noreferrer'); onClose() }}
+              className="mt-2 w-full py-2 text-[12px] font-medium text-gray-300"
+            >
               그래도 열기(권장하지 않음)
             </button>
           </>
@@ -195,7 +199,11 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
         role="button"
         tabIndex={0}
         onClick={dismiss}
-        onKeyDown={(e) => e.key === 'Enter' && dismiss()}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          e.preventDefault()
+          dismiss()
+        }}
         className="w-full text-left"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >

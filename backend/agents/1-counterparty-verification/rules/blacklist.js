@@ -10,7 +10,7 @@ export const BLACKLIST = Object.freeze({
   "01055556666": { reportCount: 3,  scamTypes: ["스미싱"],                lastReported: "2025-09-14" },
   "01099990000": { reportCount: 11, scamTypes: ["투자사기"],              lastReported: "2025-11-01" },
   "1104421783":  { reportCount: 7,  scamTypes: ["보이스피싱"],            lastReported: "2025-10-10" },
-  "1566XXXX":    { reportCount: 2,  scamTypes: ["기관사칭"],              lastReported: "2025-08-22" },
+  "15660000":    { reportCount: 2,  scamTypes: ["기관사칭"],              lastReported: "2025-08-22" },
   "kb-safe.com":      { reportCount: 31, scamTypes: ["피싱사이트"],       lastReported: "2025-11-20" },
   "shinhan-auth.net": { reportCount: 18, scamTypes: ["피싱사이트"],       lastReported: "2025-11-12" },
   "hana-secure.co":   { reportCount: 9,  scamTypes: ["피싱사이트"],       lastReported: "2025-10-30" },

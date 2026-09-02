@@ -18,6 +18,8 @@ const ACTIONS = Object.freeze([
 export function runDamageResponseAgent({ transferId = "", sentAt = "", amount = 0, recipient = "" } = {}) {
   return {
     agent: metadata.key,
+    layer: metadata.layer,
+    evaluated: true,
     decision: "START_GOLDEN_TIME_RESPONSE",
     incident: { transferId, sentAt, amount, recipient },
     actions: ACTIONS,
