@@ -46,11 +46,16 @@ const readPendingAlert = (): PendingAlert | null => {
   }
 };
 
-const DEMO_PAIR_CODE = "3827";
 const PAIR_CODE_KEY = "ansimPairCode";
 const PAIRED_KEY = "ansimPaired";
 const PAIRED_AT_KEY = "ansimPairedAt";   // 연결 시각 — 알림함에 그대로 표시된다
 const PAIRED_EVENT = "ansim-paired";
+
+const createPairCode = () => {
+  const randomValue = new Uint32Array(1);
+  crypto.getRandomValues(randomValue);
+  return String(1000 + (randomValue[0] % 9000));
+};
 
 const CORE_STAGES = [
   { step: "1", title: "상대방이 믿을 만한지 확인해요", desc: "받으신 번호·문자·링크와 수취 정보를 공식 정보와 대조해요" },
@@ -76,6 +81,7 @@ export default function Guardian({
 }) {
   const [step, setStep] = useState<Step>("intro");
   const [pairRole, setPairRole] = useState<"parent" | "child" | null>(null);
+  const [pairCode, setPairCode] = useState(() => localStorage.getItem(PAIR_CODE_KEY) ?? "");
   const [code, setCode] = useState(["", "", "", ""]);
   const [codeError, setCodeError] = useState("");
   const [isPaired, setIsPaired] = useState(() => localStorage.getItem(PAIRED_KEY) === "true");
@@ -173,7 +179,11 @@ export default function Guardian({
     setPairRole(role);
     setCode(["", "", "", ""]);
     setCodeError("");
-    if (role === "parent") localStorage.setItem(PAIR_CODE_KEY, DEMO_PAIR_CODE);
+    if (role === "parent") {
+      const nextPairCode = createPairCode();
+      localStorage.setItem(PAIR_CODE_KEY, nextPairCode);
+      setPairCode(nextPairCode);
+    }
     setStep("code");
   };
 
@@ -189,6 +199,7 @@ export default function Guardian({
     localStorage.setItem(PAIRED_KEY, "true");
     localStorage.setItem(PAIRED_AT_KEY, new Date().toISOString());
     localStorage.removeItem(PAIR_CODE_KEY);
+    setPairCode("");
     pushNotice("paired");
     setIsPaired(true);
     setCodeError("");
@@ -212,6 +223,7 @@ export default function Guardian({
     localStorage.removeItem(PAIRED_KEY);
     localStorage.removeItem(PAIRED_AT_KEY);
     localStorage.removeItem(PAIR_CODE_KEY);
+    setPairCode("");
     pushNotice("unpaired");
     setIsPaired(false);
     setPairRole(null);
@@ -888,7 +900,7 @@ export default function Guardian({
           </p>
           {pairRole === "parent" ? (
             <div className="w-full rounded-2xl bg-[var(--ac-50)] py-6 text-center">
-              <p className="text-[32px] font-bold text-gray-900 tracking-[0.32em] pl-[0.32em]">{DEMO_PAIR_CODE.split("").join(" ")}</p>
+              <p className="text-[32px] font-bold text-gray-900 tracking-[0.32em] pl-[0.32em]">{pairCode.split("").join(" ")}</p>
               <p className="mt-2 text-[12px] text-gray-500">자녀 앱에서 입력할 1회용 연결 코드예요</p>
             </div>
           ) : (

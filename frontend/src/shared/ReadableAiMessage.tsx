@@ -10,6 +10,12 @@ const AI_MESSAGE_HEADINGS = new Set([
   "보내기 전 확인",
 ]);
 
+export function isStructuredAiMessage(value: string) {
+  const text = String(value || "");
+  return [...AI_MESSAGE_HEADINGS].some((heading) => text.includes(heading))
+    || /(?:^|\n)[1-4]\.\s/.test(text);
+}
+
 export function formatReadableAiMessage(value: string) {
   let text = value
     .replace(/\r\n/g, "\n")
@@ -68,8 +74,8 @@ export function formatReadableAiMessage(value: string) {
   return text;
 }
 
-export function formatAiSpeechText(value: string) {
-  return formatReadableAiMessage(value)
+export function formatAiSpeechText(value: string, structured = true) {
+  return (structured ? formatReadableAiMessage(value) : value)
     .replace(/\p{Extended_Pictographic}/gu, "")
     .replace(/\uFE0F|\u200D|\u20E3/g, "")
     .replace(/[ \t]+([,.!?？])/g, "$1")

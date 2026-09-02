@@ -14,6 +14,7 @@ import Transfer from "./screens/Transfer";
 import Guardian from "./screens/Guardian";
 import ParentHome from "./screens/ParentHome";
 import History from "./screens/History";
+import MonthlySpending from "./screens/MonthlySpending";
 import ChildApp from "./screens/ChildApp";
 import Verify from "./screens/Verify";
 import SavingsDetail from "./screens/SavingsDetail";
@@ -32,7 +33,7 @@ import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/Tab
 import { useGlobalCooldown } from "./shared/cooldown";
 import CooldownPopup from "./shared/CooldownPopup";
 
-type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "verify" | "savings" | "limit" | "support" | "privacy";
+type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "monthly-spending" | "verify" | "savings" | "limit" | "support" | "privacy";
 
 const DEFAULT_DAILY_LIMIT = 5_000_000;
 
@@ -166,6 +167,7 @@ export default function App() {
 
   const searchItems: SearchItem[] = [
     { label: "거래내역", desc: "한결은행 입출금통장 거래내역", keywords: ["내역", "이체", "입금", "출금"], onSelect: () => { setAccountIdx(0); setPage("history"); } },
+    { label: "9월 이용 내역", desc: "이번 달 이체·자동이체·체크카드 내역", keywords: ["9월", "이용", "지출", "월별"], onSelect: () => setPage("monthly-spending") },
     { label: "송금", desc: "계좌이체 보내기", keywords: ["이체", "보내기"], onSelect: () => goToTransfer(0) },
     { label: "이체한도 상향", desc: "1일 이체한도 관리", keywords: ["한도", "상향", "이체한도"], onSelect: () => setPage("limit") },
     { label: "상대방 검증", desc: "번호·링크·기관명 안전 여부 확인", keywords: ["검증", "사기", "확인"], onSelect: () => setPage("verify") },
@@ -300,6 +302,17 @@ export default function App() {
                 extraRows={extraTxns[liveAccounts[accountIdx].account] ?? []}
               />
             )}
+            {page === "monthly-spending" && (
+              <MonthlySpending
+                onBack={() => setPage("home")}
+                onGuardian={() => setPage("guardian")}
+                onTransfer={() => {
+                  setResumeIntentChatId(null);
+                  setTransferFromIdx(0);
+                  setPage("transfer");
+                }}
+              />
+            )}
             {page === "home" && tab === "홈" && (
               <ParentHome
                 onTransfer={(i) => goToTransfer(i)}
@@ -319,7 +332,7 @@ export default function App() {
                 onPrivacy={() => setPage("privacy")}
                 onLimitIncrease={() => setPage("limit")}
                 onAllAccounts={() => setTab("금융")}
-                onMonthlyDetail={() => setTab("금융")}
+                onMonthlyDetail={() => setPage("monthly-spending")}
                 accounts={liveAccounts}
                 onSubscribe={handleSubscribe}
                 openProductKey={openProductKey}

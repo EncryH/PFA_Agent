@@ -5,13 +5,20 @@
 ## PDF 8개
 
 1. `guide_pdf.pdf`
+
 2. `[FSI Intelligence Report] Operation BlackEcho (KOR).pdf`
+
 3. `사기 예방 백과사전.pdf`
+
 4. `[한국금융소비자보호재단] 보이스피싱 알아야 막을 수 있다! 피해 사례와 예방법.pdf`
+
 5. `보험연구원(KIRI).pdf`
+
 6. `[최종본_내지]_가상자산_연계_투자사기_사례집_240417.pdf`
+
 7. `[pdf]전자금융범죄.pdf`
-8. `보이스피싱_피해자의_심리분석을_통한_피해예방연구_2024년도_대검찰청_연구용역보고서.pdf`
+
+   `보이스피싱_피해자의_심리분석을_통한_피해예방연구_2024년도_대검찰청_연구용역보고서.pdf`
 
 - 금융투자협회 「행복 금융투자 길라잡이」: https://www.kofia.or.kr/files/www/guide_pdf.pdf
 - 금융보안원 「Operation BlackEcho」: https://www.fsec.or.kr/bbs/detail?bbsNo=11611&menuNo=244

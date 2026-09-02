@@ -1,7 +1,11 @@
 // 백엔드 /api/intent 호출.
 // 판정 로직은 전부 backend/ 에 있다 — 여기서는 결과를 받아 화면에 넘기기만 한다.
 
-export type ChatMessage = { role: "ai" | "user"; text: string };
+export type ChatMessage = {
+  role: "ai" | "user";
+  text: string;
+  display?: "plain" | "structured";
+};
 
 export type TransferContext = {
   userId?: "demo-parent-01" | "demo-parent-02" | "demo-parent-03";
@@ -15,6 +19,14 @@ export type TransferContext = {
   patternRiskScore?: number;
   reportedAccount?: boolean;
   callInProgress?: boolean;
+};
+
+export type ConversationState = {
+  resumed: boolean;
+  analysisDone: boolean;
+  analysisHold: boolean;
+  fraudTypeLabel?: string;
+  riskLabels?: string[];
 };
 
 /** 사기 유형별로 미리 큐레이션한 공식 자료 — 금감원 사례·영상 */
@@ -91,6 +103,14 @@ export type Verdict = {
   };
   /** LLM 장애로 사전 정의 시나리오를 쓴 경우 */
   fallback: boolean;
+  middleware?: {
+    route: "STATIC" | "GENERAL" | "RISK" | "BLOCK";
+    confidence: number;
+    reason: string;
+    securityFlags: string[];
+    bypassedHeavyPipeline: boolean;
+    sessionLocked: boolean;
+  };
 };
 
 export const FIRST_QUESTION = "처음 보내는 계좌예요. 어떤 돈인지 여쭤봐도 될까요? 😊";
@@ -108,13 +128,14 @@ const OFFLINE: Verdict = {
 export async function takeTurn(
   transfer: TransferContext,
   messages: ChatMessage[],
-  turn: number
+  turn: number,
+  conversationState?: ConversationState,
 ): Promise<Verdict> {
   try {
     const res = await fetch("/api/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transfer, messages, turn }),
+      body: JSON.stringify({ transfer, messages, turn, conversationState }),
     });
     if (!res.ok) throw new Error(`/api/intent ${res.status}`);
     return await res.json();
