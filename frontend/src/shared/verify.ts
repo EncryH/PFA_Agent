@@ -231,7 +231,11 @@ export async function verifyPhone(raw: string): Promise<VerifyResult> {
 // (키는 루트 .env 의 GOOGLE_SAFE_BROWSING_API_KEY, backend/safebrowsing.js 에서만 쓰인다).
 async function fetchSafeBrowsing(url: string): Promise<{ threat: boolean; threatTypes?: string[] } | null> {
   try {
-    const res = await fetch(`/api/safe-browsing/check?url=${encodeURIComponent(url)}`);
+    const res = await fetch("/api/safe-browsing/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json?.result ?? null;

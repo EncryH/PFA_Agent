@@ -50,6 +50,34 @@ test("개인 거래 패턴은 신규 고액 송금을 최대 40점 안에서 가
   assert.match(context, /개인 패턴 위험 점수: 35점/);
 });
 
+test("이전 송금 내역이 부족하면 개인 패턴을 추정하지 않는다", async () => {
+  const fakeClient = () => Promise.resolve([{
+    outgoing_count: 1,
+    transfer_count: 1,
+    average_transfer_amount: 400_000,
+    median_transfer_amount: 400_000,
+    maximum_transfer_amount: 400_000,
+    recipient_transfer_count: 0,
+    typical_transfer_hour: 13,
+    family_count: 0,
+    housing_count: 0,
+    consumption_count: 0,
+  }]);
+  const pattern = await retrieveTransactionPattern({
+    transfer: {
+      user_id: "demo-parent-01",
+      amount: 5_000_000,
+      occurred_at: "2026-09-03T13:00:00+09:00",
+      recipient_account_hash: "acct_new",
+    },
+  }, { client: fakeClient });
+
+  assert.equal(pattern.status, "insufficient");
+  assert.equal(pattern.risk_score, 0);
+  assert.equal(pattern.reason, "insufficient_transaction_history");
+  assert.match(formatTransactionPatternContext(pattern), /개인 패턴을 추정하지 않음/);
+});
+
 test("평소 범위의 기존 수취인 송금은 개인 패턴 위험 점수를 더하지 않는다", () => {
   const risk = calculatePatternRisk({
     transfer_count: 20,

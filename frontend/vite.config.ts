@@ -266,7 +266,7 @@ function fscApi(apiKey: string): Plugin {
   }
 }
 
-// Google Safe Browsing 프록시 — GET /api/safe-browsing/check?url=...
+// Google Safe Browsing 프록시 — POST /api/safe-browsing/check { url }
 // 데이터포털 서비스키와 같은 이유로(브라우저 노출·쿼터 남용 방지) 서버가 대신 호출한다.
 // 실제 조회 로직은 backend/safebrowsing.js — verify.ts 의 verifyUrl()이 여기로 부른다.
 function safeBrowsingApi(apiKey: string): Plugin {
@@ -276,18 +276,35 @@ function safeBrowsingApi(apiKey: string): Plugin {
       const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/safebrowsing.js')).href
       server.middlewares.use('/api/safe-browsing/check', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Cache-Control', 'no-store')
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          return res.end(JSON.stringify({ error: 'POST only' }))
+        }
         try {
-          const url = new URL(req.url ?? '', 'http://localhost')
-          const target = url.searchParams.get('url') ?? ''
+          const chunks: Buffer[] = []
+          let size = 0
+          for await (const chunk of req) {
+            const buffer = chunk as Buffer
+            size += buffer.length
+            if (size > 8192) throw new Error('REQUEST_TOO_LARGE')
+            chunks.push(buffer)
+          }
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+          const target = String(body.url ?? '').trim()
           if (!target) {
             res.statusCode = 400
-            return res.end(JSON.stringify({ error: 'url query param required' }))
+            return res.end(JSON.stringify({ error: 'url required' }))
           }
           const { checkUrlThreat } = await import(handlerPath)
           const result = await checkUrlThreat(target, apiKey)
           res.statusCode = 200
           res.end(JSON.stringify({ result }))
         } catch (e) {
+          if ((e as Error).message === 'REQUEST_TOO_LARGE') {
+            res.statusCode = 413
+            return res.end(JSON.stringify({ error: '요청이 너무 큽니다' }))
+          }
           console.error('[ansim-safe-browsing-api]', e)
           res.statusCode = 502
           res.end(JSON.stringify({ error: (e as Error).message }))

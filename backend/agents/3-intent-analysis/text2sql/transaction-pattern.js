@@ -2,6 +2,7 @@ import { getText2SqlClient } from "./client.js";
 
 const DEFAULT_USER_ID = "demo-parent-01";
 const USER_ID_PATTERN = /^demo-parent-0[1-3]$/;
+const MIN_PATTERN_TRANSFERS = 3;
 
 function number(value) {
   const parsed = Number(value);
@@ -134,6 +135,22 @@ export async function retrieveTransactionPattern(input = {}, {
       housing_count: number(row.housing_count),
       consumption_count: number(row.consumption_count),
     };
+    if (stats.transfer_count < MIN_PATTERN_TRANSFERS) {
+      return {
+        status: "insufficient",
+        method: "supabase_parameterized_sql",
+        query_intent: "최근 12개월 송금액·수취인·시간대·생활 패턴 비교",
+        user_id: userId,
+        lookback_months: 12,
+        ...stats,
+        recipient_known: stats.recipient_transfer_count > 0,
+        current_amount: number(transfer.amount),
+        current_hour: hour,
+        risk_score: 0,
+        risk_reasons: [],
+        reason: "insufficient_transaction_history",
+      };
+    }
     const risk = calculatePatternRisk(stats, { amount: transfer.amount, hour });
     return {
       status: "ready",
@@ -162,6 +179,9 @@ export async function retrieveTransactionPattern(input = {}, {
 }
 
 export function formatTransactionPatternContext(pattern = {}) {
+  if (pattern.status === "insufficient") {
+    return "[개인 거래 패턴 근거]\n비교 가능한 이전 송금 내역이 부족함 — 개인 패턴을 추정하지 않음";
+  }
   if (pattern.status !== "ready") return "[개인 거래 패턴 근거]\n조회되지 않음";
   const known = pattern.recipient_known
     ? `최근 12개월 ${pattern.recipient_transfer_count}회 송금한 수취인`

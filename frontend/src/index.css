@@ -1,19 +1,6 @@
 @import "tailwindcss";
 
-/* Spoqa Han Sans Neo — Bold 한 가지 굵기만 쓴다. 이 굵기 하나만 등록해 두면
-   font-bold·font-semibold 등 다른 굵기를 요청하는 기존 클래스도 전부 이 얼굴로
-   렌더링된다(등록된 얼굴이 하나뿐이라 브라우저가 항상 이걸 고른다).
-   jsDelivr(GitHub) CDN에 특정 버전으로 고정 — spoqa.github.io 공식 배포는
-   무료 호스팅이라 로딩이 느릴 수 있다는 게 공식 안내라 더 빠른 CDN을 쓴다. */
-@font-face {
-  font-family: "Spoqa Han Sans Neo";
-  font-weight: 700;
-  font-display: swap;
-  src:
-    local("Spoqa Han Sans Neo Bold"),
-    url("https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@3.3.0/Subset/SpoqaHanSansNeo/SpoqaHanSansNeo-Bold.woff2") format("woff2"),
-    url("https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@3.3.0/Subset/SpoqaHanSansNeo/SpoqaHanSansNeo-Bold.woff") format("woff");
-}
+/* 페이지를 여는 것만으로 글꼴 CDN에 접속하지 않도록 기기 기본 한글 글꼴만 사용한다. */
 
 @theme {
   /* FIN Bank 브랜드 */
@@ -34,7 +21,7 @@
 
 body {
   background-color: #ffffff;
-  font-family: "Spoqa Han Sans Neo", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-weight: 700;
 }
 

@@ -9,6 +9,7 @@
 // 위험 이벤트의 최소 정보(금액·수취계좌·판정 근거·대화)만 기록한다.
 
 import { useEffect, useState } from "react";
+import { maskAccountForFamily } from "./privacyStorage";
 
 export type GuardianDecision = "approved" | "held" | null;
 
@@ -40,9 +41,14 @@ export function readGuardianLog(): GuardianLogEntry[] {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
     if (!Array.isArray(raw)) return [];
-    return raw
+    const entries = raw
       .filter((item): item is GuardianLogEntry => item?.schemaVersion === 1 && typeof item?.id === "string")
+      .map((item) => ({ ...item, account: maskAccountForFamily(item.account, item.bank) }))
       .sort((left, right) => Date.parse(right.raisedAt) - Date.parse(left.raisedAt));
+    if (JSON.stringify(entries) !== JSON.stringify(raw)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
+    }
+    return entries;
   } catch {
     return [];
   }

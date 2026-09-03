@@ -25,8 +25,10 @@ import {
   readEmergencyReceipts,
   type EmergencyReceipt,
 } from "../shared/emergencyReceipt";
+import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type Step = "intro" | "select" | "code" | "done" | "permissions";
+type HistoryImportStatus = "prompt" | "loading" | "success";
 
 type PendingAlert = {
   amount: number;
@@ -40,7 +42,9 @@ type PendingAlert = {
 const readPendingAlert = (): PendingAlert | null => {
   try {
     const stored = localStorage.getItem("ansimAlert");
-    return stored ? JSON.parse(stored) as PendingAlert : null;
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as PendingAlert;
+    return { ...parsed, account: maskAccountForFamily(parsed.account, parsed.bank) };
   } catch {
     return null;
   }
@@ -50,11 +54,27 @@ const PAIR_CODE_KEY = "ansimPairCode";
 const PAIRED_KEY = "ansimPaired";
 const PAIRED_AT_KEY = "ansimPairedAt";   // 연결 시각 — 알림함에 그대로 표시된다
 const PAIRED_EVENT = "ansim-paired";
+const TRANSACTION_HISTORY_STATUS_KEY = "ansimTransactionHistoryStatusV2";
 
 const createPairCode = () => {
   const randomValue = new Uint32Array(1);
   crypto.getRandomValues(randomValue);
   return String(1000 + (randomValue[0] % 9000));
+};
+
+const formatPairedDate = (value: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}.${part("month")}.${part("day")}`;
 };
 
 const CORE_STAGES = [
@@ -71,13 +91,14 @@ const PROMISES = [
 ];
 
 export default function Guardian({
-  onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest,
+  onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest, onEmergency,
 }: {
   onExit: () => void;
   appRole: "parent" | "child";
   onResumeIntentChat?: (id: string) => void;
   onOpenPendingConfirmation?: (id: string) => void;
   onOpenPendingRequest?: () => void;
+  onEmergency?: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
   const [pairRole, setPairRole] = useState<"parent" | "child" | null>(null);
@@ -85,6 +106,7 @@ export default function Guardian({
   const [code, setCode] = useState(["", "", "", ""]);
   const [codeError, setCodeError] = useState("");
   const [isPaired, setIsPaired] = useState(() => localStorage.getItem(PAIRED_KEY) === "true");
+  const [pairedAt, setPairedAt] = useState<string | null>(() => localStorage.getItem(PAIRED_AT_KEY));
   const [intentChats, setIntentChats] = useState<IntentChatSession[]>(() => readIntentChatSessions());
   const guardianLog = useGuardianLog();
   const [openLogId, setOpenLogId] = useState<string | null>(null);
@@ -92,6 +114,9 @@ export default function Guardian({
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const [openLogMenuId, setOpenLogMenuId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<null | { kind: "chat" | "log"; id: string }>(null);
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [historyPromptOpen, setHistoryPromptOpen] = useState(false);
+  const [historyImportStatus, setHistoryImportStatus] = useState<HistoryImportStatus>("prompt");
   const [pendingAlert, setPendingAlert] = useState<PendingAlert | null>(readPendingAlert);
   const [protectionLevel, setProtectionLevel] = useProtectionLevel();
   const [aiReviewThreshold, setAiReviewThreshold] = useAiReviewThreshold();
@@ -110,6 +135,15 @@ export default function Guardian({
     setDraftAiReviewThreshold(aiReviewThreshold);
     setCustomThresholdManwon(String(Math.floor(aiReviewThreshold / 10_000)));
   }, [aiReviewThreshold]);
+
+  useEffect(() => {
+    if (!historyPromptOpen || historyImportStatus !== "loading") return;
+    const timer = window.setTimeout(() => {
+      localStorage.setItem(TRANSACTION_HISTORY_STATUS_KEY, "ready");
+      setHistoryImportStatus("success");
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [historyImportStatus, historyPromptOpen]);
 
   const selectAiReviewThreshold = (amount: AiReviewThreshold) => {
     if (appRole !== "parent") return;
@@ -134,6 +168,7 @@ export default function Guardian({
     const syncPairing = () => {
       const paired = localStorage.getItem(PAIRED_KEY) === "true";
       setIsPaired(paired);
+      setPairedAt(paired ? localStorage.getItem(PAIRED_AT_KEY) : null);
       if (paired && pairRole === "parent") setStep("done");
     };
 
@@ -196,21 +231,21 @@ export default function Guardian({
       return;
     }
 
+    const connectedAt = new Date().toISOString();
     localStorage.setItem(PAIRED_KEY, "true");
-    localStorage.setItem(PAIRED_AT_KEY, new Date().toISOString());
+    localStorage.setItem(PAIRED_AT_KEY, connectedAt);
     localStorage.removeItem(PAIR_CODE_KEY);
+    setProtectionLevel(0);
     setPairCode("");
     pushNotice("paired");
     setIsPaired(true);
+    setPairedAt(connectedAt);
     setCodeError("");
     setStep("done");
     window.dispatchEvent(new Event(PAIRED_EVENT));
   };
 
   const disconnectFamily = () => {
-    const target = appRole === "parent" ? "자녀와의 안심동행 연결" : "부모님과의 안심동행 연결";
-    if (!window.confirm(`${target}을 해제할까요?\n해제 후에는 위험 거래 알림이 전달되지 않아요.`)) return;
-
     // 이전 버전에서 연결한 세션은 완료 알림 로그가 없을 수 있다.
     // 해제 전에 누락된 연결 기록을 복원해 두 알림이 모두 남게 한다.
     const notices = readNotices();
@@ -223,9 +258,11 @@ export default function Guardian({
     localStorage.removeItem(PAIRED_KEY);
     localStorage.removeItem(PAIRED_AT_KEY);
     localStorage.removeItem(PAIR_CODE_KEY);
+    setDisconnectOpen(false);
     setPairCode("");
     pushNotice("unpaired");
     setIsPaired(false);
+    setPairedAt(null);
     setPairRole(null);
     setStep("intro");
     window.dispatchEvent(new Event(PAIRED_EVENT));
@@ -259,6 +296,32 @@ export default function Guardian({
     }
 
     setPendingDelete(null);
+  };
+
+  const beginPairing = () => {
+    const transactionHistoryStatus = localStorage.getItem(TRANSACTION_HISTORY_STATUS_KEY) ?? "insufficient";
+    if (appRole === "parent" && transactionHistoryStatus === "insufficient") {
+      setHistoryImportStatus("prompt");
+      setHistoryPromptOpen(true);
+      return;
+    }
+    setStep("select");
+  };
+
+  const startExternalHistoryImport = () => {
+    setHistoryImportStatus("loading");
+  };
+
+  const continueAfterHistoryImport = () => {
+    setHistoryPromptOpen(false);
+    setHistoryImportStatus("prompt");
+    setStep("select");
+  };
+
+  const continueWithoutExternalHistory = () => {
+    setHistoryPromptOpen(false);
+    setHistoryImportStatus("prompt");
+    setStep("select");
   };
 
   return (
@@ -340,7 +403,7 @@ export default function Guardian({
                     <p className="mt-1 text-[10px] text-gray-400">현재 가족 보호</p>
                   </div>
                   <div className="rounded-xl border border-gray-100 px-3 py-3">
-                    <p className="text-[13px] font-bold text-gray-900">2026.08.15</p>
+                    <p className="text-[13px] font-bold text-gray-900">{formatPairedDate(pairedAt)}</p>
                     <p className="mt-1 text-[10px] text-gray-400">연동일</p>
                   </div>
                 </div>
@@ -626,7 +689,7 @@ export default function Guardian({
                   </svg>
                 </button>
 
-                <button onClick={disconnectFamily} className="w-full rounded-xl border border-gray-200 bg-white py-3 text-[12px] font-semibold text-red-500 active:scale-[0.98] transition-all">
+                <button onClick={() => setDisconnectOpen(true)} className="w-full rounded-xl border border-gray-200 bg-white py-3 text-[12px] font-semibold text-red-500 active:scale-[0.98] transition-all">
                   {appRole === "parent" ? "자녀 연결 해제" : "부모님 연결 해제"}
                 </button>
                 <p className="text-center text-[10px] leading-relaxed text-gray-400">
@@ -635,6 +698,28 @@ export default function Guardian({
               </div>
             )}
           </div>
+
+          {appRole === "parent" && onEmergency && (
+            <button
+              type="button"
+              onClick={onEmergency}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-left shadow-sm transition-all hover:border-red-200 hover:bg-red-100/70 active:scale-[0.98]"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-sm shadow-red-200">
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+                  <path d="M12 3 4.5 6v5.2c0 4.4 3.1 8.3 7.5 9.8 4.4-1.5 7.5-5.4 7.5-9.8V6L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M12 8v4.5M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-extrabold text-red-700">피해 대응 시작하기</span>
+                <span className="mt-1 block text-[11px] leading-relaxed text-red-500">이미 송금했거나 피해가 의심된다면 바로 대응할 수 있어요.</span>
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0 text-red-300 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
 
@@ -866,7 +951,7 @@ export default function Guardian({
             ))}
           </div>
 
-          <button onClick={() => setStep("select")} className="w-full py-4 rounded-2xl text-[16px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
+          <button onClick={beginPairing} className="w-full py-4 rounded-2xl text-[16px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
             시작하기
           </button>
         </div>
@@ -1047,6 +1132,172 @@ export default function Guardian({
                 삭제하기
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {disconnectOpen && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="연결 해제 확인 닫기"
+            onClick={() => setDisconnectOpen(false)}
+            className="absolute inset-0 bg-black/35"
+            style={{ animation: "fade-in .18s ease-out" }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="disconnect-dialog-title"
+            className="relative w-full max-w-[340px] rounded-[28px] bg-white p-5 shadow-2xl"
+            style={{ animation: "fade-in .18s ease-out" }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--ac-100)] bg-[var(--ac-50)] shadow-sm">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  안심동행 AI
+                </div>
+                <p id="disconnect-dialog-title" className="mt-2 text-[17px] font-extrabold text-gray-950">
+                  {appRole === "parent" ? "자녀와의 연결을 해제할까요?" : "부모님과의 연결을 해제할까요?"}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-gray-500">
+                  해제 후에는 위험 거래 알림이 가족에게 전달되지 않아요.
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-4 rounded-2xl bg-[var(--ac-50)] px-4 py-3 text-[12px] leading-relaxed text-[var(--ac-700)]">
+              은행 계좌와 거래내역에는 영향을 주지 않으며, 나중에 다시 연결할 수 있어요.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setDisconnectOpen(false)}
+                className="rounded-2xl bg-gray-100 py-3.5 text-[14px] font-bold text-gray-600 active:scale-[0.98] transition-transform"
+              >
+                아니오
+              </button>
+              <button
+                type="button"
+                onClick={disconnectFamily}
+                className="rounded-2xl bg-red-500 py-3.5 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
+              >
+                예, 해제할게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historyPromptOpen && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="거래내역 불러오기 안내 닫기"
+            disabled={historyImportStatus === "loading"}
+            onClick={historyImportStatus === "success" ? continueAfterHistoryImport : continueWithoutExternalHistory}
+            className="absolute inset-0 bg-black/35"
+            style={{ animation: "fade-in .18s ease-out" }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="history-prompt-title"
+            className="relative w-full max-w-[340px] rounded-[28px] bg-white p-5 shadow-2xl"
+            style={{ animation: "fade-in .18s ease-out" }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--ac-100)] bg-[var(--ac-50)] shadow-sm">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  안심동행 AI
+                </div>
+                <p id="history-prompt-title" className="mt-2 text-[17px] font-extrabold text-gray-950">
+                  {historyImportStatus === "prompt" && "이전 거래내역이 부족해요"}
+                  {historyImportStatus === "loading" && "거래내역을 불러오고 있어요"}
+                  {historyImportStatus === "success" && "거래내역을 불러왔습니다"}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-gray-500">
+                  {historyImportStatus === "prompt" && "은행을 옮긴 지 얼마 되지 않았다면 평소 송금 패턴을 충분히 비교하기 어려울 수 있어요."}
+                  {historyImportStatus === "loading" && "연결된 금융기관의 최근 거래를 안전하게 확인하고 있어요."}
+                  {historyImportStatus === "success" && "이제 이전 거래를 바탕으로 평소 송금 패턴과 더 정확히 비교할 수 있어요."}
+                </p>
+              </div>
+            </div>
+
+            {historyImportStatus === "prompt" && (
+              <>
+                <div className="mt-4 rounded-2xl bg-[var(--ac-50)] px-4 py-3.5">
+                  <p className="text-[13px] font-bold text-[var(--ac-800)]">다른 금융 내역을 함께 볼까요?</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-[var(--ac-700)]">
+                    이전 은행·카드의 거래내역을 불러오면 송금액, 수취인, 시간대를 더 정확한 근거로 비교할 수 있어요.
+                  </p>
+                </div>
+
+                <p className="mt-3 flex items-start gap-1.5 text-[10px] leading-relaxed text-gray-400">
+                  <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true">
+                    <path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5V11Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  거래내역은 송금 위험 분석에만 사용하며 자녀에게 공개하지 않아요.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={startExternalHistoryImport}
+                  className="mt-5 w-full rounded-2xl bg-[var(--ac-600)] py-3.5 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
+                >
+                  다른 금융에서 거래내역 불러오기
+                </button>
+                <button
+                  type="button"
+                  onClick={continueWithoutExternalHistory}
+                  className="mt-2 w-full py-2 text-[13px] font-semibold text-gray-400 active:scale-[0.98] transition-transform"
+                >
+                  지금은 건너뛰기
+                </button>
+              </>
+            )}
+
+            {historyImportStatus === "loading" && (
+              <div className="mt-5 rounded-2xl bg-[var(--ac-50)] px-4 py-6 text-center" aria-live="polite">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7 animate-spin text-[var(--ac-500)]" aria-hidden="true">
+                    <path d="M12 3a9 9 0 1 1-8.56 6.22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <p className="mt-4 text-[13px] font-bold text-[var(--ac-800)]">최근 12개월 거래를 확인하는 중</p>
+                <p className="mt-1 text-[11px] text-[var(--ac-600)]">잠시만 기다려 주세요</p>
+              </div>
+            )}
+
+            {historyImportStatus === "success" && (
+              <div aria-live="polite">
+                <div className="mt-5 rounded-2xl bg-emerald-50 px-4 py-5 text-center">
+                  <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm shadow-emerald-200">
+                    <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" aria-hidden="true">
+                      <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <p className="mt-4 text-[13px] font-bold text-emerald-800">분석에 필요한 이전 내역을 준비했어요</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-emerald-600">송금액·수취인·시간대 비교에 활용할 수 있어요.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={continueAfterHistoryImport}
+                  className="mt-5 w-full rounded-2xl bg-[var(--ac-600)] py-3.5 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
+                >
+                  계속하기
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

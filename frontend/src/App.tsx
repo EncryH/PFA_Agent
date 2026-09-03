@@ -65,6 +65,8 @@ export default function App() {
   const [openProductKey, setOpenProductKey] = useState<string | null>(null);
   const cooldownSecondsLeft = useGlobalCooldown();
   const [showCooldownPopup, setShowCooldownPopup] = useState(false);
+  const [showAmountResetConfirm, setShowAmountResetConfirm] = useState(false);
+  const [amountResetNotice, setAmountResetNotice] = useState(false);
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
@@ -79,6 +81,27 @@ export default function App() {
     setResumeIntentChatId(null);
     if (fromIdx !== undefined) setTransferFromIdx(fromIdx);
     setPage("transfer");
+  };
+
+  // 심사 데모 중 변경된 금융 금액 상태만 초기값으로 되돌린다.
+  // 상담 기록·가족 연결·보호 단계·쿨다운은 안전 기능 상태이므로 유지한다.
+  const resetDemoAmounts = () => {
+    setBalanceOverrides({});
+    setClosedAccounts(new Set());
+    setExtraTxns({});
+    setDailyLimit(DEFAULT_DAILY_LIMIT);
+    setDailyTransferred(0);
+    setAccountIdx(0);
+    setSavingsIdx(1);
+    setTransferFromIdx(0);
+    setResumeIntentChatId(null);
+    setResumeIntentToHold(false);
+    setOpenProductKey(null);
+    setTab("홈");
+    setPage("home");
+    setShowAmountResetConfirm(false);
+    setAmountResetNotice(true);
+    window.setTimeout(() => setAmountResetNotice(false), 2_000);
   };
 
   const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string, toAccount: string) => {
@@ -134,10 +157,16 @@ export default function App() {
 
   useEffect(() => {
     const syncPairing = () => setPaired(localStorage.getItem("ansimPaired") === "true");
+    const resetPrivateState = () => {
+      setPaired(false);
+      setLargeText(false);
+    };
     window.addEventListener("ansim-paired", syncPairing);
+    window.addEventListener("ansim-privacy-reset", resetPrivateState);
     window.addEventListener("storage", syncPairing);
     return () => {
       window.removeEventListener("ansim-paired", syncPairing);
+      window.removeEventListener("ansim-privacy-reset", resetPrivateState);
       window.removeEventListener("storage", syncPairing);
     };
   }, []);
@@ -255,6 +284,10 @@ export default function App() {
                   setResumeIntentToHold(true);
                   setResumeIntentChatId(id);
                   setPage("transfer");
+                }}
+                onEmergency={() => {
+                  setResumeIntentChatId(null);
+                  setPage("emergency");
                 }}
               />
             )}
@@ -406,15 +439,76 @@ export default function App() {
         {activeMessage && <IncomingMessage message={activeMessage} onDismiss={() => setActiveMessage(null)} />}
       </div>
 
-      {/* ── 부모/자녀 앱 전환 (데모용) ── */}
-      <button
-        type="button"
-        onClick={toggleRole}
-        className="group fixed left-[calc(50%+235px)] top-5 z-[90] flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:shadow-xl hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
-        {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
-      </button>
+      {/* ── 앱 외부 데모 조작 ── */}
+      <div className="fixed left-[calc(50%+235px)] top-5 z-[90] flex items-center gap-2 max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24">
+        <button
+          type="button"
+          onClick={toggleRole}
+          className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-300 group-hover:rotate-180"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
+          {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowAmountResetConfirm(true)}
+          className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
+          aria-label="데모 금액 상태 초기화"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" aria-hidden="true">
+            <path d="M20 11a8 8 0 10-2.34 5.66" />
+            <path d="M20 4v7h-7" />
+          </svg>
+          금액 초기화
+        </button>
+      </div>
+
+      {showAmountResetConfirm && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/45 px-5 backdrop-blur-[2px]"
+          onClick={() => setShowAmountResetConfirm(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="amount-reset-title"
+            className="w-full max-w-[360px] rounded-[24px] bg-white p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
+                <path d="M20 11a8 8 0 10-2.34 5.66" />
+                <path d="M20 4v7h-7" />
+              </svg>
+            </div>
+            <h2 id="amount-reset-title" className="mt-4 text-[18px] font-extrabold text-gray-900">금액 초기화</h2>
+            <p className="mt-2 text-[15px] font-semibold leading-relaxed text-gray-700">금액 상태를 처음으로 되돌릴까요?</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-gray-500">AI 상담 기록과 가족 연결은 유지돼요.</p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAmountResetConfirm(false)}
+                className="h-12 rounded-xl bg-gray-100 text-[14px] font-bold text-gray-600 active:scale-[0.98] transition-transform"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={resetDemoAmounts}
+                className="h-12 rounded-xl bg-blue-600 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
+              >
+                초기화하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {amountResetNotice && (
+        <div role="status" className="fixed left-1/2 top-6 z-[130] -translate-x-1/2 rounded-full bg-gray-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-xl">
+          금액이 처음 상태로 돌아갔어요
+        </div>
+      )}
 
       {/* ── 앱 외부 시뮬레이션 버튼 (안심동행 연결 후 기능 1번 데모로만 노출) ── */}
       {paired && (

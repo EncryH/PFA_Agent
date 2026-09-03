@@ -8,6 +8,7 @@ export type EmergencyReceipt = {
 };
 
 const STORAGE_KEY = "ansimEmergencyReceipts";
+const MAX_ENTRIES = 20;
 export const EMERGENCY_RECEIPT_EVENT = "ansim-emergency-receipts";
 
 export function readEmergencyReceipts(): EmergencyReceipt[] {
@@ -21,6 +22,6 @@ export function readEmergencyReceipts(): EmergencyReceipt[] {
 
 export function saveEmergencyReceipt(receipt: EmergencyReceipt) {
   const receipts = readEmergencyReceipts().filter((item) => item.id !== receipt.id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([receipt, ...receipts]));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([receipt, ...receipts].slice(0, MAX_ENTRIES)));
   window.dispatchEvent(new Event(EMERGENCY_RECEIPT_EVENT));
 }

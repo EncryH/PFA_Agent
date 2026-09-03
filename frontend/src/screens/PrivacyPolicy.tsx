@@ -1,460 +1,294 @@
-// 개인정보처리방침 — 개인정보 보호법 제30조 및 개인정보보호위원회 「개인정보 처리방침 작성지침」(2026.4.)에 따라 작성.
-// 실제 구현(로컬 저장·마스킹 후 외부 전송·가족 공유 범위·D등급 자동 송금정지·거래패턴 DB 조회)에 맞춰 항목을 채웠다.
-// 코드 검증 결과 반영: 예금보험공사·금융위원회 API는 개인정보를 전송하지 않는 공개데이터 단순조회이므로 위탁·국외이전
-// 대상에서 제외했고, 고객센터 문의는 서버 저장 없이 기기에만 남으며, 지급정지는 회사가 직접 수행하지 않는다.
-// [확인 필요] 표시는 실제 서비스 전환 시 사업자가 채워야 할 자리(리전·정확한 보존기간 등)로, 임의로 지어내지 않았다.
+// 개인정보처리방침 — 현재 프로토타입의 실제 처리 흐름과 목표 공동 허브 구조를 구분해 공개한다.
 
+import { useEffect, useState } from "react";
+import { clearAnsimLocalData } from "../shared/privacyStorage";
 import { PageHeader } from "../shared/ui";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children, open = false }: {
+  id: string;
+  title: string;
+  children: React.ReactNode;
+  open?: boolean;
+}) {
   return (
-    <div className="bg-white rounded-2xl p-5">
-      <p className="text-[15px] font-bold text-gray-900 mb-3">{title}</p>
-      <div className="text-[13px] text-gray-600 leading-relaxed flex flex-col gap-2">{children}</div>
+    <details id={id} open={open} className="group scroll-mt-4 rounded-2xl bg-white p-5">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold text-gray-900 [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <div className="mt-4 flex flex-col gap-2.5 text-[13px] leading-relaxed text-gray-600">{children}</div>
+    </details>
+  );
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-xl bg-gray-50 px-3.5 py-3 text-[12px] leading-relaxed text-gray-500">{children}</div>;
+}
+
+function PolicyTable({ headers, rows, minWidth = "min-w-[640px]" }: {
+  headers: string[];
+  rows: string[][];
+  minWidth?: string;
+}) {
+  return (
+    <div className="-mx-1 overflow-x-auto">
+      <table className={`w-full ${minWidth} border-collapse text-[11px]`}>
+        <thead>
+          <tr className="border-b border-gray-100 text-left align-top text-gray-400">
+            {headers.map((header) => <th key={header} className="py-2 pr-3 font-medium last:pr-0">{header}</th>)}
+          </tr>
+        </thead>
+        <tbody className="text-gray-600">
+          {rows.map((row) => (
+            <tr key={row.join("|")} className="border-b border-gray-50 align-top">
+              {row.map((cell, index) => <td key={`${index}-${cell}`} className="whitespace-pre-line py-2.5 pr-3 last:pr-0">{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function Sub({ children }: { children: React.ReactNode }) {
-  return <ul className="list-disc list-inside pl-4 text-[12px] text-gray-500 flex flex-col gap-0.5">{children}</ul>;
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return <a href={href} target="_blank" rel="noreferrer" className="font-semibold text-[var(--ac-600)] underline underline-offset-2">{children}</a>;
 }
 
+const summaryCards = [
+  ["실제 금융 연동", "없음 · 합성 시연 데이터"],
+  ["기기 저장", "브라우저 localStorage"],
+  ["외부 처리", "AI·검증·관리형 DB"],
+  ["자체 AI 학습", "이용자 정보 미사용"],
+];
+
+const navigation = [
+  ["처리 항목", "items"], ["보유·삭제", "retention"], ["가족 공유", "family"],
+  ["외부 서비스", "external"], ["AI 처리", "ai"], ["권리 행사", "rights"],
+];
+
 export default function PrivacyPolicy({ onBack }: { onBack: () => void }) {
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  const deleteAllLocalData = () => {
+    clearAnsimLocalData();
+    setDeleteConfirm(false);
+    setDeleted(true);
+  };
+
+  const revealSection = (id: string) => {
+    const section = document.getElementById(id) as HTMLDetailsElement | null;
+    if (!section) return;
+    section.open = true;
+  };
+
   return (
     <div className="flex flex-col gap-4 pb-10">
       <PageHeader title="개인정보처리방침" onBack={onBack} />
 
-      <div className="bg-[var(--ac-50)] rounded-2xl p-4">
-        <p className="text-[12px] text-[var(--ac-700)] leading-relaxed">
-          안심동행 AI(이하 "회사")는 「개인정보 보호법」 제30조에 따라 이용자의 개인정보를 보호하고
-          관련 고충을 신속·원활히 처리할 수 있도록 다음과 같이 개인정보 처리방침을 수립·공개합니다.
-          본 방침은 한결은행(부모 앱)·나눔은행(자녀 앱)에서 제공하는 안심동행 AI 서비스 전반에 적용됩니다.
+      <div className="rounded-2xl bg-[var(--ac-50)] p-4">
+        <p className="text-[13px] font-bold leading-relaxed text-[var(--ac-700)]">
+          안심동행 AI 운영팀(이하 “운영팀”)은 이용자가 어떤 정보를 왜 처리하는지 쉽게 확인할 수 있도록 공개합니다.
+        </p>
+        <p className="mt-2 text-[11px] leading-relaxed text-[var(--ac-600)]">
+          이 방침은 현재 공개된 공모전 검증용 프로토타입에 적용됩니다. 한결은행·나눔은행은 가상 금융회사이며,
+          금융보안원 또는 실제 금융회사가 운영·보증·제휴한 서비스가 아닙니다.
         </p>
       </div>
 
-      <Section title="제1조 (개인정보의 처리 목적)">
-        <p>
-          회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리한 개인정보는 다음 목적 이외의 용도로 이용하지
-          않으며, 이용 목적이 변경되는 경우 「개인정보 보호법」 제18조에 따라 별도 동의 등 필요한 조치를 이행합니다.
-        </p>
-        <ol className="list-decimal list-inside flex flex-col gap-2">
-          <li>
-            계좌 조회 및 송금 서비스 제공
-            <Sub>
-              <li>계좌 및 잔액 조회</li>
-              <li>거래내역 조회</li>
-              <li>송금 및 수취인 확인</li>
-              <li>이체한도 설정 및 관리</li>
-            </Sub>
-          </li>
-          <li>
-            전기통신금융사기 의심거래 탐지 및 대응
-            <Sub>
-              <li>전화번호·URL·기관명 등의 위험 여부 검증</li>
-              <li>보이스피싱 및 스미싱 의심 신호 탐지</li>
-              <li>수신 전화번호 및 문자메시지에 포함된 URL의 위험 여부 확인</li>
-              <li>AI 기반 송금 의도 및 거래 위험 분석</li>
-            </Sub>
-          </li>
-          <li>
-            AI 상담 및 송금의도 분석
-            <Sub>
-              <li>이용자의 송금 목적 및 상대방과의 관계 확인</li>
-              <li>보이스피싱 위험요소 분석</li>
-              <li>금융사기 유형 및 공식자료 검색(RAG)</li>
-              <li>과거 거래패턴을 활용한 이상거래 판단 지원</li>
-            </Sub>
-          </li>
-          <li>
-            안심동행(가족 보호) 기능 제공
-            <Sub>
-              <li>이용자가 신청한 가족 간 보호기능 연동</li>
-              <li>위험거래 발생 시 가족에게 위험정보 제공</li>
-              <li>보호 단계에 따른 송금 전 확인 및 AI 재검토</li>
-              <li>가족 구성원의 위험 알림 확인 지원</li>
-            </Sub>
-          </li>
-          <li>
-            금융사기 피해 발생 시 골든타임 대응 지원
-            <Sub>
-              <li>지급정지 등 관련 절차 안내 및 대응 지원</li>
-              <li>피해 대응 진행상태(체크리스트) 관리</li>
-              <li>112 신고 및 피해구제 절차 안내</li>
-            </Sub>
-          </li>
-          <li>
-            고객센터 운영
-            <Sub>
-              <li>1:1 문의 접수</li>
-              <li>문의 처리 및 결과 안내</li>
-            </Sub>
-          </li>
-          <li>
-            모의 투자·포트폴리오 기능 제공
-            <Sub>
-              <li>보유 종목·수량 및 평균매입단가 관리</li>
-              <li>모의 포트폴리오 현황 제공</li>
-            </Sub>
-          </li>
-          <li>
-            서비스 운영 및 품질 개선
-            <Sub>
-              <li>서비스 이용기록 관리</li>
-              <li>부정이용 방지</li>
-              <li>오류 확인 및 서비스 안정성 확보</li>
-            </Sub>
-          </li>
-        </ol>
-      </Section>
+      <div className="grid grid-cols-2 gap-2">
+        {summaryCards.map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-gray-100 bg-white px-3 py-3">
+            <p className="text-[10px] text-gray-400">{label}</p>
+            <p className="mt-1 text-[12px] font-semibold text-gray-800">{value}</p>
+          </div>
+        ))}
+      </div>
 
-      <Section title="제2조 (처리하는 개인정보의 항목)">
-        <p>회사는 서비스 제공 과정에서 다음과 같은 개인정보를 처리합니다.</p>
-
-        <p className="font-semibold text-gray-700 mt-1">① 계좌·송금 정보</p>
-        <p>계좌번호, 은행명, 잔액, 거래내역, 수취인 성명·계좌번호·은행명, 송금액, 송금 일시, 이체한도 설정값</p>
-
-        <p className="font-semibold text-gray-700 mt-1">② 상대방 검증 및 보이스피싱 탐지 정보</p>
-        <p>이용자가 입력한 전화번호, 수신 전화의 발신번호, 이용자가 입력하거나 문자메시지에 포함된 URL, 기관명</p>
-        <p className="text-[12px] text-gray-400">
-          잠금화면 등에 표시되는 수신 전화·문자 알림에서도 발신번호와 URL로 위험 여부를 확인합니다. 이 과정에서
-          실제 통화내용을 녹음·저장하거나 문자메시지 본문 전체를 별도로 저장하지 않으며, 서비스 시연 화면에
-          표시되는 통화·문자 내용은 데모용 시나리오 데이터입니다.
-        </p>
-
-        <p className="font-semibold text-gray-700 mt-1">③ AI 송금의도 분석 및 상담 정보</p>
-        <p>AI 상담 과정에서 입력한 질문·답변 및 대화 내용, AI 위험 분석 결과, 거래일시·거래금액·수취계좌 해시값·거래유형·거래채널</p>
-        <p className="text-[12px] text-gray-400">
-          AI 상담 내용은 외부 AI 서비스로 전송하기 전 주민등록번호·전화번호·이메일주소·URL·계좌번호 등 식별
-          가능성이 높은 정보를 정규식 기반으로 마스킹합니다. 금융사기 지식 검색(RAG) 과정에서는 이용자의 질의
-          텍스트가 임베딩 생성을 위해 처리될 수 있으며, 생성된 임베딩은 기존 지식베이스(사기유형·공식자료) 검색
-          목적으로만 사용하고 이용자별 정보로 별도 저장하지 않습니다.
-        </p>
-
-        <p className="font-semibold text-gray-700 mt-1">④ 안심동행(가족 보호) 정보 — 기능 이용 시</p>
-        <p>
-          가족 연동 코드·여부·연동 시각, 위험 등급, 감지된 위험 신호, AI 상담 대화 내용, 송금액·수취계좌, 가족
-          구성원의 위험 알림 열람 시각, 보호 단계 설정값, AI 재검토 임계값
-        </p>
-        <p className="text-[12px] text-gray-400">※ 계좌 잔액·전체 거래내역·소비 패턴은 어떤 보호 단계에서도 가족에게 제공되지 않습니다.</p>
-
-        <p className="font-semibold text-gray-700 mt-1">⑤ 금융사기 피해 대응 정보</p>
-        <p>피해·송금 금액, 은행명, 계좌정보, 지급정지 등 대응 절차의 진행상태(이용자 기기에 저장되는 체크리스트)</p>
-
-        <p className="font-semibold text-gray-700 mt-1">⑥ 고객센터 정보</p>
-        <p>1:1 문의 내용, 문의 접수일시, 문의 처리상태</p>
-        <p className="text-[12px] text-gray-400">현재 구현상 이용자의 기기(localStorage)에만 저장되며, 회사 서버로 전송·보관하지 않습니다.</p>
-
-        <p className="font-semibold text-gray-700 mt-1">⑦ 모의 투자·포트폴리오 정보</p>
-        <p>보유 종목, 보유 수량, 평균매입단가, 이용자 역할(부모·자녀)에 따른 포트폴리오 구분정보</p>
-        <p className="text-[12px] text-gray-400">이용자의 기기 내 저장공간에만 저장되며, 실제 증권 계좌와 연동되지 않은 모의 기록으로 회사 서버에는 전송되지 않습니다.</p>
-
-        <p className="font-semibold text-gray-700 mt-1">⑧ 서비스 이용 과정에서 자동 생성·처리되는 정보</p>
-        <p>서비스 접속·이용 기록, 공지사항 확인 기록, 서비스 설정값, 가족 연동 및 보호기능 설정값</p>
-        <p className="text-[12px] text-gray-400">일부 정보는 브라우저 localStorage 등 이용자 기기 내 저장공간에만 저장됩니다.</p>
-
-        <p className="text-[12px] text-gray-400 mt-1 pt-2 border-t border-gray-100">
-          ①·②·③·⑤·⑥·⑦·⑧ 항목은 「개인정보 보호법」 제15조제1항제4호(계약 체결·이행)에 따라 별도 동의 없이
-          처리됩니다. ④ 안심동행 가족 보호 기능은 이용자(부모)가 가족 연동을 직접 신청하는 경우에만, 그 신청
-          행위를 같은 법 제17조제1항제1호에 따른 동의로 보아 처리합니다.
-        </p>
-      </Section>
-
-      <Section title="제3조 (개인정보의 처리 및 보유 기간)">
-        <p>
-          회사는 개인정보의 처리 목적이 달성된 경우 해당 개인정보를 지체 없이 파기합니다. 다만 관계 법령에 따라
-          일정 기간 보관해야 하는 경우에는 해당 법령에서 정한 기간 동안 보관합니다. 서비스 기능별 개인정보는
-          원칙적으로 다음과 같이 처리합니다.
-        </p>
-        <div className="overflow-x-auto -mx-1">
-          <table className="w-full text-[11px] border-collapse min-w-[480px]">
-            <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-100">
-                <th className="py-1.5 pr-2 font-medium">구분</th>
-                <th className="py-1.5 font-medium">보유기간</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-600">
-              {[
-                ["계좌·송금 관련 정보", "서비스 제공 목적 달성 시까지 또는 관계 법령상 보존기간"],
-                ["상대방 검증(전화번호·URL·기관명) 정보", "위험 검증 목적 달성(조회 완료) 즉시 파기, 서버에 별도 보관하지 않음"],
-                ["전기통신금융사기 의심거래 임시조치(D등급 자동 송금정지)·본인확인조치 기록", "「전기통신금융사기 피해 방지 및 피해금 환급에 관한 특별법」 제2조의5에 따라 조치 종료일로부터 5년"],
-                ["AI 상담·분석 정보", "이용자 기기(localStorage)에만 저장, 이용자가 직접 삭제하거나 브라우저 데이터를 삭제할 때까지"],
-                ["거래패턴 통계값(평균·최대 송금액 등)", "산출·조회 완료 즉시 파기, 별도 보관하지 않음"],
-                ["안심동행(가족 보호) 정보", "가족 연동 해제 시까지 (분쟁·피해 대응 근거자료로 필요한 경우 5년)"],
-                ["금융사기 피해 대응 정보", "이용자 기기(localStorage)에만 저장, 이용자가 직접 삭제할 때까지"],
-                ["고객센터 1:1 문의", "이용자 기기(localStorage)에만 저장, 이용자가 직접 삭제할 때까지"],
-                ["모의 투자·포트폴리오 정보", "이용자 기기(localStorage)에만 저장, 이용자가 직접 삭제할 때까지"],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-gray-50 align-top">
-                  <td className="py-2 pr-2">{row[0]}</td>
-                  <td className="py-2">{row[1]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <nav aria-label="개인정보처리방침 바로가기" className="rounded-2xl bg-white p-4">
+        <p className="mb-2 text-[12px] font-bold text-gray-700">바로 확인하기</p>
+        <div className="flex flex-wrap gap-2">
+          {navigation.map(([label, id]) => (
+            <a key={id} href={`#${id}`} onClick={() => revealSection(id)} className="rounded-full bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-600 active:scale-95">{label}</a>
+          ))}
         </div>
-        <p className="text-[12px] text-gray-400">
-          [확인 필요] 계좌·거래내역 원본은 은행 핵심시스템(제5조의 위탁 데이터베이스)에 보관되며, 그 정확한
-          보유기간은 해당 시스템의 보존정책에 따릅니다. 이 항목은 실제 서비스 전환 시 확인 후 구체화해야 합니다.
-        </p>
-      </Section>
+      </nav>
 
-      <Section title="제4조 (개인정보의 제3자 제공)">
-        <p>
-          회사는 정보주체의 개인정보를 제1조에서 명시한 목적 범위 내에서만 처리하며, 다음 각 호에 해당하는
-          경우를 제외하고는 개인정보를 제3자에게 제공하지 않습니다.
-        </p>
-        <ol className="list-decimal list-inside flex flex-col gap-1">
-          <li>이용자가 사전에 동의한 경우 (예: 안심동행 가족 보호 기능 — 자세한 내용은 제12조 참조)</li>
-          <li>법률에 특별한 규정이 있거나 법령상 의무를 준수하기 위해 필요한 경우</li>
-          <li>수사기관 등이 관계 법령에 따른 적법한 절차를 통해 요청한 경우</li>
-          <li>정보주체 또는 제3자의 급박한 생명·신체·재산상 이익을 위하여 필요한 경우로서 관계 법령에서 허용하는 경우</li>
-        </ol>
-      </Section>
-
-      <Section title="제5조 (개인정보 처리업무의 위탁)">
-        <p>회사는 원활한 서비스 제공을 위하여 다음과 같이 개인정보 처리업무를 위탁합니다. 국외 수탁자는 제6조에서 통합하여 안내합니다.</p>
-        <div className="overflow-x-auto -mx-1">
-          <table className="w-full text-[11px] border-collapse min-w-[440px]">
-            <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-100">
-                <th className="py-1.5 pr-2 font-medium">수탁자</th>
-                <th className="py-1.5 font-medium">위탁업무</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-600">
-              {[
-                ["네이버클라우드(주) (NAVER API HUB)", "전화번호의 공개 웹문서 기반 위험·공식 정황 확인"],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-gray-50 align-top">
-                  <td className="py-2 pr-2">{row[0]}</td>
-                  <td className="py-2">{row[1]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <section className="rounded-2xl border border-[var(--ac-100)] bg-white p-5">
+        <h2 className="text-[15px] font-bold text-gray-900">현재 구현과 목표 구조를 구분합니다</h2>
+        <div className="mt-3 grid gap-3">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-[12px] font-bold text-gray-800">현재 공모전 프로토타입</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-gray-500">하나의 브라우저에서 부모·자녀 역할을 바꾸어 시연합니다. 실제 계좌·거래원장·통화·문자·가족 기기·112·금융기관 접수 시스템과 연결되지 않습니다.</p>
+          </div>
+          <div className="rounded-xl bg-[var(--ac-50)] p-4">
+            <p className="text-[12px] font-bold text-[var(--ac-700)]">목표 공동 허브 모델 · 제안 구조</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-[var(--ac-600)]">금융보안 분야의 공동 허브를 중심으로 참여 금융회사가 같은 안심동행 AI를 제공하고, 서로 다른 금융회사를 이용하는 부모와 자녀도 양측 확인·동의 후 연결하는 구조를 제안합니다. 실제 도입 시 각 금융회사의 처리 책임, 허브의 수탁 범위, 금융회사 간 제공 항목과 보유기간은 계약과 법률 검토를 거쳐 별도로 고지합니다.</p>
+          </div>
         </div>
-        <p>
-          회사는 위탁계약 체결 시 「개인정보 보호법」 제26조에 따라 위탁업무 수행목적 외 개인정보 처리금지,
-          기술적·관리적 보호조치 등 필요한 사항을 규정하고 수탁자를 관리·감독합니다.
-        </p>
-        <p className="text-[12px] text-gray-400">
-          참고: 회사는 상대방(전화번호·기관명) 검증 시 예금보험공사·금융위원회의 공공데이터 개방 API를 함께
-          활용합니다. 이는 해당 기관이 공개한 금융회사 목록·등록정보를 조회하는 것으로, 조회 과정에서 이용자의
-          개인정보가 해당 기관에 전송되지 않아 개인정보 처리업무 위탁에는 해당하지 않습니다.
-        </p>
+      </section>
+
+      <Section id="purpose" title="제1조 처리 목적과 서비스 범위" open>
+        <p>운영팀은 이용자가 직접 선택한 기능을 제공하기 위해 필요한 범위에서 정보를 처리합니다.</p>
+        <ol className="flex list-inside list-decimal flex-col gap-1.5 pl-1">
+          <li>송금 입력정보와 평소 거래패턴을 이용한 보이스피싱 위험 분석</li>
+          <li>전화번호·URL·기관명의 공개 정보와 위험 여부 확인</li>
+          <li>AI 상담, 송금 의도 분석, 관련 공식 금융사기 자료 제공</li>
+          <li>가족 연결·보호 단계·위험 알림·가족 확인 흐름 시연</li>
+          <li>금융사기 피해 대응 순서, 모의 신청서와 체크리스트 제공</li>
+          <li>기기 내 문의내역·모의 포트폴리오·접근성 설정 유지</li>
+          <li>서비스 오류 확인, 보안 유지와 부정 이용 방지</li>
+        </ol>
+        <Note>실제 잔액 조회·송금·한도 변경·예적금 해지·기관 신고를 수행하지 않습니다. 실제 금융서비스와 연결하기 전 처리방침과 필요한 동의 절차를 먼저 갱신합니다.</Note>
       </Section>
 
-      <Section title="제6조 (개인정보의 국외 이전)">
-        <p>
-          회사는 AI 분석 및 외부 클라우드 서비스 이용 과정에서 다음과 같이 개인정보를 국외로 이전(처리위탁·보관)
-          합니다. AI 상담 중 입력된 주민등록번호·전화번호·이메일·링크·계좌번호 등은 정규식 기반으로 치환·마스킹
-          하고, 수취 계좌는 원문 대신 해시값으로 대체한 뒤에만 국외로 전송합니다.
-        </p>
-        <div className="overflow-x-auto -mx-1">
-          <table className="w-full text-[11px] border-collapse min-w-[560px]">
-            <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-100">
-                <th className="py-1.5 pr-2 font-medium">이전받는 자</th>
-                <th className="py-1.5 pr-2 font-medium">이용 목적</th>
-                <th className="py-1.5 pr-2 font-medium">이전 항목</th>
-                <th className="py-1.5 font-medium">보유·이용 기간</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-600">
-              {[
-                ["Google LLC (Gemini API)", "AI 기반 송금 의도 분석·상담 응답 생성", "마스킹 처리된 상담 대화 내용", "요청 처리 즉시 미보관"],
-                ["Google LLC (Gemini Embedding API)", "금융사기 지식베이스 검색(RAG)을 위한 질의 벡터화", "마스킹 처리된 상담 질의 텍스트", "요청 처리 즉시 미보관"],
-                ["Google LLC (Safe Browsing API)", "문자 메시지 내 링크의 악성 URL 여부 확인", "조회 URL", "조회 완료 즉시 미보관"],
-                ["Supabase, Inc.", "AI 이상거래 탐지를 위한 거래패턴 통계 산출(거래내역 DB 호스팅)", "거래일시·금액·수취계좌 해시값·거래유형·거래채널", "회원 탈퇴 또는 계좌 해지 시까지"],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-gray-50 align-top">
-                  {row.map((cell, i) => <td key={i} className="py-2 pr-2">{cell}</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <Section id="items" title="제2조 처리 항목·방법·법적 근거" open>
+        <PolicyTable headers={["기능", "처리 항목", "처리 위치·방법", "처리 근거"]} rows={[
+          ["송금 위험 분석", "은행명, 출금계좌, 수취인명·계좌, 송금액, 입력 시각\n파생값: 신규 수취인, 금액 구간, 위험점수·등급·근거", "API 요청 중 서버에서 처리\n상담 저장·가족 확인 선택 시 일부 기기 저장", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["전화번호 검증", "입력 전화번호, 공개 웹 검색 결과, 공식·위험 정황", "서버와 NAVER 검색 API에서 요청 단위 처리", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["URL·기관 검증", "입력 URL, 기관명, 위협·등록 확인 결과", "Google Safe Browsing 및 공공데이터 API 요청", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["AI 상담·검색", "상담 질문·답변, 규칙으로 마스킹된 문자열, 금액 구간, 위험신호와 분석결과", "Gemini·Embedding API에서 요청 단위 처리\n저장 상담은 기기에 최근 5건", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["거래패턴·관계 검색", "가상 사용자 ID, 조회시각, 수취인 파생 참조값, 범주형 위험·채널·행동 코드", "Supabase 거래패턴 조회와 Neo4j 관계 검색", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["가족 보호 시연", "연결코드·상태·시각, 보호단계·임계값, 금액, 마스킹 계좌표시, 위험근거, 선택한 상담내용과 가족 의견", "같은 브라우저의 localStorage에서 부모·자녀 화면 간 공유", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["피해대응·문의·포트폴리오", "모의 피해정보·처리상태, 문의 내용·시각, 종목·수량·평균매입가", "기기 localStorage에 저장\n실제 기관·상담원·증권사로 전송하지 않음", "이용자가 요청한 서비스 제공\n법 제15조제1항제4호"],
+          ["운영·보안", "IP, 브라우저·기기 정보, 접속시각, 요청 경로·상태, 오류기록", "호스팅·API 운영 과정에서 자동 생성될 수 있음", "서비스 제공 및 보안상 정당한 이익\n법 제15조제1항제4호·제6호"],
+        ]} />
+        <Note>주민등록번호, 비밀번호, 보안카드·OTP, 카드번호, 인증서, 생체정보를 요구하지 않습니다. 정규식 마스킹은 전화번호·이메일·URL·긴 숫자열 등을 줄이는 보조조치이며 이름·주소 등 모든 개인정보를 완전히 제거하지는 못합니다.</Note>
+      </Section>
+
+      <Section id="retention" title="제3조 보유기간과 파기">
+        <PolicyTable headers={["구분", "현재 보유 기준", "삭제 방법"]} minWidth="min-w-[560px]" rows={[
+          ["API 입력과 분석 결과", "응답 생성 후 운영팀 DB에 별도 저장하지 않음", "요청 처리 종료 후 서버 메모리에서 제거"],
+          ["AI 상담", "기기 최근 5건", "기록별 삭제 또는 전체 삭제"],
+          ["가족 위험·확인 기록", "기기 최근 20건", "기록별 삭제 또는 전체 삭제"],
+          ["가족 연결·보호 설정", "연결 또는 설정 유지 중", "연결 해제 또는 전체 삭제"],
+          ["연결·설정 알림", "기기 최근 50건", "전체 삭제"],
+          ["문의·모의 피해대응", "각 기기 최근 20건", "전체 삭제"],
+          ["포트폴리오·화면 설정", "이용자가 변경하거나 삭제할 때까지", "전체 삭제"],
+          ["호스팅·외부 사업자 로그", "각 사업자의 계약·보안 설정과 관련 법령에 따른 기간", "각 사업자 정책과 운영팀 권리행사 절차"],
+        ]} />
+        <p>보유기간이 끝나거나 처리 목적을 달성한 정보는 지체 없이 삭제합니다. 현재 실제 금융거래 원장이나 지급정지 조치내역을 운영하지 않으므로 이를 이유로 이용자 입력을 5년간 보관하지 않습니다.</p>
+      </Section>
+
+      <Section id="family" title="제4조 가족 공유와 공동 허브 모델">
+        <p>현재 가족 페어링은 동일 브라우저의 역할 전환 시연이므로 다른 사람의 기기로 네트워크 전송되는 제3자 제공이 아닙니다.</p>
+        <div className="rounded-xl border border-gray-100 p-3.5">
+          <p className="font-bold text-gray-800">현재 공유되는 최소 범위</p>
+          <p className="mt-1">위험등급·위험근거, 송금액, 수취은행과 계좌 끝 4자리, 요청시각, 부모가 가족 확인을 요청할 때 선택한 상담내용, 가족의 확인 의견</p>
+          <p className="mt-2 font-bold text-gray-800">공유하지 않는 항목</p>
+          <p className="mt-1">잔액, 전체 거래내역, 비밀번호·인증정보, 다른 금융상품 정보</p>
         </div>
-        <p>
-          이전 국가는 각 사업자의 서버 운영국(미국 등)이며, 이전 시기 및 방법은 서비스 이용 시점부터 지체없이
-          전용 네트워크(HTTPS 암호화 통신)를 통한 원격지 전송입니다. 회사는 「개인정보 보호법」 제28조의8제1항에
-          따라 정보주체의 동의를 받거나, 서비스 제공에 필요한 처리위탁·보관으로서 법령이 정한 사유에 해당하는
-          경우에 한하여 이전합니다.
-        </p>
-        <p>
-          국외 이전을 거부할 경우 관련 서비스(AI 상담, 상대방 URL 검증, 이상거래 탐지) 이용이 제한될 수 있습니다.
-          국외 이전을 원치 않는 경우 홈페이지·앱 내 회원 탈퇴를 통해 이전을 중단할 수 있으며, 이전받는 자에
-          대한 문의는 제14조의 개인정보 보호책임자를 통해 하실 수 있습니다.
-        </p>
-        <p className="text-[12px] text-gray-400">
-          [확인 필요] 각 수탁자의 정확한 데이터센터 리전(국가) 및 계약상 보유기간은 실제 계약·프로젝트 설정을
-          확인해 구체화해야 하며, 현재 알 수 없는 세부사항은 임의로 작성하지 않았습니다.
-        </p>
+        <p>실제 공동 허브 도입 시에는 부모·자녀 각각의 금융회사, 공동 허브, 연결 상대방의 역할을 확정하고 제공받는 자·목적·항목·보유기간·동의 거부권을 연결 화면에서 별도로 알린 뒤 양측 동의를 받습니다.</p>
       </Section>
 
-      <Section title="제7조 (개인정보의 파기절차 및 방법)">
-        <p>회사는 보유기간 경과, 처리목적 달성 등으로 개인정보가 불필요해진 경우 지체없이 파기합니다.</p>
-        <p className="font-semibold text-gray-700 mt-1">① 파기절차</p>
-        <p>처리 목적이 달성된 개인정보는 별도의 보존 필요성이 없는 경우 삭제합니다. 관계 법령에 따라 일정 기간 보존해야 하는 개인정보는 해당 기간 동안 다른 개인정보와 분리하여 보관한 후 파기합니다.</p>
-        <p className="font-semibold text-gray-700 mt-1">② 파기방법</p>
-        <ol className="list-decimal list-inside flex flex-col gap-1">
-          <li>전자적 파일: 기록을 재생할 수 없는 기술적 방법으로 삭제</li>
-          <li>출력물 등 종이 형태로 존재하는 경우: 분쇄 또는 소각 등 복구할 수 없는 방법으로 파기</li>
-          <li>이용자 기기 내 로컬 저장소(localStorage) 보관 정보: 이용자가 앱 내 삭제 기능을 실행하거나 브라우저·애플리케이션의 저장정보를 삭제하는 즉시 파기</li>
-        </ol>
+      <Section id="external" title="제5조 국내 외부 서비스와 국외 이전" open>
+        <p className="font-bold text-gray-800">국내 외부 서비스</p>
+        <PolicyTable headers={["서비스", "목적", "전송 항목", "운영팀 보관"]} minWidth="min-w-[560px]" rows={[
+          ["NAVER Cloud 검색 API", "전화번호 공개 웹문서 확인", "입력 전화번호", "응답 후 별도 저장하지 않음"],
+          ["예금보험공사·금융위원회 공공데이터 API", "금융회사·기관 등록정보 확인", "기관명 등 공개 조회값", "응답 후 별도 저장하지 않음"],
+        ]} />
+        <p className="mt-2 font-bold text-gray-800">국외 처리·이전</p>
+        <PolicyTable headers={["이전받는 자", "목적·항목", "시기·방법", "보유 기준"]} rows={[
+          ["Google LLC", "Gemini·Embedding: 규칙 마스킹 대화와 위험 맥락\nSafe Browsing: 검사 URL\nYouTube: 재생 시 접속·기기 정보", "해당 기능 요청 또는 영상 재생 시 HTTPS", "Google 설정·정책과 관련 법령에 따른 기간"],
+          ["Vercel Inc.", "웹 호스팅·API 실행·보안\nIP, 접속·오류기록 및 요청 처리 입력", "페이지 접속·API 요청 시 HTTPS", "프로젝트·보안 설정과 관련 법령에 따른 기간"],
+          ["Supabase Inc.", "가상 거래패턴 비교\n가상 사용자 ID, 조회시각, 수취인 파생 참조값", "송금 의도 분석 시 암호화된 DB 연결", "가상 데이터는 데모 운영기간\n요청값 별도 적재 없음"],
+          ["Neo4j Inc.", "사기 진행 관계 검색\n범주형 위험·채널·사칭대상·행동 코드", "위험 대화 분석 시 HTTPS", "지식그래프는 데모 운영기간\n대화 원문 별도 적재 없음"],
+        ]} />
+        <p>국외 처리는 이용자가 요청한 기능 제공에 필요한 처리위탁·보관으로서 개인정보 보호법 제28조의8제1항제3호를 근거로 합니다. 처리 국가는 미국 및 각 사업자가 인프라를 운영하는 국가일 수 있습니다.</p>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+          <ExternalLink href="https://policies.google.com/privacy">Google 정책</ExternalLink>
+          <ExternalLink href="https://vercel.com/legal/privacy-policy">Vercel 정책</ExternalLink>
+          <ExternalLink href="https://supabase.com/privacy">Supabase 정책</ExternalLink>
+          <ExternalLink href="https://neo4j.com/privacy-policy/">Neo4j 정책</ExternalLink>
+        </div>
+        <Note>외부 사업자의 정확한 데이터 리전·재수탁자·로그 기간은 계약과 프로젝트 설정에 따라 달라질 수 있습니다. 정식 운영 전 실제 계약 내용을 확인해 국가·연락처·보유기간을 확정 고지합니다.</Note>
       </Section>
 
-      <Section title="제8조 (정보주체와 법정대리인의 권리·의무 및 행사방법)">
-        <p>정보주체는 회사에 대해 언제든지 다음의 권리를 행사할 수 있습니다.</p>
-        <ol className="list-decimal list-inside flex flex-col gap-1">
-          <li>개인정보 처리 여부 확인 및 열람 요구 (제35조)</li>
-          <li>오류 등이 있을 경우 정정 요구 (제36조)</li>
-          <li>삭제 요구 (제36조)</li>
-          <li>처리정지 요구 (제37조)</li>
-          <li>동의 철회</li>
-        </ol>
-        <p>
-          권리 행사는 「개인정보 보호법 시행령」 제41조제1항에 따라 서면·전자우편·팩스 등으로 하실 수 있으며,
-          앱 내 "고객센터 &gt; 1:1 문의" 또는 제14조의 개인정보 보호책임자·담당부서를 통해서도 요청하실 수
-          있습니다. 회사는 관계 법령에서 정한 사유가 없는 한 요청에 대해 지체없이 필요한 조치를 취합니다.
-          법정대리인은 관계 법령에서 인정되는 경우 정보주체를 대신하여 위 권리를 행사할 수 있으며, 안심동행
-          가족 보호 이용 시 부모(정보주체)는 언제든지 가족 연동을 해제할 수 있습니다.
-        </p>
+      <Section id="device" title="제6조 기기 저장정보·쿠키·외부 콘텐츠">
+        <p>광고·행태추적용 쿠키는 사용하지 않습니다. 가족 연결, 보호 설정, 상담, 가족 기록, 피해대응, 문의, 포트폴리오, 큰글씨 설정은 브라우저 localStorage에 저장됩니다.</p>
+        <p>페이지를 여는 것만으로 외부 글꼴 서버에 접속하지 않도록 기기 기본 글꼴을 사용합니다. 공식 예방 영상의 외부 썸네일도 미리 불러오지 않으며, 이용자가 재생을 선택한 뒤에만 YouTube의 개인정보 처리방침에 따라 연결됩니다.</p>
+        <p>답변 듣기는 사용자가 누를 때 브라우저·운영체제의 음성합성 기능을 호출합니다. 운영팀은 음성 파일이나 마이크 입력을 수집하지 않습니다.</p>
+        <Note>공용 기기에서는 다른 사용자가 저장 기록을 볼 수 있습니다. 이용 후 개별 기록 또는 아래의 전체 저장정보를 삭제해 주세요.</Note>
       </Section>
 
-      <Section title="제9조 (개인정보의 안전성 확보조치)">
-        <p>회사는 개인정보가 분실·도난·유출·위조·변조·훼손되지 않도록 「개인정보 보호법」 제29조에 따라 다음과 같은 조치를 취하고 있습니다.</p>
-        <p className="font-semibold text-gray-700 mt-1">① 관리적 조치</p>
-        <p>내부 관리계획 수립·시행, 개인정보 취급자 최소화 및 담당자 교육·관리·감독</p>
-        <p className="font-semibold text-gray-700 mt-1">② 기술적 조치</p>
-        <p>
-          접근권한 관리, 통신 구간 암호화(HTTPS), 개인정보 접근통제 및 보안 취약점 관리. 특히 AI 상담 과정에서
-          외부 AI 서비스로 정보를 전송하는 경우 주민등록번호·전화번호·이메일주소·URL·계좌번호 등을 정규식
-          기반으로 마스킹하며, 거래패턴 분석에 사용되는 수취계좌는 원문 대신 해시값으로 처리합니다.
-        </p>
-        <p className="font-semibold text-gray-700 mt-1">③ 물리적 조치</p>
-        <p>전산설비 접근 통제</p>
-      </Section>
-
-      <Section title="제10조 (자동으로 수집·저장되는 정보 및 기기 내 저장정보)">
-        <p>
-          회사는 서비스 제공 과정에서 서비스 접속·이용 기록 등이 자동으로 생성될 수 있으며, 서비스 기능 제공을
-          위해 다음 정보를 브라우저 로컬 저장소(localStorage) 등 이용자 기기 내 저장공간에 저장합니다.
-        </p>
-        <ul className="list-disc list-inside flex flex-col gap-1">
-          <li>가족 연동정보(연동 코드·여부·시각)</li>
-          <li>보호 단계 설정정보, AI 재검토 임계값</li>
-          <li>위험 알림 및 AI 상담 대화 관련 정보</li>
-          <li>공지사항 확인기록</li>
-          <li>금융사기 피해 대응 체크리스트, 고객센터 문의 내역</li>
-          <li>모의 투자·포트폴리오 정보</li>
-          <li>기타 서비스 설정정보</li>
+      <Section id="ai" title="제7조 AI 처리와 위험 결정" open>
+        <p>AI는 상담에서 위험 신호를 구조화하고 이용자가 이해하기 쉬운 설명을 만드는 보조수단입니다. 최종 등급과 화면 조치는 사전에 정한 규칙, 공개 검증 결과와 이용자 답변을 함께 반영합니다.</p>
+        <ul className="flex list-inside list-disc flex-col gap-1 pl-1">
+          <li>입력: 규칙 마스킹 대화, 금액 구간, 신규 수취인 여부, 통화 여부, 검증결과와 위험신호</li>
+          <li>결과: 위험점수·등급, 의심 유형, 판단 근거와 권장 행동</li>
+          <li>오류 시: 외부 AI 결과를 그대로 사용하지 않고 보수적인 서버 규칙으로 대체</li>
+          <li>D등급 지연: 앱 화면의 모의 보호조치이며 실제 계좌나 송금을 정지하지 않음</li>
+          <li>재검토: 상담 계속하기, 공식 채널 확인, 가족 의견 확인 후 이용자가 최종 판단</li>
         </ul>
-        <p>
-          위 정보는 쿠키와 달리 서버로 자동 전송되지 않으며 이용자의 기기 안에만 남습니다. 이용자는 앱 내 삭제
-          기능이나 브라우저·애플리케이션의 저장정보 삭제 기능을 이용해 언제든지 삭제할 수 있습니다.
-        </p>
+        <p>이용자 입력을 운영팀 자체 AI 모델의 학습·미세조정 자료로 사용하지 않습니다. 학습 목적으로 변경할 경우 별도의 목적·항목·보유기간과 동의 절차를 먼저 마련합니다.</p>
       </Section>
 
-      <Section title="제11조 (AI를 이용한 개인정보 처리 및 자동화된 결정에 관한 사항)">
-        <p>회사는 보이스피싱 예방 및 송금 안전성 분석을 위하여 AI 기술을 활용하며, 그 처리 사항은 다음과 같습니다.</p>
-        <ol className="list-decimal list-inside flex flex-col gap-1">
-          <li>이용자의 송금 의도 분석 및 금융사기 위험 신호 분석</li>
-          <li>AI 상담 제공 및 금융사기 관련 지식·공식자료 검색(RAG)</li>
-          <li>거래패턴 분석 결과를 활용한 위험 판단 지원</li>
-        </ol>
-        <p>
-          AI 상담 과정에서 입력되는 개인정보는 외부 AI 서비스로 전송하기 전 가능한 범위에서 마스킹 처리합니다.
-          RAG 검색 과정에서는 이용자의 질의 텍스트가 Gemini Embedding API를 통해 임베딩으로 변환될 수 있으며,
-          해당 임베딩은 금융사기 유형·공식자료가 저장된 지식베이스 검색에만 사용하고 이용자의 별도 프로필
-          정보로 저장하지 않습니다.
-        </p>
-        <p className="font-semibold text-gray-700 mt-1">자동화된 결정에 관한 사항 (「개인정보 보호법」 제37조의2)</p>
-        <ol className="list-decimal list-inside flex flex-col gap-1">
-          <li>
-            회사는 송금 시도 시 AI가 상대방 검증 결과·거래 패턴·상담 응답을 분석해 위험 등급을 산정하고, 위험
-            등급이 가장 높은 경우(D등급) 정보주체의 별도 조작 없이 해당 송금을 일정 시간 자동으로 정지(쿨다운)
-            하는 자동화된 결정을 수행합니다. 이는 전기통신금융사기가 의심되는 거래로부터 이용자의 재산을
-            보호하기 위한 목적으로, 송금을 시도하는 모든 이용자를 대상으로 이루어집니다.
-          </li>
-          <li>
-            자동화된 결정에는 상대방 전화번호·URL·기관명의 검증 결과, 송금 금액, AI 상담 중 응답 내용이 주요
-            정보로 활용되며, 이 정보들의 위험도 조합에 따라 자동 정지 여부가 결정됩니다.
-          </li>
-          <li>
-            자동 정지는 사전에 설정된 지연 시간 동안 유지되며, 이 기간 동안 안심동행 가족 보호가 연동된 경우
-            보호자 확인을, 연동되지 않은 경우 은행 상담원 확인을 거쳐야 송금을 진행할 수 있습니다.
-          </li>
-          <li>회사는 자동화된 결정 과정에서 민감정보 또는 14세 미만 아동의 개인정보를 처리하지 않습니다.</li>
-          <li>
-            정보주체는 자동 정지 조치에 대해 설명을 요구하거나, 은행 상담원 확인을 거쳐 정지 해제를 요청할 수
-            있습니다. 다만 이 조치는 정보주체 본인의 재산을 보호하기 위한 조치이므로, 다른 사람의 생명·신체·
-            재산상 이익을 부당하게 침해할 우려가 없는 범위에서만 거부 요청이 반영됩니다. 요청은 제14조의
-            개인정보 보호책임자 연락처 또는 앱 내 "고객센터 &gt; 1:1 문의"로 하실 수 있습니다.
-          </li>
-        </ol>
-        <p className="text-[12px] text-gray-400">회사는 AI의 분석 결과만을 이유로 이용자의 권리를 부당하게 제한하지 않도록 필요한 관리조치를 시행합니다.</p>
-      </Section>
-
-      <Section title="제12조 (안심동행 서비스 이용에 관한 사항)">
-        <p>
-          안심동행은 이용자(부모)가 가족 구성원(자녀)과 연동하여 금융사기 위험상황을 공유하고 보호받을 수
-          있도록 지원하는 기능입니다. 이용자(부모)가 안심동행 가족 보호 기능을 직접 신청(가족 연동)함으로써
-          「개인정보 보호법」 제17조제1항제1호에 따른 동의를 부여한 것으로 처리합니다.
-        </p>
-        <p>가족 연동 시 위험 거래 발생에 한하여 다음의 최소한의 정보만 연동된 가족에게 제공됩니다.</p>
-        <ul className="list-disc list-inside flex flex-col gap-1">
-          <li>위험 등급, 위험 감지 신호</li>
-          <li>AI 상담 대화 내용</li>
-          <li>송금액, 수취계좌 관련 정보</li>
-          <li>위험 알림 및 대응에 필요한 정보</li>
+      <Section id="security" title="제8조 안전성 확보조치">
+        <ul className="flex list-inside list-disc flex-col gap-1 pl-1">
+          <li>API 키와 DB 접속정보를 브라우저가 아닌 서버 환경변수로 관리</li>
+          <li>서비스·외부 API·관리형 DB 사이 암호화 통신</li>
+          <li>주민등록번호·전화번호·이메일·URL·긴 숫자열 규칙 마스킹</li>
+          <li>Gemini에 원문 계좌번호 대신 금액 구간·수취인 표시 유형 등 최소 맥락 전달</li>
+          <li>Neo4j에 원문 대화 대신 범주형 위험 코드 전달</li>
+          <li>프롬프트 인젝션 방어, 응답 구조 검증과 안전 문구 대체</li>
+          <li>가족 공유 계좌 마스킹과 잔액·전체 거래내역 제외</li>
         </ul>
-        <p>
-          계좌 잔액·전체 거래내역·소비 패턴은 어떤 보호 단계에서도 제공되지 않습니다. 회사는 가족 보호 목적을
-          벗어나 해당 정보를 이용하지 않으며, 가족 연동이 해제된 경우 연동을 목적으로 한 개인정보 처리를
-          중단합니다. 이용자(부모)는 언제든지 가족 연동을 해제해 정보 제공을 중단할 수 있습니다.
-        </p>
       </Section>
 
-      <Section title="제13조 (금융사기 피해 대응)">
-        <p>
-          회사는 금융사기 피해가 의심되는 경우 이용자의 피해 최소화를 위하여 지급정지, 112 신고 및 피해구제
-          절차 등에 관한 정보를 제공하고 대응 순서를 안내합니다. 이 과정에서 피해·송금 금액, 은행명, 계좌정보
-          및 이용자 기기에 저장되는 대응 체크리스트(진행상태)를 처리할 수 있습니다.
-        </p>
-        <p>
-          회사는 지급정지·계좌 동결 등을 직접 수행하지 않으며, 이용자가 은행 대표번호 등 공식 채널을 통해
-          지급정지를 요청·신청하고 112에 신고할 수 있도록 절차를 안내·지원합니다. 지급정지 및 피해구제 절차는
-          「전기통신금융사기 피해 방지 및 피해금 환급에 관한 특별법」 등 관계 법령 및 해당 금융기관의 절차에
-          따라 진행됩니다.
-        </p>
+      <Section id="rights" title="제9조 이용자의 권리와 저장정보 삭제" open>
+        <p>이용자는 개인정보의 열람·정정·삭제·처리정지 및 동의 철회를 요구할 수 있습니다. 현재 기기에 저장된 정보는 기록별 삭제, 가족 연결 해제 또는 아래 전체 삭제 기능으로 직접 제거할 수 있습니다.</p>
+        <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+          <p className="text-[13px] font-bold text-red-700">이 기기의 안심동행 데이터 전체 삭제</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-red-500">가족 연결, 상담·위험 기록, 문의, 피해대응, 포트폴리오와 화면 설정이 모두 삭제되며 되돌릴 수 없습니다. 실제 은행 데이터에는 영향이 없습니다.</p>
+          {deleted ? (
+            <p className="mt-3 rounded-lg bg-white px-3 py-2 text-[12px] font-bold text-green-600">기기에 저장된 안심동행 데이터를 삭제했습니다.</p>
+          ) : deleteConfirm ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setDeleteConfirm(false)} className="rounded-xl border border-gray-200 bg-white py-2.5 text-[12px] font-semibold text-gray-600">취소</button>
+              <button type="button" onClick={deleteAllLocalData} className="rounded-xl bg-red-500 py-2.5 text-[12px] font-bold text-white">모두 삭제</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setDeleteConfirm(true)} className="mt-3 w-full rounded-xl border border-red-200 bg-white py-2.5 text-[12px] font-bold text-red-600">전체 저장정보 삭제</button>
+          )}
+        </div>
+        <Note>앱의 1:1 문의는 현재 기기에만 저장되는 시연 기능으로 운영팀에 전송되지 않습니다. 서버·외부 사업자 처리에 관한 권리행사는 제12조의 문의 채널을 이용합니다.</Note>
       </Section>
 
-      <Section title="제14조 (개인정보 보호책임자)">
-        <p>회사는 개인정보 처리에 관한 업무를 총괄하고 불만처리·피해구제를 지원하기 위해 개인정보 보호책임자를 지정하고 있습니다.</p>
-        <div className="rounded-xl bg-gray-50 p-3.5 mt-1">
-          <p>성명·직책: 임서준 · 개인정보보호책임자(CPO)</p>
-          <p>연락처: 1588-5000 (평일 09:00~18:00, 주말·공휴일 휴무)</p>
+      <Section id="children" title="제10조 아동·고령 이용자 보호">
+        <p>부모·자녀 역할은 성인 가족 구성원의 보호 흐름을 시연하기 위한 것입니다. 만 14세 미만 아동의 정보를 의도적으로 수집하지 않으며 확인될 경우 지체 없이 삭제합니다.</p>
+        <p>고령 이용자가 처리 내용을 이해할 수 있도록 핵심 요약, 쉬운 표현, 큰글씨 화면과 단계별 재확인을 제공합니다. 가족 보호는 감시 기능이 아니라 부모가 범위를 정하고 언제든 회수할 수 있는 선택 기능으로 설계합니다.</p>
+      </Section>
+
+      <Section id="damage" title="제11조 피해대응 기능의 한계">
+        <p>피해대응 화면은 지급정지 요청, 112 신고, 피해구제 신청과 증거 보관 순서를 안내하고 모의 신청서·체크리스트를 기기에 저장합니다.</p>
+        <p>화면의 “접수 완료”, 접수번호와 전달 상태는 시연용이며 실제 금융회사·경찰에 신청하거나 계좌를 동결하지 않습니다. 실제 피해가 의심되면 해당 금융회사의 공식 대표번호와 112에 직접 연락해야 합니다.</p>
+      </Section>
+
+      <Section id="contact" title="제12조 개인정보 문의와 권익침해 구제">
+        <p>개인정보 처리 관련 문의·권리행사·불만은 아래 담당자에게 요청할 수 있습니다.</p>
+        <div className="rounded-xl bg-gray-50 p-3.5">
+          <p>담당: 안심동행 AI 운영팀 개인정보 담당자</p>
           <p>이메일: seojun0007@naver.com</p>
+          <p className="mt-1 text-[11px] text-gray-400">공모전 프로토타입 문의 채널이며, 정식 운영 전 사업자 정보와 공식 연락처를 확정해 다시 고지합니다.</p>
         </div>
-      </Section>
-
-      <Section title="제15조 (권익침해 구제방법)">
-        <p>정보주체는 아래 기관에 개인정보 침해에 대한 신고나 상담을 하실 수 있습니다.</p>
-        <ul className="list-disc list-inside flex flex-col gap-1">
-          <li>개인정보 침해신고센터 : (국번없이) 118 · privacy.kisa.or.kr</li>
-          <li>개인정보 분쟁조정위원회 : 1833-6972 · kopico.go.kr</li>
-          <li>대검찰청 사이버범죄수사단 : (국번없이) 1301 · spo.go.kr</li>
-          <li>경찰청 사이버수사국 : (국번없이) 182 · ecrm.cyber.go.kr</li>
+        <ul className="flex list-inside list-disc flex-col gap-1 pl-1">
+          <li>개인정보 침해신고센터: 118 · <ExternalLink href="https://privacy.kisa.or.kr">privacy.kisa.or.kr</ExternalLink></li>
+          <li>개인정보 분쟁조정위원회: 1833-6972 · <ExternalLink href="https://www.kopico.go.kr">kopico.go.kr</ExternalLink></li>
+          <li>대검찰청: 1301 · <ExternalLink href="https://www.spo.go.kr">spo.go.kr</ExternalLink></li>
+          <li>경찰청: 182 · <ExternalLink href="https://ecrm.police.go.kr">ecrm.police.go.kr</ExternalLink></li>
         </ul>
       </Section>
 
-      <Section title="제16조 (개인정보 처리방침의 변경)">
-        <p>
-          회사는 관계 법령, 서비스 내용 또는 개인정보 처리방식의 변경 등에 따라 본 개인정보 처리방침을 변경할
-          수 있습니다. 변경하는 경우 변경 내용 및 시행일자를 시행 7일 전부터 서비스 내 공지사항을 통해 고지합니다.
-        </p>
-        <p className="text-gray-400">공고일자 : 2026년 9월 2일&nbsp;&nbsp;·&nbsp;&nbsp;시행일자 : 2026년 9월 2일</p>
+      <Section id="revision" title="제13조 변경과 이전 버전">
+        <p>기능, 외부 서비스, 공유 범위, 보유기간 또는 법령이 바뀌면 변경 내용과 시행일을 서비스 안에서 알립니다. 이용자 권리에 중요한 변경은 적용 전에 충분한 기간을 두고 안내합니다.</p>
+        <p>현재 공개된 버전은 2026년 9월 3일 최초 시행본입니다. 이후 개정본부터는 변경 사유와 이전 버전을 함께 제공합니다.</p>
+        <p className="text-gray-400">공고일자: 2026년 9월 3일 · 시행일자: 2026년 9월 3일</p>
       </Section>
     </div>
   );

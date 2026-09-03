@@ -26,6 +26,7 @@ import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/em
 import { startGlobalCooldown } from "../shared/cooldown";
 import { hasRecentCall } from "../shared/callActivity";
 import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
+import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
@@ -532,7 +533,7 @@ export default function Transfer({
     if (step !== "hold" || !paired) return;
     localStorage.setItem("ansimAlert", JSON.stringify({
       amount: parseAmt(amt),
-      account: `${bank} ${account}`,
+      account: maskAccountForFamily(account, bank),
       bank,
       risk: "HIGH",
       signals: riskLabels.length ? riskLabels : DEMO_ALERT.signals,
@@ -1404,15 +1405,11 @@ export default function Transfer({
                           onClick={() => setPlayingVideo(item.videoId)}
                           className="group mt-3 w-full text-left active:scale-[0.99] transition-transform"
                         >
-                          {/* 유튜브 카드처럼 16:9 전체 폭 — 고령 사용자가 보기 쉽게 크게 */}
-                          <span className="relative block w-full overflow-hidden rounded-xl bg-gray-900" style={{ aspectRatio: "16 / 9" }}>
-                            <img
-                              src={item.thumbnailUrl}
-                              alt=""
-                              className="h-full w-full object-cover"
-                              onError={(e) => { e.currentTarget.style.display = "none"; }}
-                            />
-                            <span className="absolute inset-0 bg-black/15" />
+                          {/* 외부 썸네일은 자동으로 불러오지 않는다. 재생을 누른 뒤에만 YouTube에 연결한다. */}
+                          <span className="relative block w-full overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 via-slate-700 to-blue-900" style={{ aspectRatio: "16 / 9" }}>
+                            <span className="absolute inset-x-5 top-5 text-[12px] font-semibold leading-relaxed text-white/80">
+                              금융감독원 공식 예방 영상
+                            </span>
                             <span className="absolute inset-0 flex items-center justify-center">
                               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/65 shadow-lg transition-transform duration-200 group-hover:scale-110">
                                 <svg viewBox="0 0 24 24" fill="white" className="ml-1 h-7 w-7"><path d="M8 5v14l11-7z" /></svg>
@@ -1424,6 +1421,7 @@ export default function Transfer({
                           </span>
                           <span className="mt-2.5 block text-[15px] font-bold leading-snug text-gray-900">{item.title}</span>
                           <span className="mt-1 block text-[12px] text-gray-400">{item.source} 공식 영상</span>
+                          <span className="mt-1 block text-[11px] text-gray-400">재생하면 YouTube에 연결됩니다.</span>
                         </button>
                       )}
                     </div>
@@ -1604,9 +1602,8 @@ export default function Transfer({
                       </div>
                     ) : (
                       <button onClick={() => setPlayingVideo(item.videoId)} className="group w-full text-left active:scale-[0.99] transition-transform">
-                        <span className="relative block w-full overflow-hidden rounded-xl bg-gray-900" style={{ aspectRatio: "16 / 9" }}>
-                          <img src={item.thumbnailUrl} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                          <span className="absolute inset-0 bg-black/15" />
+                        <span className="relative block w-full overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 via-slate-700 to-blue-900" style={{ aspectRatio: "16 / 9" }}>
+                          <span className="absolute inset-x-5 top-5 text-[12px] font-semibold leading-relaxed text-white/80">금융감독원 공식 예방 영상</span>
                           <span className="absolute inset-0 flex items-center justify-center">
                             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/65 shadow-lg transition-transform duration-200 group-hover:scale-110">
                               <svg viewBox="0 0 24 24" fill="white" className="ml-1 h-7 w-7"><path d="M8 5v14l11-7z" /></svg>
@@ -1616,6 +1613,7 @@ export default function Transfer({
                         </span>
                         <span className="mt-2 block text-[13px] font-semibold text-gray-900">{item.title}</span>
                         <span className="mt-0.5 block text-[11px] text-gray-400">{item.source} · {item.duration}</span>
+                        <span className="mt-1 block text-[11px] text-gray-400">재생하면 YouTube에 연결됩니다.</span>
                       </button>
                     )}
                   </div>
@@ -1899,7 +1897,7 @@ export default function Transfer({
                           )}
                           {policeDraftConfirmed && (
                             <button type="button" disabled={policeReportDone} onClick={() => setPoliceReportDone(true)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 active:scale-[0.98] disabled:border-green-200 disabled:text-green-700">
-                              {policeReportDone ? "신고 접수 완료" : "접수번호 받았어요"}
+                              {policeReportDone ? "신고 접수 완료" : "접수 완료"}
                             </button>
                           )}
                         </div>
