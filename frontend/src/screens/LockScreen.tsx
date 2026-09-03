@@ -103,7 +103,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
     // 즉 실제 홈 화면(은행 앱 프레임)과 정확히 같은 폭·위치로만 한정한다.
     <div className="fixed inset-0 z-[200] bg-white">
       <div
-        className={`relative mx-auto flex h-full max-w-[430px] flex-col items-center justify-center bg-[#e2edfe] px-6 ${
+        className={`relative mx-auto flex h-full max-w-[430px] flex-col items-center justify-center bg-[#fafbfe] px-6 ${
           shake ? "[animation:shake_0.48s_ease]" : ""
         }`}
       >

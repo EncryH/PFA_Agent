@@ -1037,7 +1037,7 @@ export default function Guardian({
       {openEmergencyReceipt && (
         <div className="fixed inset-0 z-50">
           <button type="button" aria-label="접수 내역 닫기" onClick={() => setOpenEmergencyReceipt(null)} className="absolute inset-0 bg-black/40" />
-          <div className="absolute bottom-0 left-0 right-0 mx-auto max-h-[88vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-[#e2edfe] px-5 pb-8 pt-4 shadow-2xl" style={{ animation: "sheet-up .28s cubic-bezier(.32,.72,0,1)" }}>
+          <div className="absolute bottom-0 left-0 right-0 mx-auto max-h-[88vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-[#fafbfe] px-5 pb-8 pt-4 shadow-2xl" style={{ animation: "sheet-up .28s cubic-bezier(.32,.72,0,1)" }}>
             <div className="mx-auto h-1 w-10 rounded-full bg-gray-200" />
             <div className="mt-5 flex items-start justify-between gap-3">
               <div>
@@ -1345,7 +1345,7 @@ export default function Guardian({
               )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto border-t border-gray-100 bg-[#e2edfe] px-4 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto border-t border-gray-100 bg-[#fafbfe] px-4 py-4">
               <p className="mb-3 text-[12px] font-bold text-gray-400">부모님과 AI가 나눈 대화</p>
               <div className="flex flex-col gap-2.5">
                 {openLog.conversation.map((msg, i) => (

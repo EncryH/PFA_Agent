@@ -218,14 +218,14 @@ export default function App() {
   return (
     <>
       {/* ── 은행 앱 컨테이너 ── */}
-      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#e2edfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
+      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#fafbfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
 
         {/*
           두 앱을 항상 마운트해 두고 보이기만 전환한다.
           역할을 오가도 송금 진행 상황·입력값·대화가 그대로 남아야 MVP 시연이 끊기지 않는다.
         */}
         <div className={role === "parent" ? "contents" : "hidden"}>
-          <header className="sticky top-0 z-20 bg-[#e2edfe] flex items-center justify-between px-5 py-4">
+          <header className="sticky top-0 z-20 bg-[#fafbfe] flex items-center justify-between px-5 py-4">
             <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
               <svg viewBox="0 0 24 24" fill="#2563eb" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
               <span className="text-[17px] font-bold text-gray-900 tracking-tight">한결은행</span>
