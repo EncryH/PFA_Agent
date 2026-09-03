@@ -1,6 +1,6 @@
 // 개인정보처리방침 — 현재 프로토타입의 실제 처리 흐름과 목표 공동 허브 구조를 구분해 공개한다.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { clearAnsimLocalData } from "../shared/privacyStorage";
 import { PageHeader } from "../shared/ui";
 
@@ -71,6 +71,10 @@ const navigation = [
 export default function PrivacyPolicy({ onBack }: { onBack: () => void }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleted, setDeleted] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
 
   const deleteAllLocalData = () => {
     clearAnsimLocalData();

@@ -25,6 +25,7 @@ import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from ".
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 import { startGlobalCooldown } from "../shared/cooldown";
 import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
+import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
@@ -514,13 +515,9 @@ export default function Transfer({
   // hold 화면 도달 시 자녀 탭에 알림 공유 — 페어링 전에는 알림을 받을 자녀가 없으므로 쓰지 않는다.
   useEffect(() => {
     if (step !== "hold" || !paired) return;
-    const accountDigits = account.replace(/\D/g, "");
-    const maskedRecipient = accountDigits
-      ? `${bank} 끝 ${accountDigits.slice(-4)}자리`
-      : `${bank} 수취 계좌`;
     localStorage.setItem("ansimAlert", JSON.stringify({
       amount: parseAmt(amt),
-      account: maskedRecipient,
+      account: maskAccountForFamily(account, bank),
       bank,
       risk: "HIGH",
       signals: riskLabels.length ? riskLabels : DEMO_ALERT.signals,

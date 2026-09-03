@@ -25,6 +25,7 @@ import {
   readEmergencyReceipts,
   type EmergencyReceipt,
 } from "../shared/emergencyReceipt";
+import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type Step = "intro" | "select" | "code" | "done" | "permissions";
 type HistoryImportStatus = "prompt" | "loading" | "success";
@@ -41,7 +42,9 @@ type PendingAlert = {
 const readPendingAlert = (): PendingAlert | null => {
   try {
     const stored = localStorage.getItem("ansimAlert");
-    return stored ? JSON.parse(stored) as PendingAlert : null;
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as PendingAlert;
+    return { ...parsed, account: maskAccountForFamily(parsed.account, parsed.bank) };
   } catch {
     return null;
   }

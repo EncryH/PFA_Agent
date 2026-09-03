@@ -23,6 +23,7 @@ import {
   markGuardianLogViewed, openGuardianLogEntry, recordGuardianDecision,
 } from "../shared/guardianLog";
 import { ReadableAiMessage } from "../shared/ReadableAiMessage";
+import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
@@ -210,7 +211,7 @@ export default function ChildApp() {
 
   const a = alert as any;
   const amount  = a?.amount ?? DEMO_ALERT.amount;
-  const account = a?.account ?? DEMO_ALERT.account;
+  const account = maskAccountForFamily(a?.account ?? DEMO_ALERT.account, a?.bank ?? DEMO_ALERT.bank);
   const time    = a?.time ?? DEMO_ALERT.time;
   const signals: string[] = a?.signals?.length ? a.signals : DEMO_ALERT.signals;
   const conversation = a?.conversation?.length ? a.conversation : DEMO_ALERT.conversation;
