@@ -15,7 +15,7 @@ export async function runIntentAnalysisAgent(input, { apiKey, graphConfig, datab
   const routed = await routeIntentRequest(input, { apiKey });
   if (routed.handled) return routed.response;
 
-  const result = await handleIntent(routed.input, apiKey, { graphConfig, databaseConfig });
+  const result = await handleIntent(routed.input, apiKey, { graphConfig, databaseConfig, middleware: routed.middleware || {} });
   return guardIntentResult({
     ...result,
     middleware: routed.middleware,

@@ -28,6 +28,23 @@ import { maskAccountForFamily } from "../shared/privacyStorage";
 type Tab = typeof parentTabs[number];
 type AlertResponse = "approved" | "held" | null;
 
+type AlertEntry = DemoAlert & { _ts?: number; sessionId?: string; protectionLevel?: ProtectionLevel };
+
+const readAlertQueue = (): AlertEntry[] => {
+  try {
+    const stored = localStorage.getItem("ansimAlerts");
+    if (stored) {
+      const arr = JSON.parse(stored) as AlertEntry[];
+      if (Array.isArray(arr) && arr.length) return arr.map((a) => ({ ...DEMO_ALERT, ...a }));
+    }
+    const single = localStorage.getItem("ansimAlert");
+    if (!single) return [];
+    return [{ ...DEMO_ALERT, ...JSON.parse(single) }];
+  } catch {
+    return [];
+  }
+};
+
 const EMERGENCY_LIMIT = 500_000;
 
 function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert, onOpen, onVerify }: {
@@ -133,15 +150,21 @@ export default function ChildApp() {
   const [page, setPage] = useState<"home" | "alert-detail" | "alerts" | "settings" | "history" | "transfer" | "guardian" | "verify" | "support" | "privacy" | "emergency-loan" | "benefits">("home");
   // 페어링 완료 여부 — 완료 전에는 은행 앱만 보이고 안심동행 기능은 숨는다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
-  const [response, setResponse] = useState<AlertResponse>(null);
+  const [responses, setResponses] = useState<Record<string, AlertResponse>>({});
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
-  const [alert, setAlert] = useState<DemoAlert | null>(() => {
-    const stored = localStorage.getItem("ansimAlert");
-    return stored ? { ...DEMO_ALERT, ...JSON.parse(stored) } : null;
-  });
+  const [alerts, setAlerts] = useState<AlertEntry[]>(readAlertQueue);
+  const [activeAlertIdx, setActiveAlertIdx] = useState(0);
+  const alert = alerts.length ? alerts[activeAlertIdx] ?? alerts[0] : null;
+  const response = alert ? (responses[String((alert as any)._ts ?? "demo")] ?? null) : null;
+  const setResponse = (r: AlertResponse) => {
+    if (!alert) return;
+    setResponses((prev) => ({ ...prev, [String((alert as any)._ts ?? "demo")]: r }));
+  };
+  const pendingAlerts = alerts.filter((a) => !responses[String((a as any)._ts ?? "demo")]);
+  const hasPendingAlerts = pendingAlerts.length > 0;
   const [comingSoon, setComingSoon] = useState<string | null>(null);
   const [otherFinanceOpen, setOtherFinanceOpen] = useState(false);
   const [emergencyLoan, setEmergencyLoan] = useState(0);
@@ -183,17 +206,8 @@ export default function ChildApp() {
   // 부모 앱이 보류 상태가 되면 localStorage 로 알림이 넘어온다
   useEffect(() => {
     const id = setInterval(() => {
-      const stored = localStorage.getItem("ansimAlert");
-      if (stored) {
-        const data = JSON.parse(stored);
-        setAlert((prev) => {
-          const next = { ...DEMO_ALERT, ...data, _ts: data._ts || (prev as any)?._ts };
-          if (next._ts && next._ts !== (prev as any)?._ts) setResponse(null);
-          return next;
-        });
-      } else {
-        setAlert(null);
-      }
+      const queue = readAlertQueue();
+      setAlerts(queue);
     }, 1500);
     return () => clearInterval(id);
   }, []);
@@ -241,8 +255,25 @@ export default function ChildApp() {
   const respond = (r: Exclude<AlertResponse, null>) => {
     setResponse(r);
     recordGuardianDecision(alertId, r);
+    // 배열에서 해당 알림 제거
+    try {
+      const queue = readAlertQueue();
+      const remaining = queue.filter((item) => String((item as any)._ts ?? "") !== alertId);
+      if (remaining.length) {
+        localStorage.setItem("ansimAlerts", JSON.stringify(remaining));
+        localStorage.setItem("ansimAlert", JSON.stringify(remaining[0]));
+      } else {
+        localStorage.removeItem("ansimAlerts");
+        localStorage.removeItem("ansimAlert");
+      }
+      setAlerts(remaining);
+    } catch {
+      localStorage.removeItem("ansimAlerts");
+      localStorage.removeItem("ansimAlert");
+      setAlerts([]);
+    }
+    setActiveAlertIdx(0);
     setPage("home");
-    localStorage.removeItem("ansimAlert");
     window.dispatchEvent(new Event("ansim-alert"));
   };
 
@@ -274,7 +305,7 @@ export default function ChildApp() {
           <button onClick={() => setShowSearch(true)} aria-label="검색" className="text-gray-400 active:scale-90 transition-transform"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg></button>
           <button onClick={() => setShowNotifications(true)} className="relative text-gray-400 active:scale-90 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
-            {paired && alert && !response && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"><span className="text-[9px] font-bold text-white">1</span></div>}
+            {paired && hasPendingAlerts && <div className="absolute -top-1 -right-1 min-w-4 h-4 bg-red-500 rounded-full flex items-center justify-center px-1"><span className="text-[9px] font-bold text-white">{pendingAlerts.length}</span></div>}
           </button>
         </div>
       </header>
@@ -333,7 +364,7 @@ export default function ChildApp() {
               paired={paired}
               protectionLevel={protectionLevel}
               protectionName={protection.name}
-              hasPendingAlert={Boolean(alert) && !response}
+              hasPendingAlert={hasPendingAlerts}
               onOpen={() => setPage("guardian")}
               onVerify={() => setPage("verify")}
             />
@@ -395,6 +426,42 @@ export default function ChildApp() {
               </div>
             ) : null}
 
+            {/* 대기 중인 확인 요청이 여러 건이면 카드 목록으로 보여준다 */}
+            {pendingAlerts.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {pendingAlerts.map((pa, idx) => {
+                  const paTime = (pa as any)._ts ? new Date((pa as any)._ts).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
+                  const realIdx = alerts.findIndex((a) => (a as any)._ts === (pa as any)._ts);
+                  return (
+                    <button
+                      key={(pa as any)._ts ?? idx}
+                      onClick={() => { setActiveAlertIdx(realIdx >= 0 ? realIdx : 0); setPage("alert-detail"); }}
+                      className="w-full rounded-2xl border-2 border-red-200 bg-red-50 p-5 text-left active:scale-[0.98] transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[15px] font-bold text-red-700">
+                            {pendingAlerts.length > 1 ? `${idx + 1}. ` : ""}확인이 필요한 송금이 있어요
+                          </p>
+                          <p className="mt-1 text-[12px] text-gray-500">
+                            부모님이 확인을 요청했어요.{paTime ? ` · ${paTime}` : ""}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white">가족 확인 중</span>
+                      </div>
+                      <div className="mt-3 rounded-xl bg-white px-4 py-3">
+                        <p className="text-[20px] font-bold text-gray-900">{Number(pa.amount).toLocaleString()}원</p>
+                        <p className="mt-1 text-[13px] text-gray-500">받는 사람: {maskAccountForFamily(pa.account, pa.bank)}{pa.bank ? ` · ${pa.bank}` : ""}</p>
+                      </div>
+                      <p className="mt-3 rounded-xl bg-red-600 py-3 text-center text-[14px] font-bold text-white">
+                        확인하러 가기
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             </>)}
 
             <button onClick={() => setPage("privacy")} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
@@ -429,7 +496,7 @@ export default function ChildApp() {
           <Guardian
             appRole="child"
             onExit={() => setPage("home")}
-            onOpenPendingRequest={() => setPage("alert-detail")}
+            onOpenPendingRequest={(idx) => { setActiveAlertIdx(idx ?? 0); setPage("alert-detail"); }}
           />
         )}
         {page === "verify" && <Verify onBack={() => setPage("home")} />}
@@ -770,9 +837,10 @@ export default function ChildApp() {
       {showNotifications && (
         <NotificationShade
           role="child"
-          hasRiskAlert={paired && Boolean(alert) && !response}
+          hasRiskAlert={paired && hasPendingAlerts}
+          riskAlertCount={pendingAlerts.length}
           onClose={() => setShowNotifications(false)}
-          onOpenRiskAlert={() => { setShowNotifications(false); setPage("alert-detail"); }}
+          onOpenRiskAlert={() => { setShowNotifications(false); setActiveAlertIdx(0); setPage("alert-detail"); }}
           extraTxns={extraTxns}
         />
       )}
