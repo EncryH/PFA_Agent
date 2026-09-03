@@ -19,7 +19,12 @@ export interface RiskResult {
 export interface RiskPayload {
   // 1층(상대방 검증) 입력 — 생략해도 동작한다(1층이 CONTINUE 로 넘어가며 점수도 안 준다).
   counterparty?: { account?: string; phone?: string; domain?: string }
-  behavior: BehaviorSignals & { backPresses: number; sessionSeconds: number; recentCallLinked: boolean }
+  behavior: BehaviorSignals & {
+    backPresses: number;
+    sessionSeconds: number;
+    recentCallLinked: boolean;
+    callTransferRequestDetected: boolean;
+  }
   transaction: {
     amount: number
     isKnownRecipient: boolean

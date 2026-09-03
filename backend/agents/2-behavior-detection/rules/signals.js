@@ -32,6 +32,9 @@ export const SIGNALS = Object.freeze({
   ON_CALL: { score: 45, label: "통화 중 송금 시도 — 통화 상대의 지시에 따라 송금 중일 가능성" },
   // 10분 내 통화 기록이 있고, 이번 송금이 그 통화와 관련 있다고 스스로 확인한 경우
   RECENT_CALL_LINKED: { score: 35, label: "최근 통화와 관련된 송금이라고 확인함" },
+  // 통화 내용 자체에서 구체적인 송금 요구가 확인된 경우 — 자기 신고가 아니라 통화
+  // 내용에서 직접 잡힌 신호라 가장 확실하다
+  CALL_TRANSFER_REQUEST: { score: 50, label: "통화 중 구체적인 송금 요구가 감지됨 — 통화 상대가 직접 송금을 지시한 정황" },
 });
 
 export const SIGNAL_CODES = Object.keys(SIGNALS);
@@ -46,6 +49,7 @@ export function extractSignals({
   backPresses = 0,
   isOnCall = false,
   recentCallLinked = false,
+  callTransferRequestDetected = false,
 } = {}) {
   const codes = [];
 
@@ -71,6 +75,7 @@ export function extractSignals({
 
   if (isOnCall) codes.push("ON_CALL");
   if (recentCallLinked) codes.push("RECENT_CALL_LINKED");
+  if (callTransferRequestDetected) codes.push("CALL_TRANSFER_REQUEST");
 
   return codes;
 }

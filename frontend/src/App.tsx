@@ -235,7 +235,10 @@ export default function App() {
             <div className="flex gap-1 items-center">
               {!largeText && (
                 <button onClick={() => setShowSearch(true)} aria-label="검색" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 transition-transform duration-200 group-hover:scale-110"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>
+                  {/* group-hover:scale-110은 뺐다 — 모바일 터치는 tap 후에도 :hover가 안 풀려서
+                      버튼을 누를 때마다 아이콘이 살짝 확대된 채로 남는 버그였다(PC 마우스 호버는
+                      원래도 active:scale-90 하나로 충분히 눌리는 느낌이 난다). */}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>
                 </button>
               )}
               <button onClick={() => setShowNotifications(true)} aria-label="알림" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">

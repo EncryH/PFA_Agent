@@ -111,6 +111,12 @@ body {
   50%      { transform: scaleY(1); }
 }
 
+/* 통화 자막 — 실시간 캡션처럼 단어가 투명한 상태에서 하얗게 차오른다 */
+@keyframes caption-word-in {
+  from { opacity: 0.18; }
+  to   { opacity: 1; }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }

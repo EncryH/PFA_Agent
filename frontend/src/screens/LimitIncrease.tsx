@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import CallSafetyCheck from "../shared/CallSafetyCheck";
+import { getRecentCallScriptFlags } from "../shared/callActivity";
 
 const OPTIONS = [10_000_000, 30_000_000, 50_000_000, 100_000_000];
 const fmt = (n: number) => n.toLocaleString("ko-KR");
@@ -19,6 +20,9 @@ export default function LimitIncrease({
   const [selected, setSelected] = useState<number | null>(null);
   const [done, setDone] = useState<number | null>(null);
   const [showCallCheck, setShowCallCheck] = useState(false);
+  // 최근 10분 내 통화 대사에 "이체한도를 올려라"는 요구가 있었는지 — 있었다면
+  // 자기 신고 질문 없이 바로 경고로 보낸다.
+  const limitIncreaseRequestedOnCall = getRecentCallScriptFlags().limitIncreaseRequest;
 
   const completeIncrease = () => {
     if (!selected) return;
@@ -104,6 +108,7 @@ export default function LimitIncrease({
           onClose={() => setShowCallCheck(false)}
           onProceed={completeIncrease}
           isOnCall={isOnCall}
+          keywordDetected={limitIncreaseRequestedOnCall}
         />
       )}
     </div>

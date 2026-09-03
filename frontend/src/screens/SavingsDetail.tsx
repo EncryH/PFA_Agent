@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MY_ACCOUNTS, SAVINGS_INFO } from "../shared/data";
 import { BankLogo } from "../shared/ui";
 import CallSafetyCheck from "../shared/CallSafetyCheck";
+import { getRecentCallScriptFlags } from "../shared/callActivity";
 
 type SavingsStep = "detail" | "confirm" | "done";
 
@@ -35,6 +36,9 @@ export default function SavingsDetail({
 }) {
   const [step, setStep] = useState<SavingsStep>("detail");
   const [showCallCheck, setShowCallCheck] = useState(false);
+  // 최근 10분 내 통화 대사에 "적금을 해지해라"는 요구가 있었는지 — 있었다면
+  // 자기 신고 질문 없이 바로 경고로 보낸다.
+  const savingsCloseRequestedOnCall = getRecentCallScriptFlags().savingsCloseRequest;
 
   const clean = account.account.replace(/\D/g, "");
   const info = SAVINGS_INFO[clean];
@@ -212,6 +216,8 @@ export default function SavingsDetail({
             actionLabel="예·적금 중도해지"
             onClose={() => setShowCallCheck(false)}
             isOnCall={isOnCall}
+            keywordDetected={savingsCloseRequestedOnCall}
+            keywordPhrase="적금을 해지해달라"
             onProceed={() => {
               setShowCallCheck(false);
               onEarlyClosure(info.afterPenaltyBalance);

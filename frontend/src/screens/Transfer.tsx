@@ -24,7 +24,7 @@ import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 import { startGlobalCooldown } from "../shared/cooldown";
-import { hasRecentCall } from "../shared/callActivity";
+import { hasRecentCall, getRecentCallScriptFlags } from "../shared/callActivity";
 import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
 import { maskAccountForFamily } from "../shared/privacyStorage";
 
@@ -268,6 +268,7 @@ export default function Transfer({
   const behaviorSignalsRef = useRef(behaviorSignals);
   behaviorSignalsRef.current = behaviorSignals; // 렌더마다 갱신 — 클로저 stale 방지
   const time = nowTime();
+  const recentCallScriptFlags = getRecentCallScriptFlags();
 
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
@@ -415,10 +416,17 @@ export default function Transfer({
       (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name,
     );
 
+    // 최근 통화 대사에서 구체적인 송금 요구가 감지됐는지 — 10분 창 안에서만 유효하다.
+    const transferRequestDetected = getRecentCallScriptFlags().transferRequest;
+
     // 기준 금액 미만은 분석을 건너뛰고 바로 보내는 게 원래 취지지만, 그건 "익숙한 곳으로
     // 보내는 소액"에만 적용돼야 한다. 미등록 수취인이거나, 한도를 방금 올렸거나, 지금
-    // 통화 중이면 — 금액과 무관하게 위험 신호이므로 기준 금액으로 건너뛰지 않는다.
-    const hasRedFlag = !known || Number(behaviorSignalsRef.current.limitIncreased ?? 0) >= 1 || behaviorSignalsRef.current.isOnCall;
+    // 통화 중이거나, 통화에서 송금 요구가 감지됐으면 — 금액과 무관하게 위험 신호이므로
+    // 기준 금액으로 건너뛰지 않는다.
+    const hasRedFlag = !known
+      || Number(behaviorSignalsRef.current.limitIncreased ?? 0) >= 1
+      || behaviorSignalsRef.current.isOnCall
+      || transferRequestDetected;
     if (amountValue < aiReviewThreshold && !hasRedFlag) { setStep("success"); return; }
 
     // 최근 10분 내 통화 기록이 있으면, 분석에 들어가기 전에 이번 송금이 그 통화와
@@ -447,7 +455,13 @@ export default function Transfer({
 
     fetchRiskScore({
       counterparty: { account },
-      behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec, recentCallLinked: callLinkAnswer === true },
+      behavior: {
+        ...behaviorSignalsRef.current,
+        backPresses,
+        sessionSeconds: sessionSec,
+        recentCallLinked: callLinkAnswer === true,
+        callTransferRequestDetected: transferRequestDetected,
+      },
       transaction: {
         amount: amountValue,
         isKnownRecipient: !!known,
@@ -531,12 +545,16 @@ export default function Transfer({
   // hold 화면 도달 시 자녀 탭에 알림 공유 — 페어링 전에는 알림을 받을 자녀가 없으므로 쓰지 않는다.
   useEffect(() => {
     if (step !== "hold" || !paired) return;
+    const summarySignals = riskLabels.length ? riskLabels : DEMO_ALERT.signals;
     localStorage.setItem("ansimAlert", JSON.stringify({
       amount: parseAmt(amt),
       account: maskAccountForFamily(account, bank),
       bank,
       risk: "HIGH",
-      signals: riskLabels.length ? riskLabels : DEMO_ALERT.signals,
+      signals: summarySignals,
+      // 실제 대화·판정에서 나온 사기 유형·위험 신호로 만든다 — 고정 문구를 두면
+      // 자녀 화면의 "AI 분석 결과"가 실제 대화 내용과 다르게 보이는 문제가 있었다.
+      aiSummary: `${fraudTypeLabel || "보이스피싱"} 의심 거래예요 — ${summarySignals.join(", ")}이 확인됐어요.`,
       conversation: messages,
       sessionId: intentSessionId,
       protectionLevel,
@@ -544,7 +562,7 @@ export default function Transfer({
       _ts: Date.now(),
     }));
     window.dispatchEvent(new Event("ansim-alert"));
-  }, [step, intentSessionId, protectionLevel]);
+  }, [step, intentSessionId, protectionLevel, fraudTypeLabel]);
 
   // ── Handlers ──
   const reset = () => {
@@ -1063,22 +1081,26 @@ export default function Transfer({
         checkPhase === "call-link" ? (
           <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
-              {behaviorSignals.isOnCall && (
+              {(behaviorSignals.isOnCall || recentCallScriptFlags.transferRequest) && (
                 <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-bold text-red-700">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                  지금 통화 중이에요
+                  {recentCallScriptFlags.transferRequest ? "송금 요구 감지됨" : "지금 통화 중이에요"}
                 </span>
               )}
-              <div className={`flex h-14 w-14 items-center justify-center rounded-full ${behaviorSignals.isOnCall ? "bg-red-100" : "bg-[var(--ac-100)]"}`}>
-                <svg viewBox="0 0 24 24" fill="none" stroke={behaviorSignals.isOnCall ? "#dc2626" : "var(--ac-600)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
+              <div className={`flex h-14 w-14 items-center justify-center rounded-full ${behaviorSignals.isOnCall || recentCallScriptFlags.transferRequest ? "bg-red-100" : "bg-[var(--ac-100)]"}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke={behaviorSignals.isOnCall || recentCallScriptFlags.transferRequest ? "#dc2626" : "var(--ac-600)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
                   <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
                 </svg>
               </div>
               <p className="mt-4 text-[18px] font-extrabold text-gray-950">
-                {behaviorSignals.isOnCall ? "지금 통화와 관련 있나요?" : "최근 통화와 관련 있나요?"}
+                {recentCallScriptFlags.transferRequest
+                  ? "통화에서 송금 요구가 감지됐어요"
+                  : behaviorSignals.isOnCall ? "지금 통화와 관련 있나요?" : "최근 통화와 관련 있나요?"}
               </p>
               <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
-                {behaviorSignals.isOnCall ? (
+                {recentCallScriptFlags.transferRequest ? (
+                  <>방금 통화에서 <strong>구체적인 금액을 보내라는 요구</strong>가 있었어요.<br />이번 송금이 그 요구와 관련이 있나요?</>
+                ) : behaviorSignals.isOnCall ? (
                   <>지금 누군가와 통화 중인 상태로 송금하고 있어요.<br />이번 송금이 그 통화와 관련이 있나요?</>
                 ) : (
                   <>최근 10분 이내 통화 기록이 있어요.<br />이번 송금이 방금 그 전화와 관련이 있나요?</>

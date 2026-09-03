@@ -6,6 +6,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { screenCall, screenCallImmediate, type CallScreenResult } from '../shared/callscreen'
+import { pickRandomCallScript, type CallScript } from '../shared/callScript'
+import { markCallScriptFlag } from '../shared/callActivity'
 
 interface Props {
   call: { display: string; number: string; label: string }
@@ -27,6 +29,34 @@ function formatDuration(totalSeconds: number) {
   const ss = String(s).padStart(2, '0')
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${ss}`
   return `${m}:${ss}`
+}
+
+// 자막 한 줄을 사람이 소리내어 읽는 속도와 비슷하게 단어 단위로 쪼갠다 — 각 단어에
+// "지금까지 읽은 시간(delay)"을 매겨서, 그 시점에 그 단어만 투명→하양으로 페이드인되게 한다.
+const READ_CHAR_MS = 70
+const WORD_GAP_MS = 90
+const SPACE_MS = 80
+const LINE_HOLD_MS = 1000
+
+interface TimedWord {
+  text: string
+  delay: number
+}
+
+function wordTimings(text: string): TimedWord[] {
+  const tokens = text.split(/(\s+)/).filter((t) => t.length > 0)
+  let acc = 0
+  return tokens.map((token) => {
+    const delay = acc
+    acc += /\s/.test(token) ? SPACE_MS : token.length * READ_CHAR_MS + WORD_GAP_MS
+    return { text: token, delay }
+  })
+}
+
+function lineDurationMs(text: string): number {
+  const timing = wordTimings(text)
+  const last = timing.at(-1)
+  return (last?.delay ?? 0) + LINE_HOLD_MS
 }
 
 export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
@@ -92,6 +122,35 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
     return () => clearInterval(id)
   }, [phase])
 
+  // 실제 녹취를 구할 수 없어(개인정보·저작권), 통화 중 대사를 자막으로 대신 보여준다.
+  // 위험(danger) 통화를 받을 때마다 5가지 시나리오 중 하나를 무작위로 고르고, 한 줄씩
+  // "사람이 읽는 속도"만큼 시간을 두고 다음 줄로 넘어간다. 각 줄에 달린 flags(이체한도
+  // 상향 요구·적금 해지 요구·송금 요구)는 나올 때마다 callActivity에 기록해, 이체한도
+  // 화면·적금 해지 화면·송금 화면이 나중에 그걸 참조할 수 있게 한다.
+  const [script, setScript] = useState<CallScript | null>(null)
+  const [scriptLineIdx, setScriptLineIdx] = useState(-1)
+  // 한 번이라도 voiceClone 대사가 나오면, 그 뒤로는 계속 배지를 띄워둔다(다시 꺼지지 않음).
+  const [voiceCloneWarning, setVoiceCloneWarning] = useState(false)
+  useEffect(() => {
+    if (phase !== 'active' || result.status !== 'danger') return
+    const chosen = pickRandomCallScript()
+    setScript(chosen)
+    let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
+
+    const showLine = (i: number) => {
+      if (cancelled || i >= chosen.lines.length) return
+      setScriptLineIdx(i)
+      chosen.lines[i].flags?.forEach(markCallScriptFlag)
+      if (chosen.lines[i].voiceClone) setVoiceCloneWarning(true)
+      const t = setTimeout(() => showLine(i + 1), lineDurationMs(chosen.lines[i].text))
+      timers.push(t)
+    }
+    showLine(0)
+
+    return () => { cancelled = true; timers.forEach(clearTimeout) }
+  }, [phase, result.status])
+
   const decline = () => {
     setVisible(false)
     setTimeout(onEnd, 280)
@@ -149,10 +208,11 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
   const capsuleTop = visible ? 8 : -140
 
   return (
-    /* 휴대폰 알림이라 은행 앱 스크롤과 무관하게 화면 상단에 고정돼야 한다 — absolute를 쓰면
+    <>
+    {/* 휴대폰 알림이라 은행 앱 스크롤과 무관하게 화면 상단에 고정돼야 한다 — absolute를 쓰면
        은행 앱 컨테이너(스크롤되는 문서 흐름)를 기준으로 붙어서 스크롤하면 같이 밀려 올라간다.
        fixed + 뷰포트 중앙 정렬로, 폰 프레임 폭(max-w-430px) 안에서 진짜 상태바처럼 붙여둔다.
-       캡슐 바깥은 pointer-events-none이라 은행 앱을 그대로 조작할 수 있다 */
+       캡슐 바깥은 pointer-events-none이라 은행 앱을 그대로 조작할 수 있다 */}
     <div ref={wrapRef} className="pointer-events-none fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2">
       <div
         onPointerDown={handlePointerDown}
@@ -230,6 +290,11 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
               {result.international && (
                 <span className="rounded-full border border-sky-400/30 bg-sky-400/15 px-2 py-0.5 text-[8px] font-bold text-sky-300">
                   🌐 국제전화
+                </span>
+              )}
+              {voiceCloneWarning && (
+                <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-400/15 px-2 py-0.5 text-[8px] font-bold text-fuchsia-300">
+                  🎙️ AI 음성 변조 의심
                 </span>
               )}
               <span className={`rounded-full border px-2 py-0.5 text-[8px] font-bold ${statusClass}`}>{statusLabel}</span>
@@ -339,5 +404,34 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
         </div>
       </div>
     </div>
+
+    {/* 실시간 캡션 스타일 자막 — 안드로이드 라이브 캡션처럼 화면 맨 아래, 옅은 회색
+        배경에 하얀 글씨로 떠 있다. wrapRef 안에 넣으면 그 div의 transform(-translate-x-1/2)이
+        새 containing block이 되어 이 자막의 fixed가 화면이 아니라 wrapRef 기준으로 붙어버려서,
+        독립된 형제 엘리먼트로 뺐다. */}
+    {phase === 'active' && script && scriptLineIdx >= 0 && (
+      <div className="pointer-events-none fixed bottom-4 left-1/2 z-[95] w-full max-w-[430px] -translate-x-1/2 px-3">
+        <div
+          key={scriptLineIdx}
+          className="rounded-2xl px-4 py-3 shadow-lg"
+          style={{ background: 'rgba(120,120,128,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+        >
+          <p className="text-[13px] font-medium leading-relaxed">
+            {wordTimings(script.lines[scriptLineIdx].text).map((w, i) => (
+              <span
+                key={i}
+                className={`opacity-0 [animation:caption-word-in_0.5s_ease-out_forwards] ${
+                  script.lines[scriptLineIdx].flags?.length ? 'font-bold text-red-200' : 'text-white'
+                }`}
+                style={{ animationDelay: `${w.delay}ms` }}
+              >
+                {w.text}
+              </span>
+            ))}
+          </p>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

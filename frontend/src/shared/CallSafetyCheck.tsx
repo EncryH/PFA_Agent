@@ -5,6 +5,8 @@ export default function CallSafetyCheck({
   onClose,
   onProceed,
   isOnCall = false,
+  keywordDetected = false,
+  keywordPhrase = "이체한도를 올려달라",
 }: {
   actionLabel: string;
   onClose: () => void;
@@ -12,8 +14,13 @@ export default function CallSafetyCheck({
   // 실제 통화 배너 상태로 이미 통화 중임을 감지했다면, 굳이 자기 신고로 다시 묻지 않고
   // 바로 경고 화면으로 보낸다. 감지가 안 됐을 때만(false) 기존처럼 직접 물어본다.
   isOnCall?: boolean;
+  // 통화 대사 자막에서 이 행동과 직접 관련된 요구(예: "이체한도를 올려라")가 감지됐는지.
+  // isOnCall보다 더 구체적이고 확실한 신호라 경고 문구를 다르게 보여준다.
+  keywordDetected?: boolean;
+  // keywordDetected일 때 인용할 문구 — 화면마다 감지하는 요구가 다르다(이체한도 상향/적금 해지 등).
+  keywordPhrase?: string;
 }) {
-  const [onCall, setOnCall] = useState(isOnCall);
+  const [onCall, setOnCall] = useState(isOnCall || keywordDetected);
 
   return (
     <div
@@ -85,11 +92,20 @@ export default function CallSafetyCheck({
               통화를 먼저 끊어주세요
             </h2>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-700">
-              {isOnCall && (
+              {keywordDetected ? (
                 <>
-                  지금 <strong>통화 중인 것으로 확인됐어요.</strong> 전화 통화 중에 이런 행동을 하는 건 위험성이 높아요.
+                  방금 통화에서 <strong>"{keywordPhrase}"</strong>는 말이 있었어요.
+                  <br />
+                  이건 전형적인 보이스피싱 수법이에요.
                   <br />
                 </>
+              ) : (
+                isOnCall && (
+                  <>
+                    지금 <strong>통화 중인 것으로 확인됐어요.</strong> 전화 통화 중에 이런 행동을 하는 건 위험성이 높아요.
+                    <br />
+                  </>
+                )
               )}
               검찰·경찰·금융기관은 전화로 자산을 옮기거나 이체한도를 높이라고 요구하지 않아요.
             </p>
