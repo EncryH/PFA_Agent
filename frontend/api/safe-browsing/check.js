@@ -1,9 +1,10 @@
 import { checkUrlThreat } from "../../../backend/safebrowsing.js";
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).json({ error: "GET only" });
-  const target = Array.isArray(req.query.url) ? req.query.url[0] : String(req.query.url ?? "");
-  if (!target) return res.status(400).json({ error: "url query param required" });
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  const target = String(req.body?.url ?? "").trim();
+  if (!target) return res.status(400).json({ error: "url required" });
 
   try {
     const result = await checkUrlThreat(target, process.env.GOOGLE_SAFE_BROWSING_API_KEY);

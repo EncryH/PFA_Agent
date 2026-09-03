@@ -584,6 +584,8 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
         method: retrieval.transaction_pattern?.method || "supabase_parameterized_sql",
         user_id: retrieval.transaction_pattern?.user_id || safeUserId(retrieval.transaction_pattern),
         lookback_months: retrieval.transaction_pattern?.lookback_months || 12,
+        outgoing_count: Number(retrieval.transaction_pattern?.outgoing_count) || 0,
+        transfer_count: Number(retrieval.transaction_pattern?.transfer_count) || 0,
         average_transfer_amount: Number(retrieval.transaction_pattern?.average_transfer_amount) || 0,
         maximum_transfer_amount: Number(retrieval.transaction_pattern?.maximum_transfer_amount) || 0,
         recipient_transfer_count: Number(retrieval.transaction_pattern?.recipient_transfer_count) || 0,
@@ -591,6 +593,7 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
         typical_transfer_hour: Number(retrieval.transaction_pattern?.typical_transfer_hour) || 0,
         risk_score: Number(retrieval.transaction_pattern?.risk_score) || 0,
         risk_reasons: normalizeStringList(retrieval.transaction_pattern?.risk_reasons),
+        reason: retrieval.transaction_pattern?.reason || "",
       },
       knowledge_graph: {
         status: retrieval.graph?.status || "disabled",

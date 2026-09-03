@@ -126,6 +126,7 @@ export type NoticeEvent = {
 };
 
 const NOTICE_KEY = "ansimNotices";
+const MAX_NOTICE_ENTRIES = 50;
 
 export const readNotices = (): NoticeEvent[] => {
   try {
@@ -143,7 +144,7 @@ export const pushNotice = (
 ) => {
   const list = readNotices();
   list.push({ type, at, ...extra });
-  localStorage.setItem(NOTICE_KEY, JSON.stringify(list));
+  localStorage.setItem(NOTICE_KEY, JSON.stringify(list.slice(-MAX_NOTICE_ENTRIES)));
 };
 
 /** 데모용 예금주 조회 — 실제로는 금융결제원 조회. 같은 계좌번호면 항상 같은 이름이 나온다. */

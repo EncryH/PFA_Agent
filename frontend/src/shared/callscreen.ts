@@ -40,6 +40,16 @@ export const DEMO_SCENARIOS: { display: string; number: string; label: string }[
   { display: "02-9876-5432",    number: "0298765432",   label: "알 수 없음" },
 ]
 
+function reportedRiskDetail(hit: { reportCount: number; scamTypes: string[] }) {
+  if (hit.scamTypes.includes('투자사기')) {
+    return '신고 이력상 투자 사기 위험이 있어요. 투자 권유나 송금을 요구하면 공식 채널로 먼저 확인하세요.'
+  }
+  if (hit.scamTypes.includes('기관사칭')) {
+    return '신고 이력상 기관 사칭 가능성이 있어요. 상대가 안내한 번호가 아닌 공식 대표번호로 다시 확인하세요.'
+  }
+  return '신고 이력이 있는 번호로 사기 위험이 있어요. 금전이나 개인정보를 요구하면 통화를 멈추고 확인하세요.'
+}
+
 export function screenCallImmediate(raw: string): CallScreenResult {
   const clean = raw.replace(/[-\s]/g, '')
 
@@ -55,17 +65,22 @@ export function screenCallImmediate(raw: string): CallScreenResult {
     }
   }
 
-  // 2. 070 인터넷전화 — 공식 기관은 절대 사용 안 함
+  // 2. 070 인터넷전화 — 신고 이력이 있을 때만 위험, 번호 유형만으로는 추가 확인
   if (clean.startsWith('070')) {
     const hit = CALL_BLACKLIST[clean]
+    if (!hit) {
+      return {
+        status: 'unknown',
+        reason: '070 인터넷전화 · 추가 확인 필요',
+        detail: '인터넷전화 번호예요. 금융·정부기관을 안내했다면 공식 대표번호로 다시 확인하세요.',
+      }
+    }
     return {
       status: 'danger',
-      reason: hit
-        ? `070 인터넷전화 · 보이스피싱 신고 ${hit.reportCount}건`
-        : '070 인터넷전화',
-      detail: '공식 금융·정부기관은 070 번호를 사용하지 않습니다. 기관사칭 가능성이 높습니다.',
-      reportCount: hit?.reportCount,
-      scamTypes: hit?.scamTypes,
+      reason: `070 인터넷전화 · 피해 신고 ${hit.reportCount}건`,
+      detail: reportedRiskDetail(hit),
+      reportCount: hit.reportCount,
+      scamTypes: hit.scamTypes,
     }
   }
 
@@ -74,8 +89,8 @@ export function screenCallImmediate(raw: string): CallScreenResult {
   if (blackHit) {
     return {
       status: 'danger',
-      reason: `보이스피싱 신고 ${blackHit.reportCount}건`,
-      detail: `사기 유형: ${blackHit.scamTypes.join(', ')} · 수신을 거부하세요.`,
+      reason: `피해 신고 ${blackHit.reportCount}건 · ${blackHit.scamTypes.join(', ')}`,
+      detail: reportedRiskDetail(blackHit),
       reportCount: blackHit.reportCount,
       scamTypes: blackHit.scamTypes,
     }

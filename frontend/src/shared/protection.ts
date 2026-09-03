@@ -54,8 +54,8 @@ export const PROTECTION_EVENT = "ansim-protection-level";
 export const AI_REVIEW_THRESHOLD_EVENT = "ansim-ai-review-threshold";
 
 export function readProtectionLevel(): ProtectionLevel {
-  const value = Number(localStorage.getItem(STORAGE_KEY) ?? 2);
-  return value === 0 || value === 1 || value === 2 || value === 3 ? value : 2;
+  const value = Number(localStorage.getItem(STORAGE_KEY) ?? 0);
+  return value === 0 || value === 1 || value === 2 || value === 3 ? value : 0;
 }
 
 export function saveProtectionLevel(level: ProtectionLevel) {

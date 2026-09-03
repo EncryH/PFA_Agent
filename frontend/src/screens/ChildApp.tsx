@@ -261,7 +261,7 @@ export default function ChildApp() {
   return (
     <>
       {/* 헤더 색 = 계좌 박스 맨 위 색. 둘이 이어져 하나의 영역처럼 보인다 */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 bg-[var(--ac-band-from)]">
+      <header className={`sticky top-0 z-20 flex items-center justify-between px-5 py-4 ${page === "guardian" ? "bg-white" : "bg-[var(--ac-band-from)]"}`}>
         {/* 부모 앱 헤더와 동일한 구성 — 은행 이름과 로고 색만 다르다 */}
         <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
           <svg viewBox="0 0 24 24" fill="var(--ac-band-icon)" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
