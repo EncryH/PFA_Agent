@@ -325,7 +325,7 @@ export default function Verify({ onBack }: { onBack: () => void }) {
           </ul>
         ) : tab === "링크·URL" ? (
           <ul className="text-[12px] text-[var(--ac-600)] space-y-1">
-            <li>• 공식 도메인 목록과 Google Safe Browsing 결과를 확인합니다.</li>
+            <li>• 공식 도메인 목록, KISA(한국인터넷진흥원) 피싱사이트 목록, Google Safe Browsing 결과를 확인합니다.</li>
             <li>• 출처가 불분명한 링크는 직접 열지 마세요.</li>
             <li>• 결과는 참고용이며 공식 앱에서 다시 확인하세요.</li>
           </ul>

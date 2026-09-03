@@ -266,14 +266,18 @@ function fscApi(apiKey: string): Plugin {
   }
 }
 
-// Google Safe Browsing 프록시 — POST /api/safe-browsing/check { url }
+// KISA(한국인터넷진흥원) 피싱사이트 목록 → Google Safe Browsing 프록시 — POST /api/safe-browsing/check { url }
+// KISA는 로컬 CSV 스냅샷이라 키·네트워크 없이 먼저 보고, 안 걸리면 Google로 넘어간다.
 // 데이터포털 서비스키와 같은 이유로(브라우저 노출·쿼터 남용 방지) 서버가 대신 호출한다.
-// 실제 조회 로직은 backend/safebrowsing.js — verify.ts 의 verifyUrl()이 여기로 부른다.
+// 실제 조회 로직은 backend/kisaPhishing.js·backend/safebrowsing.js — verify.ts 의
+// verifyUrl()이 여기로 부른다. frontend/api/safe-browsing/check.js(운영 배포용)와
+// 로직을 반드시 같이 맞춘다 — 이 프로젝트는 개발 서버용 프록시를 여기, 운영용은 그쪽에 따로 둔다.
 function safeBrowsingApi(apiKey: string): Plugin {
   return {
     name: 'ansim-safe-browsing-api',
     configureServer(server) {
-      const handlerPath = pathToFileURL(resolve(server.config.root, '../backend/safebrowsing.js')).href
+      const safeBrowsingPath = pathToFileURL(resolve(server.config.root, '../backend/safebrowsing.js')).href
+      const kisaPath = pathToFileURL(resolve(server.config.root, '../backend/kisaPhishing.js')).href
       server.middlewares.use('/api/safe-browsing/check', async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         res.setHeader('Cache-Control', 'no-store')
@@ -296,10 +300,29 @@ function safeBrowsingApi(apiKey: string): Plugin {
             res.statusCode = 400
             return res.end(JSON.stringify({ error: 'url required' }))
           }
-          const { checkUrlThreat } = await import(handlerPath)
-          const result = await checkUrlThreat(target, apiKey)
+          const { checkKisaPhishing } = await import(kisaPath)
+          const kisa = checkKisaPhishing(target)
+          if (kisa?.threat) {
+            res.statusCode = 200
+            return res.end(JSON.stringify({ result: { threat: true, source: 'kisa' } }))
+          }
+
+          const { checkUrlThreat } = await import(safeBrowsingPath)
+          const google = await checkUrlThreat(target, apiKey)
+          if (google?.threat) {
+            res.statusCode = 200
+            return res.end(JSON.stringify({ result: { ...google, source: 'google' } }))
+          }
+
+          if (kisa?.shortenerHost) {
+            res.statusCode = 200
+            return res.end(JSON.stringify({
+              result: { threat: false, source: 'kisa', shortenerHost: true, knownBadPaths: kisa.knownBadPaths },
+            }))
+          }
+
           res.statusCode = 200
-          res.end(JSON.stringify({ result }))
+          res.end(JSON.stringify({ result: google }))
         } catch (e) {
           if ((e as Error).message === 'REQUEST_TOO_LARGE') {
             res.statusCode = 413
