@@ -99,12 +99,15 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const lineColor = success ? "#059669" : "#1d4ed8";
 
   return (
-    <div
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white px-6 ${
-        shake ? "[animation:shake_0.48s_ease]" : ""
-      }`}
-    >
-      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--ac-100)] bg-[#fafbfe] shadow-sm">
+    // 바깥(화면 양옆)은 그대로 흰 배경 — 색이 칠해지는 영역은 안쪽의 max-w-[430px] 칼럼,
+    // 즉 실제 홈 화면(은행 앱 프레임)과 정확히 같은 폭·위치로만 한정한다.
+    <div className="fixed inset-0 z-[200] bg-white">
+      <div
+        className={`relative mx-auto flex h-full max-w-[430px] flex-col items-center justify-center bg-[#e2edfe] px-6 ${
+          shake ? "[animation:shake_0.48s_ease]" : ""
+        }`}
+      >
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--ac-100)] bg-white shadow-sm">
         <svg viewBox="0 0 24 24" fill="#2563eb" className="h-8 w-8">
           <path d="M12 2L2 7.5v1h20v-1L12 2z" />
           <path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" />
@@ -162,6 +165,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
       </div>
 
       <p className="mt-9 text-[11px] text-gray-300">힌트 · ㄱ 자 모양으로 그어보세요</p>
+      </div>
     </div>
   );
 }

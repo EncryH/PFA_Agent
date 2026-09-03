@@ -1367,7 +1367,7 @@ export default function Transfer({
               <p className="mt-0.5 text-[12px] leading-relaxed text-gray-600">상담은 끝나지 않았어요. 아래에서 계속 물어보실 수 있어요.</p>
             </div>
           )}
-          <div className="mt-auto flex shrink-0 gap-2 bg-[#fafbfe] pt-1">
+          <div className="mt-auto flex shrink-0 gap-2 bg-[#e2edfe] pt-1">
             <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="더 궁금한 내용을 입력하세요..." disabled={isTyping}
               className="h-14 flex-1 rounded-2xl border border-gray-200 px-5 text-[15px] focus:border-[var(--ac-400)] focus:outline-none transition-colors disabled:bg-gray-50" />
             <button onClick={handleSend} disabled={!input.trim() || isTyping} className="h-14 w-14 shrink-0 rounded-2xl bg-[var(--ac-500)] flex items-center justify-center active:scale-95 transition-transform disabled:bg-gray-200">

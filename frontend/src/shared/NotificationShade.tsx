@@ -174,7 +174,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           <p className="text-[17px] font-bold text-gray-900">알림</p>
         </div>
 
-        <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${role === "parent" ? "bg-[#fafbfe]" : "bg-[#fbfcf9]"}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${role === "parent" ? "bg-[#e2edfe]" : "bg-[#fbfcf9]"}`}>
           {fresh.length > 0 && (
             <>
               <p className="px-5 pt-6 pb-1 text-[17px] font-bold text-gray-900">새 알림</p>

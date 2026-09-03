@@ -17,7 +17,7 @@ import History from "./screens/History";
 import ChildApp from "./screens/ChildApp";
 import Verify from "./screens/Verify";
 import SavingsDetail from "./screens/SavingsDetail";
-import IncomingCall from "./screens/IncomingCall";
+import CallBanner from "./screens/CallBanner";
 import IncomingMessage from "./screens/IncomingMessage";
 import NotificationShade from "./shared/NotificationShade";
 import SearchOverlay, { type SearchItem } from "./shared/SearchOverlay";
@@ -129,6 +129,7 @@ export default function App() {
   };
 
   const toggleRole = () => setRole(role === "parent" ? "child" : "parent");
+
   useEffect(() => {
     const syncPairing = () => setPaired(localStorage.getItem("ansimPaired") === "true");
     window.addEventListener("ansim-paired", syncPairing);
@@ -186,14 +187,14 @@ export default function App() {
   return (
     <>
       {/* ── 은행 앱 컨테이너 ── */}
-      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#fafbfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
+      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#e2edfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
 
         {/*
           두 앱을 항상 마운트해 두고 보이기만 전환한다.
           역할을 오가도 송금 진행 상황·입력값·대화가 그대로 남아야 MVP 시연이 끊기지 않는다.
         */}
         <div className={role === "parent" ? "contents" : "hidden"}>
-          <header className="sticky top-0 z-20 bg-[#fafbfe] flex items-center justify-between px-5 py-4">
+          <header className="sticky top-0 z-20 bg-[#e2edfe] flex items-center justify-between px-5 py-4">
             <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
               <svg viewBox="0 0 24 24" fill="#2563eb" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
               <span className="text-[17px] font-bold text-gray-900 tracking-tight">한결은행</span>
@@ -347,7 +348,7 @@ export default function App() {
             {page === "home" && tab === "주식" && <StocksTab role="parent" />}
           </main>
 
-          <nav className="parent-bottom-nav sticky bottom-0 bg-white rounded-[28px] flex justify-around py-2 pt-3 mt-4">
+          <nav className="parent-bottom-nav sticky bottom-0 bg-white rounded-t-[28px] flex justify-around py-2 pt-3 pb-3 mt-4">
             {parentTabs.map((t) => (
               <button key={t} onClick={() => { setTab(t); if (page !== "home") setPage("home"); }}
                 className={`flex flex-col items-center gap-1 text-[11px] py-1 px-3 ${tab === t && page === "home" ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
@@ -377,8 +378,8 @@ export default function App() {
           <CooldownPopup secondsLeft={cooldownSecondsLeft} onClose={() => setShowCooldownPopup(false)} />
         )}
 
-        {/* 수신 전화 / 수신 문자 배너 */}
-        {activeCall    && <IncomingCall    call={activeCall}       onDismiss={() => setActiveCall(null)} />}
+        {/* 수신 전화 → 통화 중 → 종료까지 하나로 이어지는 배너 / 수신 문자 배너 */}
+        {activeCall && <CallBanner call={activeCall} onEnd={() => setActiveCall(null)} />}
         {activeMessage && <IncomingMessage message={activeMessage} onDismiss={() => setActiveMessage(null)} />}
       </div>
 
@@ -413,12 +414,16 @@ export default function App() {
                 </svg>
               </button>
             </div>
-            {!activeCall && (
-              <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
-                <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">전화</p>
-                <p className="text-white text-[10px] font-semibold leading-tight">{scenarioLabel}</p>
-              </div>
-            )}
+            {/* 폭을 고정해서 항상 렌더링한다 — 라벨을 아예 안 그리면(조건부 렌더) 폭 기준이
+                되는 요소가 사라져서, 통화 시작 같은 액션에 버튼 전체가 왼쪽으로 쏠려 보였다.
+                긴 시나리오 문구(예: "해외(필리핀) 발신 의심전화")가 떠 있을 때 특히 심했다. */}
+            <div
+              className={`bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center ${activeCall ? 'invisible' : ''}`}
+              style={{ width: 84 }}
+            >
+              <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">전화</p>
+              <p className="text-white text-[10px] font-semibold leading-tight">{scenarioLabel}</p>
+            </div>
           </div>
 
           {/* 문자 수신 버튼 */}
@@ -437,12 +442,13 @@ export default function App() {
                 </svg>
               </button>
             </div>
-            {!activeMessage && (
-              <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center" style={{ minWidth: 72 }}>
-                <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">문자</p>
-                <p className="text-white text-[10px] font-semibold leading-tight">{messageLabel}</p>
-              </div>
-            )}
+            <div
+              className={`bg-gray-900/80 backdrop-blur-sm rounded-lg px-2 py-1 text-center ${activeMessage ? 'invisible' : ''}`}
+              style={{ width: 84 }}
+            >
+              <p className="text-white/40 text-[8px] font-medium uppercase tracking-widest">문자</p>
+              <p className="text-white text-[10px] font-semibold leading-tight">{messageLabel}</p>
+            </div>
           </div>
         </div>
       )}

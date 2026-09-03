@@ -118,6 +118,12 @@ body {
   80%  { transform: translateX(4px); }
 }
 
+/* 통화 중 다이나믹 아일랜드 축소 패턴 — 파형 막대가 오르내림 */
+@keyframes call-wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }

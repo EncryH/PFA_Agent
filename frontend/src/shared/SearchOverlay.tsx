@@ -35,7 +35,7 @@ export default function SearchOverlay({ items, onClose }: { items: SearchItem[];
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#fafbfe]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#e2edfe]">
             {filtered.length === 0 ? (
               <p className="py-16 text-center text-[13px] text-gray-400">검색 결과가 없어요</p>
             ) : (
