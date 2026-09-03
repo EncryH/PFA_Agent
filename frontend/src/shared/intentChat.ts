@@ -1,6 +1,10 @@
 import type { OfficialContent } from "../api/guardian";
 
-export type StoredChatMessage = { role: "ai" | "user"; text: string };
+export type StoredChatMessage = {
+  role: "ai" | "user";
+  text: string;
+  display?: "plain" | "structured";
+};
 
 export type IntentChatSession = {
   schemaVersion: 1;

@@ -51,11 +51,6 @@ function backendApi(apiKey: string, graphConfig: Neo4jConfig, databaseConfig: Te
           res.statusCode = 405
           return res.end(JSON.stringify({ error: 'POST only' }))
         }
-        if (!apiKey) {
-          res.statusCode = 500
-          return res.end(JSON.stringify({ error: 'GEMINI_API_KEY가 루트 .env에 없습니다' }))
-        }
-
         try {
           const chunks: Buffer[] = []
           for await (const c of req) chunks.push(c as Buffer)

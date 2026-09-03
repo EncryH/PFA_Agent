@@ -2,9 +2,6 @@ import { runIntentAnalysisAgent } from "../../backend/agents/3-intent-analysis/a
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: "GEMINI_API_KEY가 설정되지 않았습니다" });
-  }
 
   try {
     const result = await runIntentAnalysisAgent(req.body ?? {}, {

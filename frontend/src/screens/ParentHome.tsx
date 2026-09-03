@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MY_ACCOUNTS } from "../shared/data";
+import { MONTHLY_SPENDING_TOTAL } from "../shared/monthlySpending";
 import { BankLogo } from "../shared/ui";
 import { PROTECTION_LEVELS, getProtectionDisplayLevel, useProtectionLevel } from "../shared/protection";
 
@@ -141,13 +142,6 @@ const PRODUCT_DETAILS: Record<string, ProductDetail> = {
   },
 };
 
-const SPENDING_BREAKDOWN = [
-  { label: "이체",     amount: 650_000 },
-  { label: "자동이체", amount: 184_000 },
-  { label: "체크카드", amount: 51_000 },
-];
-const SPENDING_TOTAL = SPENDING_BREAKDOWN.reduce((s, x) => s + x.amount, 0);
-
 export default function ParentHome({
   onTransfer, onGuardian, onAccount, onVerify, onSupport, onPrivacy, onLimitIncrease,
   onAllAccounts, onMonthlyDetail, accounts = MY_ACCOUNTS, largeText,
@@ -173,7 +167,6 @@ export default function ParentHome({
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
-  const [spendingOpen, setSpendingOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
   const [applyStep, setApplyStep] = useState<"detail" | "amount" | "done">("detail");
   const [applyAmount, setApplyAmount] = useState("");
@@ -279,18 +272,21 @@ export default function ParentHome({
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl p-5 mt-3 flex items-center justify-between hover:shadow-lg hover:-translate-y-0.5 transition-all">
+      <button
+        type="button"
+        onClick={onMonthlyDetail}
+        className="mt-3 flex w-full items-center justify-between rounded-2xl bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
+        aria-label="9월 이용 내역 보기"
+      >
         <div>
-          <p className="text-[18px] font-bold text-gray-900">{SPENDING_TOTAL.toLocaleString()}원</p>
+          <p className="text-[18px] font-bold text-gray-900">{MONTHLY_SPENDING_TOTAL.toLocaleString("ko-KR")}원</p>
           <p className="text-[13px] text-gray-400">9월 이용 금액</p>
         </div>
-        <button
-          onClick={() => { onMonthlyDetail?.(); setSpendingOpen(true); }}
-          className="text-[13px] text-gray-500 bg-gray-100 rounded-md px-4 py-1.5 font-medium active:scale-95 hover:bg-gray-200 transition-all"
-        >
+        <span className="flex items-center gap-1 rounded-md bg-gray-100 px-4 py-1.5 text-[13px] font-medium text-gray-500">
           내역
-        </button>
-      </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </span>
+      </button>
 
       <AnsimBanner paired={paired} onClick={onGuardian} onVerify={onVerify} protectionLevel={protectionLevel} protectionName={protection.name} />
 
@@ -359,39 +355,6 @@ export default function ParentHome({
       <button onClick={onPrivacy} className="w-full py-4 mt-1 text-[12px] text-gray-300 text-center active:scale-95 transition-transform">
         개인정보처리방침
       </button>
-
-      {/* ─── 월별 지출 바텀시트 ───────────────────────────────────────────── */}
-      {spendingOpen && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setSpendingOpen(false)}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
-            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
-          >
-            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[18px] font-bold text-gray-900 mb-1">9월 이용 금액</p>
-            <p className="text-[28px] font-bold text-gray-900 mb-5">{SPENDING_TOTAL.toLocaleString()}원</p>
-            <div className="flex flex-col gap-3">
-              {SPENDING_BREAKDOWN.map((item) => (
-                <div key={item.label} className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-[15px] text-gray-700">{item.label}</span>
-                  <span className="text-[15px] font-semibold text-gray-900">{item.amount.toLocaleString()}원</span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setSpendingOpen(false)}
-              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white bg-blue-500 hover:bg-blue-600 active:scale-[0.98] transition-all"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ─── 금융상품 상세 바텀시트 (상세 → 금액 입력 → 완료) ────────────── */}
       {selectedProduct && (

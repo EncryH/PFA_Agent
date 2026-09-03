@@ -13,6 +13,7 @@
 
 | 구성 | 현재 상태 |
 |---|---|
+| LLM 보안·비용 라우팅 미들웨어 | 구현 — 고정 응답·일반 LLM·전체 분석·차단 분기 |
 | 개인정보 전처리 | 구현 |
 | JSON 사례 Vector Search | 구현 |
 | Gemini 근거 결합·구조화 분석 | 구현 |
@@ -24,6 +25,9 @@
 | 개인 거래 패턴 Text2SQL | 구현 — Supabase 연결 시 활성화, 장애 시 자동 폴백 |
 
 ## 현재 실행 로직
+
+0. **LLM 미들웨어 라우팅**
+   입력 길이와 형식을 제한하고 프롬프트 인젝션을 먼저 검사한다. 인사·감사는 LLM 없이 고정 응답하고, 일반 설명 질문은 RAG·Neo4j·Supabase를 호출하지 않는 짧은 일반 LLM으로 보낸다. 송금·사기 문맥과 외부에서 받은 의심 지시문만 아래 전체 분석으로 넘긴다. 진행 중인 송금 확인 세션은 일반 대화로 우회해 종료할 수 없다.
 
 1. **입력 수신**
    송금 금액·신규 수취인 여부·통화 중 여부와 부모님-AI 대화를 받는다.
@@ -101,6 +105,12 @@
 ```text
 3-intent-analysis/
 ├─ agent.js                    # 3단계 실행 진입점
+├─ middleware/                 # 입력 보안 검사·비용 경로 라우팅·출력 방어
+│  ├─ index.js                 # STATIC·GENERAL·RISK·BLOCK 분기
+│  ├─ injection-guard.js       # 직접 공격과 외부 인용문 구분
+│  ├─ route-classifier.js      # 규칙 기반 요청 분류
+│  ├─ general-llm.js           # 도구 권한 없는 짧은 일반 답변
+│  └─ output-guard.js          # 내부 지시·환경정보 출력 차단
 ├─ intent.js                   # 전체 대화·검색·판정 흐름
 ├─ sanitize.js                 # 개인정보 마스킹
 ├─ llm/gemini.js               # Gemini 구조화 출력
@@ -172,7 +182,7 @@ node --env-file=.env backend/agents/3-intent-analysis/scripts/check-vector-searc
 node --test backend/agents/3-intent-analysis/test/intent-analysis.test.mjs
 ```
 
-필수 환경변수는 루트 `.env`의 `GEMINI_API_KEY`다. 모델·차원·유사도 기준은 `GEMINI_EMBEDDING_MODEL`, `GEMINI_EMBEDDING_DIMENSIONS`, `VECTOR_RAG_MIN_SIMILARITY`로 조정할 수 있다.
+필수 환경변수는 루트 `.env`의 `GEMINI_API_KEY`다. 일반 질문 모델과 최대 출력은 `GEMINI_GENERAL_MODEL`, `GEMINI_GENERAL_MAX_OUTPUT_TOKENS`로 분리할 수 있고, 임베딩 모델·차원·유사도 기준은 `GEMINI_EMBEDDING_MODEL`, `GEMINI_EMBEDDING_DIMENSIONS`, `VECTOR_RAG_MIN_SIMILARITY`로 조정할 수 있다.
 
 Neo4j Aura Console에서 AuraDB Free 인스턴스를 만든 뒤, 루트 `.env.example`을 `.env`의 참고값으로 사용한다. 다운로드한 접속 정보 중 URI·사용자명·비밀번호를 루트 `.env`에 추가한다. 비밀번호는 생성 시 한 번만 표시될 수 있으므로 안전하게 보관하고 저장소에는 커밋하지 않는다.
 

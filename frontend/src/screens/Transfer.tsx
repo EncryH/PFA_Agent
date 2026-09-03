@@ -24,7 +24,7 @@ import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 import { startGlobalCooldown } from "../shared/cooldown";
-import { formatAiSpeechText, ReadableAiMessage } from "../shared/ReadableAiMessage";
+import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
@@ -273,7 +273,7 @@ export default function Transfer({
     setSpeakingMessageIndex(null);
   };
 
-  const toggleAiSpeech = (text: string, messageIndex: number) => {
+  const toggleAiSpeech = (text: string, messageIndex: number, display?: ChatMessage["display"]) => {
     if (!speechSupported) return;
     if (speakingMessageIndex === messageIndex) {
       stopAiSpeech();
@@ -281,7 +281,7 @@ export default function Transfer({
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(formatAiSpeechText(text));
+    const utterance = new SpeechSynthesisUtterance(formatAiSpeechText(text, display !== "plain"));
     utterance.lang = "ko-KR";
     utterance.rate = 0.92;
     utterance.pitch = 1;
@@ -354,7 +354,9 @@ export default function Transfer({
     setFallback(session.fallback);
     // 분석이 끝난 상담이면 결론·공식 자료를 그대로 되살린다.
     // 대화를 이어가더라도 앞서 안내받은 내용이 사라지면 안 된다.
-    setChatDone(session.analysisDone ?? false);
+    // analysisDone이 없던 예전 저장본도 analysisHold가 있으면 이미 결론까지 나온 상담이다.
+    // 이를 진행 중 상담으로 복원하면 다음 답변을 새 판정으로 오인해 5분 냉각이 다시 시작된다.
+    setChatDone(session.analysisDone ?? session.analysisHold ?? false);
     setAnalysisHold(session.analysisHold ?? false);
     setOfficial(session.official ?? null);
     // 냉각 중 저장한 상담이면 남은 시간도 그대로 되살린다 — 안 그러면 그 사이 보호 단계를
@@ -661,6 +663,9 @@ export default function Transfer({
     // chatDone은 분석 결과가 나온 상태일 뿐, 추가 질문을 막는 조건이 아니다.
     if (!input.trim() || isTyping) return;
 
+    // 요청을 보낼 때의 분석 완료 여부를 보존한다. 응답을 기다리는 사이에도 이 상담이
+    // '새 위험 판정'인지 '완료된 상담의 후속 대화'인지 구분할 수 있어야 한다.
+    const analysisWasAlreadyDone = chatDone;
     const history: ChatMessage[] = [...messages, { role: "user", text: input.trim() }];
     const turn = turnCount + 1;
 
@@ -680,7 +685,14 @@ export default function Transfer({
         patternRiskScore: liveRisk?.score ?? 0,
       },
       history,
-      turn
+      turn,
+      {
+        resumed: intentSessionId !== null,
+        analysisDone: analysisWasAlreadyDone,
+        analysisHold,
+        fraudTypeLabel,
+        riskLabels,
+      },
     );
 
     setIsTyping(false);
@@ -691,13 +703,17 @@ export default function Transfer({
       setFraudTypeLabel(suspectedType.label);
     }
     setOfficial(verdict.analysis?.official_content ?? null);
-    setMessages((p) => [...p, { role: "ai", text: verdict.message }]);
+    const middlewareRoute = verdict.middleware?.route;
+    const display = middlewareRoute && middlewareRoute !== "RISK" ? "plain" : "structured";
+    setMessages((p) => [...p, { role: "ai", text: verdict.message, display }]);
 
     // 3단계 의도 분석 결과를 표시하고, 가족 확인은 사용자가 선택할 때만 별도로 연결한다.
     if (verdict.done) {
       setChatDone(true);
       setAnalysisHold(verdict.hold);
-      if (verdict.hold && protectionPolicy.delaySeconds > 0) {
+      // 냉각은 최초 위험 판정에만 적용한다. 저장된 상담에서 이어서 질문한 답변이
+      // 같은 hold 판정을 돌려줘도 이미 시작했던 5분을 다시 채우지 않는다.
+      if (!analysisWasAlreadyDone && verdict.hold && protectionPolicy.delaySeconds > 0) {
         setFreezeSecsLeft((current) => Math.max(current ?? 0, protectionPolicy.delaySeconds));
         startGlobalCooldown(protectionPolicy.delaySeconds);
       }
@@ -1259,11 +1275,19 @@ export default function Transfer({
                 {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
                 <div className={`${msg.role === "ai" ? "max-w-[88%]" : "max-w-[78%]"} min-w-0`}>
                   <div className={`${msg.role === "ai" ? "w-full bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "bg-[var(--ac-500)] text-white rounded-tr-sm"} rounded-2xl px-4 py-3 text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
-                    {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
+                    {msg.role === "ai"
+                      ? msg.display === "structured" || (msg.display === undefined && isStructuredAiMessage(msg.text))
+                        ? <ReadableAiMessage text={msg.text} />
+                        : <p>{msg.text}</p>
+                      : msg.text}
                     {msg.role === "ai" && speechSupported && (
                       <button
                         type="button"
-                        onClick={() => toggleAiSpeech(msg.text, i)}
+                        onClick={() => toggleAiSpeech(
+                          msg.text,
+                          i,
+                          msg.display ?? (isStructuredAiMessage(msg.text) ? "structured" : "plain"),
+                        )}
                         aria-label={speakingMessageIndex === i ? "답변 음성 재생 중지" : "이 답변을 음성으로 듣기"}
                         aria-pressed={speakingMessageIndex === i}
                         className="ml-auto mt-1.5 flex h-7 items-center gap-1 rounded-lg border border-[var(--ac-200)] bg-white/80 px-2 text-[10px] font-extrabold leading-none text-[var(--ac-700)] transition active:scale-[0.97]"

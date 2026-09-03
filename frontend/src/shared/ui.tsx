@@ -141,7 +141,7 @@ export const RoleToggle = ({ role, onToggle }: { role: "parent" | "child"; onTog
 /** 뒤로가기 화살표 + 큰 제목 */
 export const PageHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
   <div className="flex items-center gap-3 py-2">
-    <button onClick={onBack} className="text-gray-500 active:scale-90 transition-transform">
+    <button type="button" onClick={onBack} aria-label="뒤로가기" className="text-gray-500 active:scale-90 transition-transform">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M15 18l-6-6 6-6" /></svg>
     </button>
     <p className="text-[24px] font-bold text-gray-900 tracking-tight">{title}</p>

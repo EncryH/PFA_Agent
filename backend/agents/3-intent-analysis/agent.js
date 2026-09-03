@@ -1,5 +1,7 @@
 import { handleIntent } from "./intent.js";
 import { AGENT_STATUS } from "../shared.js";
+import { routeIntentRequest } from "./middleware/index.js";
+import { guardIntentResult } from "./middleware/output-guard.js";
 
 export const metadata = Object.freeze({
   layer: 3,
@@ -10,5 +12,12 @@ export const metadata = Object.freeze({
 
 // LLM은 의도와 위험 신호를 추출하고, 같은 폴더의 규칙 엔진이 점수와 보류 여부를 결정한다.
 export async function runIntentAnalysisAgent(input, { apiKey, graphConfig, databaseConfig } = {}) {
-  return handleIntent(input, apiKey, { graphConfig, databaseConfig });
+  const routed = await routeIntentRequest(input, { apiKey });
+  if (routed.handled) return routed.response;
+
+  const result = await handleIntent(routed.input, apiKey, { graphConfig, databaseConfig });
+  return guardIntentResult({
+    ...result,
+    middleware: routed.middleware,
+  });
 }
