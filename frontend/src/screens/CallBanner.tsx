@@ -10,6 +10,7 @@ import { screenCall, screenCallImmediate, type CallScreenResult } from '../share
 interface Props {
   call: { display: string; number: string; label: string }
   onEnd: () => void
+  onPhaseChange?: (phase: 'ringing' | 'active') => void
 }
 
 const PHONE_PATH =
@@ -28,7 +29,7 @@ function formatDuration(totalSeconds: number) {
   return `${m}:${ss}`
 }
 
-export default function CallBanner({ call, onEnd }: Props) {
+export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
   const [phase, setPhase] = useState<'ringing' | 'active'>('ringing')
   const [collapsed, setCollapsed] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -95,7 +96,7 @@ export default function CallBanner({ call, onEnd }: Props) {
     setVisible(false)
     setTimeout(onEnd, 280)
   }
-  const answer = () => setPhase('active')
+  const answer = () => { setPhase('active'); onPhaseChange?.('active') }
   const hangUp = () => {
     setVisible(false)
     setTimeout(onEnd, 280)
@@ -148,8 +149,11 @@ export default function CallBanner({ call, onEnd }: Props) {
   const capsuleTop = visible ? 8 : -140
 
   return (
-    /* 앱 상단 고정 오버레이 — 캡슐 바깥은 pointer-events-none이라 은행 앱을 그대로 조작할 수 있다 */
-    <div ref={wrapRef} className="pointer-events-none absolute top-0 left-0 right-0 z-[100]">
+    /* 휴대폰 알림이라 은행 앱 스크롤과 무관하게 화면 상단에 고정돼야 한다 — absolute를 쓰면
+       은행 앱 컨테이너(스크롤되는 문서 흐름)를 기준으로 붙어서 스크롤하면 같이 밀려 올라간다.
+       fixed + 뷰포트 중앙 정렬로, 폰 프레임 폭(max-w-430px) 안에서 진짜 상태바처럼 붙여둔다.
+       캡슐 바깥은 pointer-events-none이라 은행 앱을 그대로 조작할 수 있다 */
+    <div ref={wrapRef} className="pointer-events-none fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2">
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

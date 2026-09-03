@@ -32,6 +32,7 @@ import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
 import { useGlobalCooldown } from "./shared/cooldown";
 import CooldownPopup from "./shared/CooldownPopup";
+import { markCallStarted } from "./shared/callActivity";
 
 type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "monthly-spending" | "verify" | "savings" | "limit" | "support" | "privacy";
 
@@ -151,6 +152,7 @@ export default function App() {
 
   const triggerDemoCall = () => {
     if (activeCall) return;
+    markCallStarted(); // 10분 내 통화 기록 판단용 — 카운트를 이 시각부터 다시 센다
     setActiveCall(DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length]);
     setDemoIdx((i) => (i + 1) % DEMO_SCENARIOS.length);
   };
@@ -189,14 +191,14 @@ export default function App() {
   return (
     <>
       {/* ── 은행 앱 컨테이너 ── */}
-      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#e2edfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
+      <div className={`relative mx-auto min-h-dvh max-w-[430px] flex flex-col ${role === "parent" ? `theme-parent bg-[#fafbfe] ${largeText ? "senior-mode" : ""}` : "theme-child bg-white"}`}>
 
         {/*
           두 앱을 항상 마운트해 두고 보이기만 전환한다.
           역할을 오가도 송금 진행 상황·입력값·대화가 그대로 남아야 MVP 시연이 끊기지 않는다.
         */}
         <div className={role === "parent" ? "contents" : "hidden"}>
-          <header className="sticky top-0 z-20 bg-[#e2edfe] flex items-center justify-between px-5 py-4">
+          <header className="sticky top-0 z-20 bg-[#fafbfe] flex items-center justify-between px-5 py-4">
             <button onClick={() => { setTab("홈"); setPage("home"); }} className="flex items-center gap-1.5 active:scale-95 transition-transform">
               <svg viewBox="0 0 24 24" fill="#2563eb" className="w-5 h-5"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /><circle cx="12" cy="5.2" r="0.8" fill="white" /></svg>
               <span className="text-[17px] font-bold text-gray-900 tracking-tight">한결은행</span>
@@ -267,6 +269,7 @@ export default function App() {
                   setDailyLimit(limit);
                   setBehaviorSignals((s) => ({ ...s, limitIncreased: s.limitIncreased + 1 }));
                 }}
+                isOnCall={behaviorSignals.isOnCall}
               />
             )}
             {page === "savings"  && (
@@ -275,6 +278,7 @@ export default function App() {
                 onBack={() => setPage("home")}
                 onTransfer={() => goToTransfer(savingsIdx)}
                 isClosed={closedAccounts.has(savingsIdx)}
+                isOnCall={behaviorSignals.isOnCall}
                 onEarlyClosure={(amount) => {
                   setBehaviorSignals((s) => ({ ...s, savingsEarlyClose: s.savingsEarlyClose + 1 }));
                   setClosedAccounts((prev) => new Set(prev).add(savingsIdx));
@@ -392,7 +396,13 @@ export default function App() {
         )}
 
         {/* 수신 전화 → 통화 중 → 종료까지 하나로 이어지는 배너 / 수신 문자 배너 */}
-        {activeCall && <CallBanner call={activeCall} onEnd={() => setActiveCall(null)} />}
+        {activeCall && (
+          <CallBanner
+            call={activeCall}
+            onEnd={() => { setActiveCall(null); setBehaviorSignals((s) => ({ ...s, isOnCall: false })); }}
+            onPhaseChange={(phase) => setBehaviorSignals((s) => ({ ...s, isOnCall: phase === "active" }))}
+          />
+        )}
         {activeMessage && <IncomingMessage message={activeMessage} onDismiss={() => setActiveMessage(null)} />}
       </div>
 

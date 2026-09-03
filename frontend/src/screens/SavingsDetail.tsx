@@ -24,12 +24,14 @@ export default function SavingsDetail({
   onTransfer,
   onEarlyClosure,
   isClosed = false,
+  isOnCall = false,
 }: {
   account: typeof MY_ACCOUNTS[number];
   onBack: () => void;
   onTransfer: () => void;
   onEarlyClosure: (amount: number) => void;
   isClosed?: boolean;
+  isOnCall?: boolean;
 }) {
   const [step, setStep] = useState<SavingsStep>("detail");
   const [showCallCheck, setShowCallCheck] = useState(false);
@@ -209,6 +211,7 @@ export default function SavingsDetail({
           <CallSafetyCheck
             actionLabel="예·적금 중도해지"
             onClose={() => setShowCallCheck(false)}
+            isOnCall={isOnCall}
             onProceed={() => {
               setShowCallCheck(false);
               onEarlyClosure(info.afterPenaltyBalance);

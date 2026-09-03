@@ -19,6 +19,9 @@ export type TransferContext = {
   patternRiskScore?: number;
   reportedAccount?: boolean;
   callInProgress?: boolean;
+  // 사전 분석에서 이미 D등급(강제 최고 위험 포함)으로 확정된 상담인지 — 참이면
+  // 대화 내용과 무관하게 서버가 최종 판정을 안전 쪽으로 내리지 않는다.
+  forcedHold?: boolean;
 };
 
 export type ConversationState = {

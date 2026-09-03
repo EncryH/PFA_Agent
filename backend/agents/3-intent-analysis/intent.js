@@ -8,7 +8,7 @@
 import { extractIntent, generateUserResponse } from "./llm/gemini.js";
 import {
   extractRuleContradictions, extractRuleSignals, scoreSignals,
-  MAX_TURNS, MIN_TURNS_BEFORE_VERDICT,
+  MAX_TURNS, MIN_TURNS_BEFORE_VERDICT, HOLD_THRESHOLD,
 } from "./rules/signals.js";
 import { classifyFraudType } from "./rules/fraud-types.js";
 import { retrieveIntentContext } from "./retrieval/rag.js";
@@ -25,6 +25,17 @@ const FALLBACK_QUESTIONS = [
 const DEFAULT_PROBE = "조금만 더 여쭤볼게요. 그분이 정확히 어떤 이유로 이 계좌에 보내라고 했나요?";
 
 const PASS_MESSAGE = "확인했어요.\n\n지금 말씀해 주신 내용에서는 위험한 점이 발견되지 않았어요.\n\n송금을 계속할 수 있어요.";
+
+/**
+ * 사전 분석에서 이미 D등급(강제 최고 위험 포함)으로 확정된 상담은, 대화 내용이
+ * 아무리 그럴듯해도(예: "여행 자금이야") 이 판정 로직만으로 안전 쪽으로 결론 내지 않는다.
+ * 질문은 평소대로 계속하되, 최종 결론은 항상 위험 판정(hold: true)으로 수렴시켜
+ * 가족 확인만이 유일한 통과 경로가 되게 한다.
+ */
+function applyForcedHold(risk, safeTransfer) {
+  if (!safeTransfer.forced_hold) return risk;
+  return { ...risk, score: Math.max(risk.score, HOLD_THRESHOLD), level: "HIGH" };
+}
 
 /**
  * @param {{transfer: object, messages: {role: string, text: string}[], turn: number}} body
@@ -78,9 +89,10 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     ...(safeTransfer.call_in_progress ? ["CALL_IN_PROGRESS"] : []),
     ...(hasConversationContradiction ? ["ANSWER_CONTRADICTION"] : []),
   ];
-  const risk = scoreSignals(observedSignals, {
-    patternRiskScore: safeTransfer.pattern_risk_score,
-  });
+  const risk = applyForcedHold(
+    scoreSignals(observedSignals, { patternRiskScore: safeTransfer.pattern_risk_score }),
+    safeTransfer,
+  );
   const fraudType = classifyFraudType({
     llm,
     signals: risk.codes,
@@ -629,9 +641,10 @@ function fallback({
     ...extractRuleSignals(safeMessages, safeTransfer),
     ...(localContradictions.length ? ["ANSWER_CONTRADICTION"] : []),
   ];
-  const risk = scoreSignals(localSignals, {
-    patternRiskScore: safeTransfer.pattern_risk_score,
-  });
+  const risk = applyForcedHold(
+    scoreSignals(localSignals, { patternRiskScore: safeTransfer.pattern_risk_score }),
+    safeTransfer,
+  );
   const localLlm = {
     signals: localSignals,
     answer_contradictions: localContradictions,

@@ -24,6 +24,7 @@ import type { BehaviorSignals } from "../shared/behavior";
 import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from "../shared/protection";
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 import { startGlobalCooldown } from "../shared/cooldown";
+import { hasRecentCall } from "../shared/callActivity";
 import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
@@ -168,7 +169,7 @@ const TITLES: Record<TransferStep, string> = {
 
 export default function Transfer({
   onExit, accounts = MY_ACCOUNTS, resumeSessionId = null, resumeToHold = false, onResumeHandled, initialStep = "input",
-  behaviorSignals = { historyVisits: 0, verifyVisited: false, savingsEarlyClose: 0, limitIncreased: 0 },
+  behaviorSignals = { historyVisits: 0, verifyVisited: false, savingsEarlyClose: 0, limitIncreased: 0, isOnCall: false },
   onSuccess, defaultFromIdx = 0, dailyLimit = Number.POSITIVE_INFINITY, dailyTransferred = 0,
 }: {
   onExit: () => void;
@@ -255,9 +256,11 @@ export default function Transfer({
   // 행동 감지 — Transfer 내부 신호
   const [backPresses, setBackPresses]   = useState(0);
   const [riskResult, setRiskResult]     = useState<RiskResult | null>(null);
-  const [checkPhase, setCheckPhase]     = useState<"analyzing" | "result">("analyzing");
+  const [checkPhase, setCheckPhase]     = useState<"call-link" | "analyzing" | "result">("analyzing");
   const [analyzeStep, setAnalyzeStep]   = useState(0);
   const [freezeSecsLeft, setFreezeSecsLeft] = useState<number | null>(null);
+  // 최근 10분 내 통화 기록이 있을 때만 묻는다 — null: 아직 안 물어봤음(또는 물을 필요 없음), true/false: 답변
+  const [callLinkAnswer, setCallLinkAnswer] = useState<boolean | null>(null);
   const sessionStartRef = useRef<number>(Date.now());
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -397,8 +400,6 @@ export default function Transfer({
     // (분석 API가 늦게 응답해도, 이미 떠난 화면에 몰래 결제·정지를 걸지 않기 위함)
     let cancelled = false;
 
-    setCheckPhase("analyzing");
-    setAnalyzeStep(0);
     setRiskResult(null);
     setThecheatHit(null); // 이전 검사에서 남은 신고 정보가 이번 화면에 잘못 뜨지 않도록 초기화
 
@@ -407,17 +408,32 @@ export default function Transfer({
     const amountValue = parseAmt(amt);
     const localRisk = runIntentPrefilter(account, amountValue, name);
     if (localRisk === "db-warning") { setStep("db-warning"); return; }
-    if (amountValue < aiReviewThreshold) { setStep("success"); return; }
 
-    // 분석 단계 애니메이션 (3단계 × 900ms)
-    const pt1 = setTimeout(() => setAnalyzeStep(1), 900);
-    const pt2 = setTimeout(() => setAnalyzeStep(2), 1800);
-
-    const sessionSec = Math.floor((Date.now() - sessionStartRef.current) / 1000);
     const clean = account.replace(/\D/g, "");
     const known = KNOWN_RECIPIENTS.find(
       (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name,
     );
+
+    // 기준 금액 미만은 분석을 건너뛰고 바로 보내는 게 원래 취지지만, 그건 "익숙한 곳으로
+    // 보내는 소액"에만 적용돼야 한다. 미등록 수취인이거나, 한도를 방금 올렸거나, 지금
+    // 통화 중이면 — 금액과 무관하게 위험 신호이므로 기준 금액으로 건너뛰지 않는다.
+    const hasRedFlag = !known || Number(behaviorSignalsRef.current.limitIncreased ?? 0) >= 1 || behaviorSignalsRef.current.isOnCall;
+    if (amountValue < aiReviewThreshold && !hasRedFlag) { setStep("success"); return; }
+
+    // 최근 10분 내 통화 기록이 있으면, 분석에 들어가기 전에 이번 송금이 그 통화와
+    // 관련 있는지 먼저 물어본다 — 아직 답하지 않았을 때만(한 번 답하면 다시 안 묻는다).
+    if (callLinkAnswer === null && hasRecentCall()) {
+      setCheckPhase("call-link");
+      return;
+    }
+
+    // 분석 단계 애니메이션 (3단계 × 900ms)
+    setCheckPhase("analyzing");
+    setAnalyzeStep(0);
+    const pt1 = setTimeout(() => setAnalyzeStep(1), 900);
+    const pt2 = setTimeout(() => setAnalyzeStep(2), 1800);
+
+    const sessionSec = Math.floor((Date.now() - sessionStartRef.current) / 1000);
     const MIN_DISPLAY = 2700;
     const startTs = Date.now();
 
@@ -430,7 +446,7 @@ export default function Transfer({
 
     fetchRiskScore({
       counterparty: { account },
-      behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec },
+      behavior: { ...behaviorSignalsRef.current, backPresses, sessionSeconds: sessionSec, recentCallLinked: callLinkAnswer === true },
       transaction: {
         amount: amountValue,
         isKnownRecipient: !!known,
@@ -474,7 +490,7 @@ export default function Transfer({
 
     return () => { cancelled = true; clearTimeout(pt1); clearTimeout(pt2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  }, [step, callLinkAnswer]);
 
   // D등급 5분 정지 카운트다운
   useEffect(() => {
@@ -544,6 +560,7 @@ export default function Transfer({
     setReliefSignatureNotice(false);
     setBackPresses(0); setRiskResult(null); setCheckPhase("analyzing"); setAnalyzeStep(0);
     setFreezeSecsLeft(null);
+    setCallLinkAnswer(null);
     sessionStartRef.current = Date.now();
   };
 
@@ -683,6 +700,10 @@ export default function Transfer({
         amount: parseAmt(amt), recipientName: name, account, bank,
         isFirstTransfer: isNewRecipient,
         patternRiskScore: liveRisk?.score ?? 0,
+        callInProgress: behaviorSignalsRef.current.isOnCall,
+        // D등급(강제 최고 위험 포함)에서 시작된 상담은, 그럴듯한 설명이 나와도
+        // 대화만으로 안전 판정을 내리지 않는다 — 가족 확인만이 유일한 통과 경로다.
+        forcedHold: riskResult?.grade === "D",
       },
       history,
       turn,
@@ -1025,6 +1046,7 @@ export default function Transfer({
                 setStep("amount");
                 return;
               }
+              setCallLinkAnswer(null);
               setStep("checking");
             }}
             className="w-full py-4 mt-4 shrink-0 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-500)] hover:bg-[var(--ac-600)] active:scale-[0.98] transition-all"
@@ -1037,7 +1059,47 @@ export default function Transfer({
       {/* ── 분석 중 / 등급 결과 ──
            연결 전에는 안심동행 판정이 돌지 않으므로 평범한 송금 로딩만 보여준다. */}
       {step === "checking" && (
-        !paired ? (
+        checkPhase === "call-link" ? (
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-6 shadow-sm">
+            <div className="flex flex-col items-center text-center">
+              {behaviorSignals.isOnCall && (
+                <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-bold text-red-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                  지금 통화 중이에요
+                </span>
+              )}
+              <div className={`flex h-14 w-14 items-center justify-center rounded-full ${behaviorSignals.isOnCall ? "bg-red-100" : "bg-[var(--ac-100)]"}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke={behaviorSignals.isOnCall ? "#dc2626" : "var(--ac-600)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
+                  <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" />
+                </svg>
+              </div>
+              <p className="mt-4 text-[18px] font-extrabold text-gray-950">
+                {behaviorSignals.isOnCall ? "지금 통화와 관련 있나요?" : "최근 통화와 관련 있나요?"}
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
+                {behaviorSignals.isOnCall ? (
+                  <>지금 누군가와 통화 중인 상태로 송금하고 있어요.<br />이번 송금이 그 통화와 관련이 있나요?</>
+                ) : (
+                  <>최근 10분 이내 통화 기록이 있어요.<br />이번 송금이 방금 그 전화와 관련이 있나요?</>
+                )}
+              </p>
+            </div>
+            <div className="mt-6 flex gap-2.5">
+              <button
+                onClick={() => setCallLinkAnswer(false)}
+                className="flex-1 rounded-xl border border-gray-200 bg-white py-3.5 text-[15px] font-bold text-gray-700 active:scale-[0.98] transition-transform"
+              >
+                아니요
+              </button>
+              <button
+                onClick={() => setCallLinkAnswer(true)}
+                className="flex-1 rounded-xl bg-[var(--ac-500)] py-3.5 text-[15px] font-bold text-white hover:bg-[var(--ac-600)] active:scale-[0.98] transition-transform"
+              >
+                네, 관련 있어요
+              </button>
+            </div>
+          </div>
+        ) : !paired ? (
           <div className="min-h-[calc(100dvh-260px)] flex flex-col items-center justify-center gap-6">
             <div className="relative w-20 h-20">
               <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-100)]" />
@@ -1391,7 +1453,7 @@ export default function Transfer({
               <p className="mt-0.5 text-[12px] leading-relaxed text-gray-600">상담은 끝나지 않았어요. 아래에서 계속 물어보실 수 있어요.</p>
             </div>
           )}
-          <div className="mt-auto flex shrink-0 gap-2 bg-[#e2edfe] pt-1">
+          <div className="mt-auto flex shrink-0 gap-2 bg-[#fafbfe] pt-1">
             <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="더 궁금한 내용을 입력하세요..." disabled={isTyping}
               className="h-14 flex-1 rounded-2xl border border-gray-200 px-5 text-[15px] focus:border-[var(--ac-400)] focus:outline-none transition-colors disabled:bg-gray-50" />
             <button onClick={handleSend} disabled={!input.trim() || isTyping} className="h-14 w-14 shrink-0 rounded-2xl bg-[var(--ac-500)] flex items-center justify-center active:scale-95 transition-transform disabled:bg-gray-200">

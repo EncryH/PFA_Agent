@@ -4,12 +4,16 @@ export default function CallSafetyCheck({
   actionLabel,
   onClose,
   onProceed,
+  isOnCall = false,
 }: {
   actionLabel: string;
   onClose: () => void;
   onProceed: () => void;
+  // 실제 통화 배너 상태로 이미 통화 중임을 감지했다면, 굳이 자기 신고로 다시 묻지 않고
+  // 바로 경고 화면으로 보낸다. 감지가 안 됐을 때만(false) 기존처럼 직접 물어본다.
+  isOnCall?: boolean;
 }) {
-  const [onCall, setOnCall] = useState(false);
+  const [onCall, setOnCall] = useState(isOnCall);
 
   return (
     <div
@@ -81,6 +85,12 @@ export default function CallSafetyCheck({
               통화를 먼저 끊어주세요
             </h2>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-700">
+              {isOnCall && (
+                <>
+                  지금 <strong>통화 중인 것으로 확인됐어요.</strong> 전화 통화 중에 이런 행동을 하는 건 위험성이 높아요.
+                  <br />
+                </>
+              )}
               검찰·경찰·금융기관은 전화로 자산을 옮기거나 이체한도를 높이라고 요구하지 않아요.
             </p>
             <div className="mt-4 rounded-xl bg-red-50 p-3.5 text-[12px] font-semibold leading-relaxed text-red-700">

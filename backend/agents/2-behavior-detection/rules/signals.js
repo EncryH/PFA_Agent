@@ -27,6 +27,11 @@ export const SIGNALS = Object.freeze({
   // 정황일 수 있다. backPresses 는 프론트가 이미 수집해 보내고 있었지만 채점되지 않던 신호다.
   BACK_NAV_REPEATED: { score: 20, label: "송금 단계를 5회 이상 되돌아감 — 지시에 따라 재입력하는 정황" },
   BACK_NAV_SOME:      { score: 12, label: "송금 단계를 반복해서 되돌아감" },
+
+  // 통화 중 송금 — 사기범이 전화를 끊지 못하게 붙잡아둔 채 지시하는 전형적인 방식
+  ON_CALL: { score: 45, label: "통화 중 송금 시도 — 통화 상대의 지시에 따라 송금 중일 가능성" },
+  // 10분 내 통화 기록이 있고, 이번 송금이 그 통화와 관련 있다고 스스로 확인한 경우
+  RECENT_CALL_LINKED: { score: 35, label: "최근 통화와 관련된 송금이라고 확인함" },
 });
 
 export const SIGNAL_CODES = Object.keys(SIGNALS);
@@ -39,6 +44,8 @@ export function extractSignals({
   verifyVisited = false,
   sessionSeconds = 999,
   backPresses = 0,
+  isOnCall = false,
+  recentCallLinked = false,
 } = {}) {
   const codes = [];
 
@@ -61,6 +68,9 @@ export function extractSignals({
   const backs = Number(backPresses ?? 0);
   if (backs >= 5) codes.push("BACK_NAV_REPEATED");
   else if (backs >= 2) codes.push("BACK_NAV_SOME");
+
+  if (isOnCall) codes.push("ON_CALL");
+  if (recentCallLinked) codes.push("RECENT_CALL_LINKED");
 
   return codes;
 }

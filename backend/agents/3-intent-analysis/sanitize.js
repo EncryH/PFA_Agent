@@ -49,5 +49,8 @@ export function safeTransferContext(transfer = {}) {
     pattern_risk_score: Number(transfer.patternRiskScore) || 0,
     reported_account: Boolean(transfer.reportedAccount),
     call_in_progress: Boolean(transfer.callInProgress),
+    // 송금 전 사전 분석에서 이미 D등급(또는 강제 최고 위험)으로 확정된 상담이다.
+    // 이 값이 참이면, 대화 내용이 아무리 그럴듯해도 최종 판정을 안전 쪽으로 내리지 않는다.
+    forced_hold: Boolean(transfer.forcedHold),
   };
 }

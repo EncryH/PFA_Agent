@@ -15,7 +15,7 @@ type Account = { name: string; account: string; bank: string; balance: string };
 
 const THEME = {
   parent: {
-    pageBg: "from-[#e2edfe] via-[#e2edfe]",
+    pageBg: "from-[#fafbfe] via-[#fafbfe]",
     income: "text-blue-600",
     tag: "text-blue-500",
     cta: "bg-blue-500 hover:bg-blue-600",

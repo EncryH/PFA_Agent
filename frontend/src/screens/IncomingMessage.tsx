@@ -172,8 +172,11 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
   return (
     <>
     <div
-      className={`absolute top-0 left-0 right-0 z-[100] px-2 pt-2 transition-transform duration-300 ease-out ${
-        visible ? 'translate-y-0' : '-translate-y-full'
+      // 휴대폰 알림이라 은행 앱 스크롤과 무관하게 화면 상단에 고정돼야 한다 — absolute였을 땐
+      // 은행 앱 컨테이너(스크롤되는 문서 흐름) 기준으로 붙어서 스크롤하면 같이 밀려 올라갔다.
+      // fixed + 뷰포트 중앙 정렬로 폰 프레임 폭(max-w-430px) 안에서 진짜 상태바처럼 붙여둔다.
+      className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] px-2 pt-2 transition-transform duration-300 ease-out ${
+        visible ? '-translate-x-1/2 translate-y-0' : '-translate-x-1/2 -translate-y-full'
       }`}
     >
       <div

@@ -9,11 +9,12 @@ const OPTIONS = [10_000_000, 30_000_000, 50_000_000, 100_000_000];
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 
 export default function LimitIncrease({
-  currentLimit, onBack, onIncreased,
+  currentLimit, onBack, onIncreased, isOnCall = false,
 }: {
   currentLimit: number;
   onBack: () => void;
   onIncreased: (limit: number) => void;
+  isOnCall?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [done, setDone] = useState<number | null>(null);
@@ -102,6 +103,7 @@ export default function LimitIncrease({
           actionLabel="이체한도 상향"
           onClose={() => setShowCallCheck(false)}
           onProceed={completeIncrease}
+          isOnCall={isOnCall}
         />
       )}
     </div>
