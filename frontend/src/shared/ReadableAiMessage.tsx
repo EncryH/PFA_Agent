@@ -6,8 +6,6 @@ const AI_MESSAGE_HEADINGS = new Set([
   "왜 위험한가요",
   "지금 해야 할 일이에요",
   "한 가지만 확인할게요",
-  "확인 결과",
-  "보내기 전 확인",
 ]);
 
 export function isStructuredAiMessage(value: string) {
@@ -19,7 +17,7 @@ export function isStructuredAiMessage(value: string) {
 export function formatReadableAiMessage(value: string) {
   let text = value
     .replace(/\r\n/g, "\n")
-    .replace(/(?:\[|]|[#*_])+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요|확인 결과|보내기 전 확인)\s*(?:\[|]|[#*_])*/g, "$1")
+    .replace(/(?:\[|]|[#*_])+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요)\s*(?:\[|]|[#*_])*/g, "$1")
     .replace(/^\s*(?:\[|]|[#*_])+\s*$/gm, "")
     .replace(/([^\n])\s+(?=(?:[1-4])\.\s)/g, "$1\n\n")
     .replace(/\n(?=(?:[2-4])\.\s)/g, "\n\n")
@@ -49,27 +47,8 @@ export function formatReadableAiMessage(value: string) {
     ].filter(Boolean).join("\n\n");
   }
 
-  // 위 블록이 이미 "확인한 내용이에요" 구조로 재구성했다면 다시 문장분리를 돌리지 않는다.
-  // 다시 돌리면 구두점 없는 제목 줄이 옆 문장에 그대로 붙어버려 제목이 뭉개진다.
-  if (!text.includes("한 가지만 확인할게요") && !text.includes("확인한 내용이에요") && text !== FIRST_QUESTION && /[?？]/.test(text)) {
-    const sentences = text
-      .replace(/\n+/g, " ")
-      .match(/[^.!?]+(?:[.!?]+|$)/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) || [];
-    const questionIndex = sentences.findLastIndex((sentence) => /[?？]$/.test(sentence));
-    if (questionIndex >= 0) {
-      const statements = sentences.filter((_, index) => index !== questionIndex);
-      text = [
-        "확인한 내용이에요",
-        statements.slice(0, 1).join(" ") || "말씀하신 내용을 확인했어요.",
-        statements.length > 1 ? "왜 확인하나요" : "",
-        statements.slice(1, 3).join(" "),
-        "한 가지만 확인할게요",
-        sentences[questionIndex],
-      ].filter(Boolean).join("\n\n");
-    }
-  }
+  // 이미 구조화된 헤더가 있는 메시지만 포맷팅한다.
+  // 헤더가 없는 자연스러운 대화 응답은 강제 구조화하지 않는다.
 
   return text;
 }

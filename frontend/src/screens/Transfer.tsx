@@ -1475,8 +1475,8 @@ export default function Transfer({
             </div>
           )}
           <div className="mt-auto flex shrink-0 gap-2 bg-[#fafbfe] pt-1">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="더 궁금한 내용을 입력하세요..." disabled={isTyping}
-              className="h-14 flex-1 rounded-2xl border border-gray-200 px-5 text-[15px] focus:border-[var(--ac-400)] focus:outline-none transition-colors disabled:bg-gray-50" />
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="더 궁금한 내용을 입력하세요..."
+              className="h-14 flex-1 rounded-2xl border border-gray-200 px-5 text-[15px] focus:border-[var(--ac-400)] focus:outline-none transition-colors" />
             <button onClick={handleSend} disabled={!input.trim() || isTyping} className="h-14 w-14 shrink-0 rounded-2xl bg-[var(--ac-500)] flex items-center justify-center active:scale-95 transition-transform disabled:bg-gray-200">
               <svg viewBox="0 0 24 24" fill="white" className="w-5.5 h-5.5"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" /></svg>
             </button>
