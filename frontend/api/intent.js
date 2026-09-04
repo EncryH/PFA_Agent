@@ -1,3 +1,5 @@
+import postgres from "postgres";
+
 import { runIntentAnalysisAgent } from "../../backend/agents/3-intent-analysis/agent.js";
 
 export default async function handler(req, res) {
@@ -18,6 +20,9 @@ export default async function handler(req, res) {
         enabled: process.env.TEXT2SQL_ENABLED,
         connectionString: process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL,
         timeoutMs: process.env.TEXT2SQL_TIMEOUT_MS,
+        // backend/ 는 frontend/node_modules 를 resolve 할 수 없다. 패키지를 찾을 수
+        // 있는 이쪽에서 팩토리를 넘겨준다 (backend/text2sql/client.js 주석 참고).
+        postgresFactory: postgres,
       },
     });
     return res.status(200).json(result);
