@@ -64,7 +64,7 @@ function normalizeTransaction(row) {
   };
 }
 
-const { sql } = getText2SqlClient();
+const { sql } = await getText2SqlClient();
 if (!sql) {
   throw new Error("SUPABASE_DATABASE_URL이 없거나 TEXT2SQL_ENABLED가 false입니다.");
 }

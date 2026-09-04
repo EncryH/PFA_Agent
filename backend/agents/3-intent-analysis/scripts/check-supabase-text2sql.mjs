@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { closeText2SqlClient, getText2SqlClient } from "../text2sql/client.js";
 import { retrieveTransactionPattern } from "../text2sql/transaction-pattern.js";
 
-const { sql } = getText2SqlClient();
+const { sql } = await getText2SqlClient();
 if (!sql) throw new Error("SUPABASE_DATABASE_URL이 없거나 TEXT2SQL_ENABLED가 false입니다.");
 
 try {

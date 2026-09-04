@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm ci && (cd ../backend && npm ci || true)",
   "functions": {
     "api/intent.js": {
       "includeFiles": "../backend/agents/3-intent-analysis/datasets/rag/runtime/**",

@@ -76,7 +76,7 @@ export async function retrieveTransactionPattern(input = {}, {
   const recipientHash = String(transfer.recipient_account_hash || "acct_unknown");
   const hour = currentHour(occurredAt);
   const resolved = client ? { sql: client, config: { enabled: true, timeoutMs: 5_000 } }
-    : getText2SqlClient(config);
+    : await getText2SqlClient(config);
 
   if (!resolved.config.enabled || !resolved.sql) {
     return {
