@@ -12,6 +12,7 @@ export const ANSIM_LOCAL_STORAGE_KEYS = [
   "ansimProtectionLevel",
   "ansimAiReviewThreshold",
   "ansimGuardianLogV1",
+  "ansimAdditionalGuardiansV1",
   "ansimAlert",
   "ansimPairCode",
   "ansimPaired",

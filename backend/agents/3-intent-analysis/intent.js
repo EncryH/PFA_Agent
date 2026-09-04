@@ -551,7 +551,7 @@ function safeActionFor(fraudType, signalCodes = []) {
     : "대화·문자·전화번호·계좌번호를 보관하고, 경찰청 112 또는 금감원 1332에 신고하세요.";
   const steps = [stopStep, verifyStep, protectStep, reportStep];
 
-  const header = "지금 해야 할 일이에요.";
+  const header = "지금 해야 할 일이에요";
   const numbered = steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return `${header}\n${numbered}`;
 }

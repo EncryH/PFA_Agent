@@ -30,9 +30,10 @@ import { DEMO_SCENARIOS } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
-import { useGlobalCooldown } from "./shared/cooldown";
+import { clearGlobalCooldown, useGlobalCooldown } from "./shared/cooldown";
 import CooldownPopup from "./shared/CooldownPopup";
 import { markCallStarted } from "./shared/callActivity";
+import { markGuardianDecisionsViewed, useGuardianLog } from "./shared/guardianLog";
 
 type ParentPage = "home" | "guardian" | "transfer" | "emergency" | "history" | "monthly-spending" | "verify" | "savings" | "limit" | "support" | "privacy";
 
@@ -67,6 +68,21 @@ export default function App() {
   const [showCooldownPopup, setShowCooldownPopup] = useState(false);
   const [showAmountResetConfirm, setShowAmountResetConfirm] = useState(false);
   const [amountResetNotice, setAmountResetNotice] = useState(false);
+  const [scenarioResetVersion, setScenarioResetVersion] = useState(0);
+  const guardianLogs = useGuardianLog();
+  const unreadGuardianDecisions = guardianLogs.filter((entry) => entry.decision && entry.decidedAt && !entry.parentViewedAt).length;
+  const latestUnreadGuardianDecision = guardianLogs.find((entry) => entry.decision && entry.decidedAt && !entry.parentViewedAt) ?? null;
+  const [guardianDecisionToastId, setGuardianDecisionToastId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (role === "parent" && latestUnreadGuardianDecision) {
+      setGuardianDecisionToastId(latestUnreadGuardianDecision.id);
+    } else if (!latestUnreadGuardianDecision) {
+      setGuardianDecisionToastId(null);
+    }
+  }, [role, latestUnreadGuardianDecision]);
+
+  const guardianDecisionToast = guardianLogs.find((entry) => entry.id === guardianDecisionToastId) ?? null;
 
   const liveAccounts = MY_ACCOUNTS.map((a, i) => ({
     ...a,
@@ -83,9 +99,21 @@ export default function App() {
     setPage("transfer");
   };
 
-  // 심사 데모 중 변경된 금융 금액 상태만 초기값으로 되돌린다.
-  // 상담 기록·가족 연결·보호 단계·쿨다운은 안전 기능 상태이므로 유지한다.
-  const resetDemoAmounts = () => {
+  // 심사위원이 다음 시나리오를 바로 시험할 수 있도록 진행 중인 시연 상태를 정리한다.
+  // 가족 연결·보호 단계·접근성 설정은 반복 설정 부담을 줄이기 위해 유지한다.
+  const resetDemoScenario = () => {
+    [
+      "ansimAlert",
+      "ansimAlerts",
+      "ansimIntentChatsV1",
+      "ansimGuardianLogV1",
+      "ansimCooldownUntil",
+      "ansimEmergencyReceipts",
+      "ansimNotices",
+      "ansimLastCallAt",
+      "ansimLastCallScriptFlags",
+    ].forEach((key) => localStorage.removeItem(key));
+
     setBalanceOverrides({});
     setClosedAccounts(new Set());
     setExtraTxns({});
@@ -97,10 +125,26 @@ export default function App() {
     setResumeIntentChatId(null);
     setResumeIntentToHold(false);
     setOpenProductKey(null);
+    setBehaviorSignals(INITIAL_SIGNALS);
+    setActiveCall(null);
+    setActiveMessage(null);
+    setMsgIdx(0);
+    setDemoIdx(0);
+    setShowNotifications(false);
+    setShowSearch(false);
+    setShowCooldownPopup(false);
+    setGuardianDecisionToastId(null);
+    setRole("parent");
     setTab("홈");
     setPage("home");
+    setScenarioResetVersion((version) => version + 1);
     setShowAmountResetConfirm(false);
     setAmountResetNotice(true);
+    window.dispatchEvent(new Event("ansim-alert"));
+    window.dispatchEvent(new Event("ansim-intent-chat-updated"));
+    window.dispatchEvent(new Event("ansim-guardian-log"));
+    window.dispatchEvent(new Event("ansim-emergency-receipts"));
+    window.dispatchEvent(new Event("ansim-cooldown"));
     window.setTimeout(() => setAmountResetNotice(false), 2_000);
   };
 
@@ -241,10 +285,18 @@ export default function App() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>
                 </button>
               )}
-              <button onClick={() => setShowNotifications(true)} aria-label="알림" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
-                {/* group-hover 애니메이션은 뺐다 — 검색 아이콘과 같은 이유로, 모바일 탭은
-                    :hover가 안 풀려서 알림함을 열 때마다 종이 흔들리는 게 매번 남아있었다. */}
+              <button
+                onClick={() => { setShowNotifications(true); markGuardianDecisionsViewed(); }}
+                aria-label="알림"
+                className="group relative rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200"
+              >
+                {/* 모바일 탭 뒤에도 :hover가 남는 문제를 막기 위해 벨 흔들림 애니메이션은 사용하지 않는다. */}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
+                {unreadGuardianDecisions > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                    {unreadGuardianDecisions}
+                  </span>
+                )}
               </button>
               <button
                 type="button"
@@ -314,7 +366,8 @@ export default function App() {
               <SavingsDetail
                 account={liveAccounts[savingsIdx]}
                 onBack={() => setPage("home")}
-                onTransfer={() => goToTransfer(savingsIdx)}
+                // 중도해지금은 입출금통장으로 들어오므로 후속 이체도 해당 계좌에서 시작한다.
+                onTransfer={() => goToTransfer(0)}
                 isClosed={closedAccounts.has(savingsIdx)}
                 isOnCall={behaviorSignals.isOnCall}
                 onEarlyClosure={(amount) => {
@@ -414,7 +467,7 @@ export default function App() {
         </div>
 
         <div className={role === "child" ? "contents" : "hidden"}>
-          <ChildApp />
+          <ChildApp key={scenarioResetVersion} />
         </div>
 
         {role === "parent" && showSearch && (
@@ -427,6 +480,40 @@ export default function App() {
             onClose={() => setShowNotifications(false)}
             extraTxns={extraTxns[liveAccounts[0].account] ?? []}
           />
+        )}
+
+        {role === "parent" && guardianDecisionToast && !showNotifications && (
+          <div className="fixed left-1/2 top-4 z-[90] w-[calc(100%-24px)] max-w-[406px] -translate-x-1/2 rounded-2xl border border-blue-100 bg-white p-4 shadow-xl" role="status" aria-live="polite">
+            <div className="flex items-start gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${guardianDecisionToast.decision === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+                {guardianDecisionToast.decision === "approved" ? "✓" : "Ⅱ"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-extrabold text-gray-950">
+                  자녀가 송금을 {guardianDecisionToast.decision === "approved" ? "승인" : "보류"}했어요
+                </p>
+                <p className="mt-1 text-[13px] font-semibold leading-relaxed text-gray-700">
+                  {guardianDecisionToast.decision === "approved" ? "승인" : "보류"} 이유: {guardianDecisionToast.decisionReason || "이전 기록에는 사유가 없어요."}
+                </p>
+                <p className="mt-0.5 text-[12px] text-gray-400">{guardianDecisionToast.amount.toLocaleString()}원</p>
+              </div>
+              <button
+                type="button"
+                aria-label="알림 닫기"
+                onClick={() => { markGuardianDecisionsViewed(); setGuardianDecisionToastId(null); }}
+                className="rounded-full p-1 text-gray-400 active:scale-90"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setShowNotifications(true); markGuardianDecisionsViewed(); setGuardianDecisionToastId(null); }}
+              className="mt-3 w-full rounded-xl bg-blue-600 py-2.5 text-[13px] font-bold text-white active:scale-[0.98]"
+            >
+              알림에서 자세히 보기
+            </button>
+          </div>
         )}
 
         {showCooldownPopup && cooldownSecondsLeft > 0 && (
@@ -458,14 +545,25 @@ export default function App() {
           type="button"
           onClick={() => setShowAmountResetConfirm(true)}
           className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
-          aria-label="데모 금액 상태 초기화"
+          aria-label="심사용 시나리오 초기화"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" aria-hidden="true">
             <path d="M20 11a8 8 0 10-2.34 5.66" />
             <path d="M20 4v7h-7" />
           </svg>
-          금액 초기화
+          시나리오 초기화
         </button>
+        {cooldownSecondsLeft > 0 && (
+          <button
+            type="button"
+            onClick={clearGlobalCooldown}
+            className="group flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-3 text-[13px] font-bold text-red-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl active:scale-95 transition-all duration-200"
+            aria-label="심사용 쿨다운 강제 해제"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            쿨다운 해제(심사용)
+          </button>
+        )}
       </div>
 
       {showAmountResetConfirm && (
@@ -486,9 +584,9 @@ export default function App() {
                 <path d="M20 4v7h-7" />
               </svg>
             </div>
-            <h2 id="amount-reset-title" className="mt-4 text-[18px] font-extrabold text-gray-900">금액 초기화</h2>
-            <p className="mt-2 text-[15px] font-semibold leading-relaxed text-gray-700">금액 상태를 처음으로 되돌릴까요?</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-gray-500">AI 상담 기록과 가족 연결은 유지돼요.</p>
+            <h2 id="amount-reset-title" className="mt-4 text-[18px] font-extrabold text-gray-900">시나리오 초기화</h2>
+            <p className="mt-2 text-[15px] font-semibold leading-relaxed text-gray-700">현재 테스트를 끝내고 처음 화면으로 돌아갈까요?</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-gray-500">송금·상담·알림·쿨다운은 초기화되고 가족 연결과 보호 단계는 유지돼요.</p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -499,10 +597,10 @@ export default function App() {
               </button>
               <button
                 type="button"
-                onClick={resetDemoAmounts}
+                onClick={resetDemoScenario}
                 className="h-12 rounded-xl bg-blue-600 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
               >
-                초기화하기
+                처음부터 시작하기
               </button>
             </div>
           </div>
@@ -511,7 +609,7 @@ export default function App() {
 
       {amountResetNotice && (
         <div role="status" className="fixed left-1/2 top-6 z-[130] -translate-x-1/2 rounded-full bg-gray-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-xl">
-          금액이 처음 상태로 돌아갔어요
+          시나리오가 초기화됐어요
         </div>
       )}
 

@@ -4,6 +4,8 @@ export type StoredChatMessage = {
   role: "ai" | "user";
   text: string;
   display?: "plain" | "structured";
+  action?: "family_connect" | "damage_response" | "cancel_transfer" | null;
+  officialContent?: OfficialContent | null;
 };
 
 export type IntentChatSession = {

@@ -1,5 +1,3 @@
-import { FIRST_QUESTION } from "../api/guardian";
-
 const AI_MESSAGE_HEADINGS = new Set([
   "확인한 내용이에요",
   "왜 확인하나요",
@@ -14,11 +12,31 @@ export function isStructuredAiMessage(value: string) {
     || /(?:^|\n)[1-4]\.\s/.test(text);
 }
 
+// 신고·상담 안내에 등장하는 공식 번호만 허용한다 — "112만원" 같은 금액 표현을
+// 잘못 잡지 않도록, 메시지 전체에 신고·연락·전화·상담 문맥이 있을 때만
+// 번호를 추출한다. (숫자 바로 옆이 아니라 목록으로 나열될 때가 많다:
+// "경찰청은 112, 금감원은 1332, 118로 전화하시면 돼요")
+const REPORT_CONTEXT_PATTERN = /신고|연락|전화|상담/;
+const KNOWN_EMERGENCY_NUMBERS: { label: string; number: string; pattern: RegExp }[] = [
+  { label: "경찰청", number: "112", pattern: /(?:^|\D)112(?:\D|$)/ },
+  { label: "금융감독원", number: "1332", pattern: /(?:^|\D)1332(?:\D|$)/ },
+  { label: "인터넷진흥원", number: "118", pattern: /(?:^|\D)118(?:\D|$)/ },
+];
+
+export function extractEmergencyNumbers(value: string) {
+  const text = String(value || "");
+  if (!REPORT_CONTEXT_PATTERN.test(text)) return [];
+  return KNOWN_EMERGENCY_NUMBERS.filter((entry) => entry.pattern.test(text));
+}
+
 export function formatReadableAiMessage(value: string) {
   let text = value
     .replace(/\r\n/g, "\n")
     .replace(/(?:\[|]|[#*_])+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요)\s*(?:\[|]|[#*_])*/g, "$1")
     .replace(/^\s*(?:\[|]|[#*_])+\s*$/gm, "")
+    // 백엔드가 헤더를 문장 중간에 붙여 보낼 때가 있다. 헤더가 어디 있든
+    // 자기 줄로 떼어내야 굵게 렌더링되고 부자연스럽게 안 붙는다.
+    .replace(/\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요)\s*/g, "\n\n$1\n\n")
     .replace(/([^\n])\s+(?=(?:[1-4])\.\s)/g, "$1\n\n")
     .replace(/\n(?=(?:[2-4])\.\s)/g, "\n\n")
     .replace(/\n{3,}/g, "\n\n")

@@ -6,7 +6,7 @@
 // 프라이버시 원칙: 자녀는 어떤 레벨에서도 잔액·거래내역을 볼 수 없다.
 // 위험 이벤트의 최소 정보(금액·수취계좌·판정 근거)만 전달된다.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { parentTabs, parentIcons } from "../shared/ui";
 import { DEMO_ALERT, CHILD_ACCOUNT, fmtAccount, parseAmt, type DemoAlert, type TxnRow } from "../shared/data";
 import History from "./History";
@@ -151,11 +151,19 @@ export default function ChildApp() {
   // 페어링 완료 여부 — 완료 전에는 은행 앱만 보이고 안심동행 기능은 숨는다.
   const [paired, setPaired] = useState(() => localStorage.getItem("ansimPaired") === "true");
   const [responses, setResponses] = useState<Record<string, AlertResponse>>({});
+  const [confirmDecision, setConfirmDecision] = useState<Exclude<AlertResponse, null> | null>(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const decisionReasonValid = decisionReason.trim().length >= 4
+    && !/^(승인|보류|확인|괜찮아|괜찮아요|문제없음)$/.test(decisionReason.trim());
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [protectionLevel] = useProtectionLevel();
   const protection = PROTECTION_LEVELS[protectionLevel];
   const [alerts, setAlerts] = useState<AlertEntry[]>(readAlertQueue);
+  // 저장소에 존재한다는 이유만으로 확인한 요청으로 보지 않는다. 실제 팝업으로 한 번
+  // 안내한 요청만 기록해야 부모 앱에서 자녀 앱으로 전환했을 때 놓치지 않는다.
+  const promptedAlertIdsRef = useRef(new Set<string>());
+  const [incomingAlertId, setIncomingAlertId] = useState<string | null>(null);
   const [activeAlertIdx, setActiveAlertIdx] = useState(0);
   const alert = alerts.length ? alerts[activeAlertIdx] ?? alerts[0] : null;
   const response = alert ? (responses[String((alert as any)._ts ?? "demo")] ?? null) : null;
@@ -205,11 +213,25 @@ export default function ChildApp() {
 
   // 부모 앱이 보류 상태가 되면 localStorage 로 알림이 넘어온다
   useEffect(() => {
-    const id = setInterval(() => {
+    const syncAlerts = () => {
       const queue = readAlertQueue();
       setAlerts(queue);
-    }, 1500);
-    return () => clearInterval(id);
+      const newestUnseen = [...queue].reverse().find((entry) => !promptedAlertIdsRef.current.has(String(entry._ts ?? "demo")));
+      if (newestUnseen) {
+        const id = String(newestUnseen._ts ?? "demo");
+        promptedAlertIdsRef.current.add(id);
+        setIncomingAlertId(id);
+      }
+    };
+    syncAlerts();
+    const id = setInterval(syncAlerts, 1500);
+    window.addEventListener("ansim-alert", syncAlerts);
+    window.addEventListener("storage", syncAlerts);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("ansim-alert", syncAlerts);
+      window.removeEventListener("storage", syncAlerts);
+    };
   }, []);
 
   // 같은 브라우저 안에서 부모·자녀 앱을 오가는 MVP에서도 연결 결과를 즉시 반영한다.
@@ -252,9 +274,9 @@ export default function ChildApp() {
     if (page === "alert-detail") markGuardianLogViewed(alertId);
   }, [page, alertId]);
 
-  const respond = (r: Exclude<AlertResponse, null>) => {
+  const respond = (r: Exclude<AlertResponse, null>, reason: string) => {
     setResponse(r);
-    recordGuardianDecision(alertId, r);
+    recordGuardianDecision(alertId, r, reason);
     // 배열에서 해당 알림 제거
     try {
       const queue = readAlertQueue();
@@ -274,6 +296,8 @@ export default function ChildApp() {
     }
     setActiveAlertIdx(0);
     setPage("home");
+    setConfirmDecision(null);
+    setDecisionReason("");
     window.dispatchEvent(new Event("ansim-alert"));
   };
 
@@ -289,6 +313,9 @@ export default function ChildApp() {
     { label: "안심동행 AI", desc: "어머니 금융 함께 지키기", keywords: ["가족", "보호", "안심"], onSelect: () => setPage("guardian") },
     { label: "설정", desc: "내 정보·권한 레벨", keywords: ["설정", "권한"], onSelect: () => setPage("settings") },
   ];
+  const incomingAlert = incomingAlertId
+    ? alerts.find((entry) => String(entry._ts ?? "demo") === incomingAlertId) ?? null
+    : null;
 
   return (
     <>
@@ -426,41 +453,7 @@ export default function ChildApp() {
               </div>
             ) : null}
 
-            {/* 대기 중인 확인 요청이 여러 건이면 카드 목록으로 보여준다 */}
-            {pendingAlerts.length > 0 && (
-              <div className="flex flex-col gap-3">
-                {pendingAlerts.map((pa, idx) => {
-                  const paTime = (pa as any)._ts ? new Date((pa as any)._ts).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
-                  const realIdx = alerts.findIndex((a) => (a as any)._ts === (pa as any)._ts);
-                  return (
-                    <button
-                      key={(pa as any)._ts ?? idx}
-                      onClick={() => { setActiveAlertIdx(realIdx >= 0 ? realIdx : 0); setPage("alert-detail"); }}
-                      className="w-full rounded-2xl border-2 border-red-200 bg-red-50 p-5 text-left active:scale-[0.98] transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[15px] font-bold text-red-700">
-                            {pendingAlerts.length > 1 ? `${idx + 1}. ` : ""}확인이 필요한 송금이 있어요
-                          </p>
-                          <p className="mt-1 text-[12px] text-gray-500">
-                            부모님이 확인을 요청했어요.{paTime ? ` · ${paTime}` : ""}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white">가족 확인 중</span>
-                      </div>
-                      <div className="mt-3 rounded-xl bg-white px-4 py-3">
-                        <p className="text-[20px] font-bold text-gray-900">{Number(pa.amount).toLocaleString()}원</p>
-                        <p className="mt-1 text-[13px] text-gray-500">받는 사람: {maskAccountForFamily(pa.account, pa.bank)}{pa.bank ? ` · ${pa.bank}` : ""}</p>
-                      </div>
-                      <p className="mt-3 rounded-xl bg-red-600 py-3 text-center text-[14px] font-bold text-white">
-                        확인하러 가기
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {/* 대기 중인 부모 확인 요청은 홈에 노출하지 않고 상단 알림에서만 확인한다. */}
 
             </>)}
 
@@ -513,10 +506,19 @@ export default function ChildApp() {
               <p className="text-[17px] font-bold text-gray-900">위험 이벤트 상세</p>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[15px] font-bold text-red-700">⚠️ 어머니 위험 거래 감지</p>
-                <span className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">HIGH</span>
+            <div className="rounded-[24px] border border-red-100 bg-gradient-to-br from-red-50 via-white to-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-red-100 bg-white shadow-sm">
+                  <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-red-700 shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    안심동행 AI 확인
+                  </div>
+                  <p className="mt-1.5 text-[15px] font-bold text-red-700">어머니 위험 거래 감지</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-bold text-white">위험</span>
               </div>
               <div className="bg-white rounded-xl p-4 flex flex-col gap-2 text-[13px]">
                 {[
@@ -555,7 +557,7 @@ export default function ChildApp() {
                 {conversation.map((msg: { role: string; text: string }, i: number) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "ai" && <div className="mr-2 mt-0.5 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-blue-100 bg-blue-50 shadow-sm"><img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" /></div>}
-                    <div className={`${msg.role === "ai" ? "max-w-[88%] bg-[var(--ac-50)] text-gray-800 rounded-tl-sm" : "max-w-[78%] bg-[var(--ac-500)] text-white rounded-tr-sm"} rounded-2xl px-4 py-3 text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
+                    <div className={`${msg.role === "ai" ? "max-w-[88%] bg-[#f7fbf8] text-gray-800 rounded-tl-sm" : "max-w-[78%] bg-[var(--ac-500)] text-white rounded-tr-sm"} rounded-2xl px-4 py-3 text-[14px] whitespace-pre-wrap leading-[1.75] break-keep`}>
                       {msg.role === "ai" ? <ReadableAiMessage text={msg.text} /> : msg.text}
                     </div>
                   </div>
@@ -565,10 +567,30 @@ export default function ChildApp() {
 
             {!response && requestPolicy.allowFamilyDecision ? (
               <div className="flex flex-col gap-2">
-                <a href="tel:010-0000-0000" className="w-full py-3.5 rounded-xl text-[15px] font-semibold text-white bg-blue-500 active:scale-[0.98] transition-all text-center block">📞 어머니께 전화하기</a>
+                <a
+                  href="tel:010-0000-0000"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-[var(--ac-400)] py-3.5 text-[15px] font-bold text-white active:scale-[0.98] transition-all"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" /></svg>
+                  어머니께 전화하기
+                </a>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => respond("approved")} className="py-3 rounded-xl text-[14px] font-semibold text-gray-900 border-2 border-blue-200 bg-blue-50 active:scale-[0.98] transition-all">✅ 승인</button>
-                  <button onClick={() => respond("held")} className="py-3 rounded-xl text-[14px] font-semibold text-red-600 border-2 border-red-200 bg-red-50 active:scale-[0.98] transition-all">⏸ 보류</button>
+                  {/* 보류가 안전한 선택이라 브랜드 색으로 강조하고, 승인은 위험을 감수하는
+                      쪽이라 신중한 톤(테두리만)으로 낮춰서 두 버튼의 무게를 다르게 준다. */}
+                  <button
+                    onClick={() => { setDecisionReason(""); setConfirmDecision("approved"); }}
+                    className="flex items-center justify-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white py-3 text-[14px] font-bold text-gray-700 active:scale-[0.98] transition-all"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M20 6L9 17l-5-5" /></svg>
+                    승인
+                  </button>
+                  <button
+                    onClick={() => { setDecisionReason(""); setConfirmDecision("held"); }}
+                    className="flex items-center justify-center gap-1.5 rounded-2xl bg-[var(--ac-400)] py-3 text-[14px] font-bold text-white active:scale-[0.98] transition-all"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                    보류
+                  </button>
                 </div>
                 <p className="text-[11px] text-gray-400 text-center">승인·보류는 자녀의 확인 의견이며, 최종 결정은 어머니가 해요.</p>
               </div>
@@ -606,7 +628,7 @@ export default function ChildApp() {
                       <p className="text-[13px] font-bold text-gray-900">어머니 위험 거래 감지</p>
                       <p className="text-[11px] text-gray-400">{time}</p>
                     </div>
-                    <p className="text-[12px] text-gray-500 mt-0.5">{amount.toLocaleString()}원 · {signals[0]} · HIGH</p>
+                    <p className="text-[12px] text-gray-500 mt-0.5">{amount.toLocaleString()}원 · {signals[0]} · 위험</p>
                     {response && <p className="text-[11px] text-green-600 mt-1 font-medium">{response === "held" ? "보류 처리됨" : "승인 처리됨"}</p>}
                   </div>
                 </div>
@@ -767,6 +789,72 @@ export default function ChildApp() {
         </div>
       )}
 
+      {/* ─── 가족 확인 의견 확정 ─────────────────────────────────────────── */}
+      {confirmDecision && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="decision-confirm-title">
+          <button aria-label="닫기" className="absolute inset-0 bg-black/40" onClick={() => setConfirmDecision(null)} />
+          <section className="relative w-full max-w-[430px] rounded-t-[28px] bg-white px-5 pb-8 pt-5 shadow-2xl">
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-gray-200" />
+            <p id="decision-confirm-title" className="text-[19px] font-extrabold text-gray-950">
+              정말 {confirmDecision === "approved" ? "승인" : "보류"}하시겠어요?
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
+              작성한 이유와 함께 {confirmDecision === "approved" ? "승인" : "보류"} 의견이 어머니께 전달돼요.
+            </p>
+
+            <div className="mt-5">
+              <label htmlFor="decision-reason" className="text-[14px] font-bold text-gray-800">
+                {confirmDecision === "approved" ? "승인하는" : "보류하는"} 이유
+              </label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(confirmDecision === "approved"
+                  ? ["직접 확인했어요", "아는 분과의 정상 거래예요", "송금 목적을 확인했어요"]
+                  : ["사기가 의심돼요", "상대방을 확인하지 못했어요", "어머니와 먼저 통화할게요"]
+                ).map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setDecisionReason(reason)}
+                    className={`rounded-full border px-3 py-2 text-[12px] font-semibold transition-colors ${decisionReason === reason ? "border-[var(--ac-400)] bg-[#eef7f1] text-[var(--ac-600)]" : "border-gray-200 bg-white text-gray-600"}`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                id="decision-reason"
+                value={decisionReason}
+                onChange={(event) => setDecisionReason(event.target.value)}
+                maxLength={120}
+                rows={3}
+                placeholder="이유를 직접 입력해주세요"
+                className="mt-3 w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-[14px] leading-relaxed text-gray-900 outline-none focus:border-[var(--ac-400)] focus:bg-white"
+              />
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className={`text-[11px] ${decisionReason.length > 0 && !decisionReasonValid ? "text-amber-600" : "text-gray-400"}`}>
+                  {decisionReason.length > 0 && !decisionReasonValid ? "확인한 내용이 드러나도록 조금 더 자세히 적어주세요." : "구체적인 확인 이유가 부모님께 전달돼요."}
+                </p>
+                <p className="shrink-0 text-[11px] text-gray-400">{decisionReason.length}/120</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-[0.8fr_1.2fr] gap-2">
+              <button type="button" onClick={() => setConfirmDecision(null)} className="rounded-2xl border border-gray-200 bg-white py-3.5 text-[14px] font-bold text-gray-600">
+                다시 생각하기
+              </button>
+              <button
+                type="button"
+                disabled={!decisionReasonValid}
+                onClick={() => respond(confirmDecision, decisionReason)}
+                className={`rounded-2xl py-3.5 text-[14px] font-bold text-white transition-all ${decisionReasonValid ? "bg-[var(--ac-400)] active:scale-[0.98]" : "cursor-not-allowed bg-gray-300"}`}
+              >
+                {confirmDecision === "approved" ? "승인 의견 보내기" : "보류 의견 보내기"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* ─── 생활 지원금 상세 바텀시트 ─────────────────────────────────────── */}
       {selectedBenefit && (
         <div className="fixed inset-0 z-50">
@@ -819,6 +907,42 @@ export default function ChildApp() {
             >
               확인
             </button>
+          </div>
+        </div>
+      )}
+
+      {incomingAlert && (
+        <div className="fixed inset-y-0 left-1/2 z-[120] flex w-full max-w-[430px] -translate-x-1/2 items-center justify-center bg-black/40 px-5" role="dialog" aria-modal="true" aria-labelledby="incoming-family-request-title">
+          <div className="w-full rounded-[24px] bg-white p-6 shadow-2xl" style={{ animation: "sheet-up .24s cubic-bezier(.2,.8,.2,1)" }}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-[var(--ac-100)] bg-[#f7fbf8] shadow-sm">
+              <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-[11px] font-bold text-[var(--ac-600)]">안심동행 AI 가족 확인 요청</p>
+              <h3 id="incoming-family-request-title" className="mt-1 text-[19px] font-extrabold leading-snug text-gray-950">어머니가 송금 확인을 요청했어요</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-gray-500">위험 신호가 감지된 송금이에요. 지금 함께 확인하시겠어요?</p>
+            </div>
+            <div className="mt-5 rounded-2xl bg-gray-50 px-4 py-3 text-[12px]">
+              <div className="flex items-center justify-between gap-3"><span className="text-gray-400">송금 금액</span><span className="font-extrabold text-red-600">{Number(incomingAlert.amount).toLocaleString()}원</span></div>
+              <div className="mt-2 flex items-center justify-between gap-3"><span className="text-gray-400">받는 계좌</span><span className="font-semibold text-gray-700">{maskAccountForFamily(incomingAlert.account, incomingAlert.bank)}</span></div>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setIncomingAlertId(null)} className="h-12 rounded-xl border border-gray-200 bg-white text-[14px] font-bold text-gray-600 active:scale-[0.98]">나중에</button>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetIdx = alerts.findIndex((entry) => String(entry._ts ?? "demo") === incomingAlertId);
+                  setActiveAlertIdx(targetIdx >= 0 ? targetIdx : 0);
+                  setIncomingAlertId(null);
+                  setTab("홈");
+                  setPage("alert-detail");
+                }}
+                className="h-12 rounded-xl bg-[var(--ac-400)] text-[14px] font-bold text-white active:scale-[0.98]"
+              >
+                예, 확인할게요
+              </button>
+            </div>
+            <p className="mt-3 text-center text-[11px] text-gray-400">나중에를 눌러도 상단 알림에서 다시 확인할 수 있어요.</p>
           </div>
         </div>
       )}

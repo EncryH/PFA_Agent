@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readNotices, TRANSACTIONS, MY_ACCOUNTS, CHILD_ACCOUNT, type TxnRow } from "./data";
 import { PROTECTION_LEVELS, getProtectionDisplayLevel } from "./protection";
+import { readGuardianLog } from "./guardianLog";
 
 type NotificationShadeProps = {
   role: "parent" | "child";
@@ -110,6 +111,25 @@ export default function NotificationShade({ role, hasRiskAlert = false, riskAler
   const freshPairing = pairingNotices.filter((n) => n._ts && now - n._ts < FRESH_WINDOW_MS);
   const olderPairing = pairingNotices.filter((n) => !n._ts || now - n._ts >= FRESH_WINDOW_MS);
 
+  const decisionNotices: (Notice & { _ts: number })[] = role === "parent"
+    ? readGuardianLog()
+      .filter((entry) => entry.decision && entry.decidedAt)
+      .map((entry) => {
+        const approved = entry.decision === "approved";
+        const reason = entry.decisionReason?.trim() || "사유가 입력되지 않았어요.";
+        return {
+          _ts: new Date(entry.decidedAt as string).getTime(),
+          icon: "family" as const,
+          title: approved ? "자녀가 송금을 승인했어요" : "자녀가 송금을 보류했어요",
+          body: `${approved ? "승인" : "보류"} 이유: ${reason} · ${Number(entry.amount).toLocaleString()}원`,
+          date: stamp(entry.decidedAt as string),
+          accent: !approved,
+        };
+      })
+    : [];
+  const freshDecisions = decisionNotices.filter((notice) => notice._ts && now - notice._ts < FRESH_WINDOW_MS);
+  const olderDecisions = decisionNotices.filter((notice) => !notice._ts || now - notice._ts >= FRESH_WINDOW_MS);
+
   const alertCount = hasRiskAlert ? Math.max(1, riskAlertCount) : 0;
   const fresh: Notice[] = [
     ...(role === "child" && alertCount > 0
@@ -122,6 +142,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, riskAler
           onClick: () => requestClose(onOpenRiskAlert ?? onClose),
         }))
       : []),
+    ...freshDecisions,
     ...freshPairing,
   ];
 
@@ -145,7 +166,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, riskAler
     ? [{ icon: "gift" as const, title: "안심 정기예금 금리가 올랐어요",  body: "연 3.5%로 12개월 예치하실 수 있어요.", date: "7월 28일" }]
     : [{ icon: "gift" as const, title: "나눔 적금 이벤트가 시작됐어요",   body: "매주 저축할 때마다 추가 금리를 드려요.", date: "7월 25일" }];
 
-  const earlier: Notice[] = [...olderPairing, ...txnNotices, ...marketingNotices];
+  const earlier: Notice[] = [...olderDecisions, ...olderPairing, ...txnNotices, ...marketingNotices];
 
   const row = (n: Notice, i: number) => {
     const Tag = n.onClick ? "button" : "div";

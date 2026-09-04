@@ -25,7 +25,7 @@ import { getProtectionPolicy, useAiReviewThreshold, useProtectionLevel } from ".
 import { saveEmergencyReceipt as saveEmergencyReceiptRecord } from "../shared/emergencyReceipt";
 import { startGlobalCooldown } from "../shared/cooldown";
 import { hasRecentCall, getRecentCallScriptFlags } from "../shared/callActivity";
-import { formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
+import { extractEmergencyNumbers, formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
 import { maskAccountForFamily } from "../shared/privacyStorage";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
@@ -157,6 +157,7 @@ function RiskGradeCard({
           </button>
         </div>
       )}
+
     </div>
   );
 }
@@ -233,6 +234,34 @@ export default function Transfer({
   const [aiReviewThreshold] = useAiReviewThreshold();
   const protectionPolicy = getProtectionPolicy(protectionLevel);
   const [resumeNotice, setResumeNotice] = useState(false);   // 저장한 상담을 다시 연 상태
+  // 사용자가 대화 중 취소 의사를 밝히면(action: "cancel_transfer") 그 뒤로 다른 메시지를
+  // 주고받아도 취소 버튼이 계속 보여야 한다 — 채팅 말풍선에만 붙이면 다음 메시지가
+  // 오는 순간 사라져서 눌러야 할 때 안 보이는 문제가 생긴다.
+  const [cancelRequested, setCancelRequested] = useState(false);
+  const [familyConfirmationOpen, setFamilyConfirmationOpen] = useState(false);
+  // 공식 사례·영상 카드는 위험이 처음 확정된 turn 딱 한 번만 붙인다. 대화가 계속
+  // 이어지며 done&&hold가 다시 참으로 나와도(후속 질문 재확인 등) 매번 새로 붙이면
+  // 메시지마다 카드가 중복으로 쌓인다.
+  const officialShownRef = useRef(false);
+
+  // AI가 응답 중일 때 사용자가 이어서 입력한 메시지를 담아두는 큐.
+  // 답변을 기다리는 동안에도 타이핑은 막지 않되, 전송은 이전 응답이 끝난 뒤
+  // 순서대로 처리한다 — 그렇지 않으면 Enter를 눌러도 조용히 무시돼 입력창에
+  // 글자가 그대로 남는 것처럼 보인다.
+  const sendQueueRef = useRef<string[]>([]);
+  const queueRunningRef = useRef(false);
+  const messagesRef = useRef<ChatMessage[]>(messages);
+  const turnCountRef = useRef(turnCount);
+  const chatDoneRef = useRef(chatDone);
+  const analysisHoldRef = useRef(analysisHold);
+  const riskLabelsRef = useRef(riskLabels);
+  const fraudTypeLabelRef = useRef(fraudTypeLabel);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { turnCountRef.current = turnCount; }, [turnCount]);
+  useEffect(() => { chatDoneRef.current = chatDone; }, [chatDone]);
+  useEffect(() => { analysisHoldRef.current = analysisHold; }, [analysisHold]);
+  useEffect(() => { riskLabelsRef.current = riskLabels; }, [riskLabels]);
+  useEffect(() => { fraudTypeLabelRef.current = fraudTypeLabel; }, [fraudTypeLabel]);
   const [intentSessionId, setIntentSessionId] = useState<string | null>(null);
   const [emergencyStage, setEmergencyStage] = useState<EmergencyStage>("review");
   const [emergencyConsent, setEmergencyConsent] = useState(false);
@@ -351,7 +380,17 @@ export default function Transfer({
     setFromIdx(Math.min(session.transfer.fromIdx, accounts.length - 1));
     // 이어보기 안내는 대화 기록이 아니라 시스템 알림이다.
     // 메시지로 넣으면 결론·공식 자료보다 뒤에 붙어 순서가 뒤집힌다.
-    setMessages(session.messages);
+    // 카드를 메시지에 직접 붙이기 전(더 이전 버전)에 저장된 상담은 official은 있어도
+    // 어느 메시지에도 officialContent가 없다 — 이때는 마지막 AI 메시지에 되살려 붙인다.
+    const hasOfficialOnMessage = session.messages.some((m) => m.officialContent);
+    const restoredMessages = !hasOfficialOnMessage && session.official?.status === "curated"
+      ? (() => {
+          const lastAiIndex = session.messages.map((m) => m.role).lastIndexOf("ai");
+          if (lastAiIndex === -1) return session.messages;
+          return session.messages.map((m, i) => (i === lastAiIndex ? { ...m, officialContent: session.official } : m));
+        })()
+      : session.messages;
+    setMessages(restoredMessages);
     setResumeNotice(true);
     setTurnCount(session.turnCount);
     setRiskLabels(session.riskLabels);
@@ -364,6 +403,9 @@ export default function Transfer({
     setChatDone(session.analysisDone ?? session.analysisHold ?? false);
     setAnalysisHold(session.analysisHold ?? false);
     setOfficial(session.official ?? null);
+    // 저장된 대화에 이미 공식 자료가 붙어 있었다면(또는 옛 저장본이라 메시지에는
+    // 없어도 official이 남아 있다면), 이어서 새 turn이 나올 때 중복으로 다시 붙이지 않는다.
+    officialShownRef.current = session.messages.some((m) => m.officialContent) || Boolean(session.official);
     // 냉각 중 저장한 상담이면 남은 시간도 그대로 되살린다 — 안 그러면 그 사이 보호 단계를
     // 낮춰서 재개하는 것만으로 냉각·가족 확인 게이트를 건너뛸 수 있었다.
     if (session.analysisHold) {
@@ -582,6 +624,9 @@ export default function Transfer({
     setAccount(""); setBank(""); setName(""); setAmt(""); setBankOpen(false);
     setMessages([]); setInput(""); setTurnCount(0); setChatDone(false);
     setIsTyping(false); setFallback(false); setRiskLabels([]); setFraudTypeLabel(""); setAnalysisHold(false); setOfficial(null); setPlayingVideo(null); setResumeNotice(false);
+    setCancelRequested(false);
+    setFamilyConfirmationOpen(false);
+    officialShownRef.current = false;
     setIntentSessionId(null);
     setEmergencyStage("review"); setEmergencyConsent(false); setEmergencyReceipt("");
     setEmergencyAuthOpen(false); setEmergencyAuthVerifying(false);
@@ -627,7 +672,12 @@ export default function Transfer({
   };
 
   const requestFamilyConfirmation = () => {
+    setFamilyConfirmationOpen(true);
+  };
+
+  const confirmFamilyConfirmation = () => {
     saveCurrentIntentChat();
+    setFamilyConfirmationOpen(false);
     setStep("hold");
   };
 
@@ -705,76 +755,138 @@ export default function Transfer({
     else goHome();
   };
 
-  // 3단계 AI 의도 분석 — 이전 거래 패턴·RAG·Gemini 신호를 결합하고 규칙이 보류 판정
-  const handleSend = async () => {
-    // 위험 판정이 끝나도 상담은 끝나지 않는다.
-    // chatDone은 분석 결과가 나온 상태일 뿐, 추가 질문을 막는 조건이 아니다.
-    if (!input.trim() || isTyping) return;
-
-    // 요청을 보낼 때의 분석 완료 여부를 보존한다. 응답을 기다리는 사이에도 이 상담이
-    // '새 위험 판정'인지 '완료된 상담의 후속 대화'인지 구분할 수 있어야 한다.
-    const analysisWasAlreadyDone = chatDone;
-    const history: ChatMessage[] = [...messages, { role: "user", text: input.trim() }];
-    const turn = turnCount + 1;
-
-    setMessages(history);
-    setInput("");
-    setTurnCount(turn);
+  // 3단계 AI 의도 분석 — 이전 거래 패턴·RAG·Gemini 신호를 결합하고 규칙이 보류 판정.
+  // 큐에 쌓인 메시지를 하나씩 순서대로 처리한다. AI가 답변하는 동안 사용자가
+  // 이어서 입력해도, 그 메시지는 큐에 쌓였다가 이전 응답이 끝나면 자동으로 전송된다.
+  const processSendQueue = async () => {
+    if (queueRunningRef.current) return;
+    queueRunningRef.current = true;
     setIsTyping(true);
-    setResumeNotice(false);   // 새 답변이 들어오면 이어보기 안내는 내린다
 
-    const verdict = await takeTurn(
-      {
-        userId: "demo-parent-01",
-        sourceAccount: accounts[fromIdx].account,
-        occurredAt: new Date(sessionStartRef.current).toISOString(),
-        amount: parseAmt(amt), recipientName: name, account, bank,
-        isFirstTransfer: isNewRecipient,
-        patternRiskScore: liveRisk?.score ?? 0,
-        callInProgress: behaviorSignalsRef.current.isOnCall,
-        // D등급(강제 최고 위험 포함)에서 시작된 상담은, 그럴듯한 설명이 나와도
-        // 대화만으로 안전 판정을 내리지 않는다 — 가족 확인만이 유일한 통과 경로다.
-        forcedHold: riskResult?.grade === "D",
-      },
-      history,
-      turn,
-      {
-        resumed: intentSessionId !== null,
-        analysisDone: analysisWasAlreadyDone,
-        analysisHold,
-        fraudTypeLabel,
-        riskLabels,
-      },
-    );
+    while (sendQueueRef.current.length > 0) {
+      const text = sendQueueRef.current.shift()!;
 
-    setIsTyping(false);
-    setFallback(verdict.fallback);
-    if (verdict.risk.labels.length) setRiskLabels(verdict.risk.labels);
-    const suspectedType = verdict.analysis?.suspected_fraud_type;
-    if (suspectedType && !["none", "unknown"].includes(suspectedType.code)) {
-      setFraudTypeLabel(suspectedType.label);
-    }
-    setOfficial(verdict.analysis?.official_content ?? null);
-    const middlewareRoute = verdict.middleware?.route;
-    const display = middlewareRoute && middlewareRoute !== "RISK" ? "plain" : "structured";
-    setMessages((p) => [...p, { role: "ai", text: verdict.message, display }]);
+      // 요청을 보낼 때의 분석 완료 여부를 보존한다. 응답을 기다리는 사이에도 이 상담이
+      // '새 위험 판정'인지 '완료된 상담의 후속 대화'인지 구분할 수 있어야 한다.
+      const analysisWasAlreadyDone = chatDoneRef.current;
+      const history: ChatMessage[] = [...messagesRef.current, { role: "user", text }];
+      const turn = turnCountRef.current + 1;
 
-    // 3단계 의도 분석 결과를 표시하고, 가족 확인은 사용자가 선택할 때만 별도로 연결한다.
-    if (verdict.done) {
-      setChatDone(true);
-      setAnalysisHold(verdict.hold);
-      // 냉각은 최초 위험 판정에만 적용한다. 저장된 상담에서 이어서 질문한 답변이
-      // 같은 hold 판정을 돌려줘도 이미 시작했던 5분을 다시 채우지 않는다.
-      if (!analysisWasAlreadyDone && verdict.hold && protectionPolicy.delaySeconds > 0) {
-        setFreezeSecsLeft((current) => Math.max(current ?? 0, protectionPolicy.delaySeconds));
-        startGlobalCooldown(protectionPolicy.delaySeconds);
+      messagesRef.current = history;
+      turnCountRef.current = turn;
+      setMessages(history);
+      setTurnCount(turn);
+
+      const verdict = await takeTurn(
+        {
+          userId: "demo-parent-01",
+          sourceAccount: accounts[fromIdx].account,
+          occurredAt: new Date(sessionStartRef.current).toISOString(),
+          amount: parseAmt(amt), recipientName: name, account, bank,
+          isFirstTransfer: isNewRecipient,
+          patternRiskScore: liveRisk?.score ?? 0,
+          callInProgress: behaviorSignalsRef.current.isOnCall,
+          // D등급(강제 최고 위험 포함)에서 시작된 상담은, 그럴듯한 설명이 나와도
+          // 대화만으로 안전 판정을 내리지 않는다 — 가족 확인만이 유일한 통과 경로다.
+          forcedHold: riskResult?.grade === "D",
+        },
+        history,
+        turn,
+        {
+          resumed: intentSessionId !== null,
+          analysisDone: analysisWasAlreadyDone,
+          analysisHold: analysisHoldRef.current,
+          fraudTypeLabel: fraudTypeLabelRef.current,
+          riskLabels: riskLabelsRef.current,
+        },
+      );
+
+      setFallback(verdict.fallback);
+      if (verdict.risk.labels.length) {
+        riskLabelsRef.current = verdict.risk.labels;
+        setRiskLabels(verdict.risk.labels);
+      }
+      const suspectedType = verdict.analysis?.suspected_fraud_type;
+      if (suspectedType && !["none", "unknown"].includes(suspectedType.code)) {
+        fraudTypeLabelRef.current = suspectedType.label;
+        setFraudTypeLabel(suspectedType.label);
+      }
+      const officialContent = verdict.analysis?.official_content ?? null;
+      setOfficial(officialContent);
+      const middlewareRoute = verdict.middleware?.route;
+      const display: ChatMessage["display"] = middlewareRoute && middlewareRoute !== "RISK" ? "plain" : "structured";
+      // 사용자가 직접 피해를 호소한 긴급 신고는 4단계 긴급 대응(지급정지·피해구제) 화면으로
+      // 바로 연결하는 버튼을 함께 준다 — 전화만 안내하고 끝내면 다음 행동이 막막해진다.
+      const action = verdict.middleware?.emergency
+        ? "damage_response"
+        : verdict.middleware?.action ?? null;
+      if (action === "cancel_transfer") setCancelRequested(true);
+      // 사기 유형이 확정된 바로 이 메시지에 공식 사례·영상을 함께 붙인다. 전역 상태로만
+      // 관리하면 계속 대화할 때마다 카드가 맨 아래로 밀려 내려가는 것처럼 보인다.
+      const showOfficial = !officialShownRef.current && verdict.done && verdict.hold && officialContent?.status === "curated";
+      if (showOfficial) officialShownRef.current = true;
+      const withAiReply: ChatMessage[] = [...history, {
+        role: "ai" as const, text: verdict.message, display, action,
+        officialContent: showOfficial ? officialContent : null,
+      }];
+      messagesRef.current = withAiReply;
+      setMessages(withAiReply);
+
+      // 3단계 의도 분석 결과를 표시하고, 가족 확인은 사용자가 선택할 때만 별도로 연결한다.
+      if (verdict.done) {
+        chatDoneRef.current = true;
+        analysisHoldRef.current = verdict.hold;
+        setChatDone(true);
+        setAnalysisHold(verdict.hold);
+        // 냉각은 최초 위험 판정에만 적용한다. 저장된 상담에서 이어서 질문한 답변이
+        // 같은 hold 판정을 돌려줘도 이미 시작했던 5분을 다시 채우지 않는다.
+        if (!analysisWasAlreadyDone && verdict.hold && protectionPolicy.delaySeconds > 0) {
+          setFreezeSecsLeft((current) => Math.max(current ?? 0, protectionPolicy.delaySeconds));
+          startGlobalCooldown(protectionPolicy.delaySeconds);
+        }
       }
     }
+
+    queueRunningRef.current = false;
+    setIsTyping(false);
+  };
+
+  const handleSend = () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput("");
+    setResumeNotice(false);   // 새 답변이 들어오면 이어보기 안내는 내린다
+    sendQueueRef.current.push(text);
+    void processSendQueue();
   };
 
   // ══════════════════════════════════════════════════════════════════════
   return (
     <div className={`flex flex-col ${step === "amount" || step === "confirm" ? "gap-0" : "gap-4"} ${step === "ai-chat" ? "min-h-[calc(100dvh-158px)]" : ""}`}>
+      {familyConfirmationOpen && (
+        <div className="fixed inset-y-0 left-1/2 z-[125] flex w-full max-w-[430px] -translate-x-1/2 items-center justify-center bg-black/45 px-5" role="dialog" aria-modal="true" aria-labelledby="family-confirm-title">
+          <div className="w-full rounded-[24px] bg-white p-6 shadow-2xl" style={{ animation: "sheet-up .24s cubic-bezier(.2,.8,.2,1)" }}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
+            <div className="mt-4 text-center">
+              <h3 id="family-confirm-title" className="text-[19px] font-extrabold text-gray-950">정말 가족에게 확인을 요청하시겠어요?</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-gray-500">자녀에게 현재 송금의 최소 정보와 AI 상담 내용이 전달돼요.</p>
+            </div>
+            <div className="mt-5 rounded-2xl bg-gray-50 px-4 py-3 text-[12px]">
+              <div className="flex items-center justify-between gap-3"><span className="text-gray-400">확인 요청 대상</span><span className="font-bold text-gray-800">딸 김지혜님</span></div>
+              <div className="mt-2 flex items-center justify-between gap-3"><span className="text-gray-400">송금 금액</span><span className="font-bold text-gray-800">{amt || "0"}원</span></div>
+              <div className="mt-2 flex items-center justify-between gap-3"><span className="text-gray-400">전달 정보</span><span className="font-semibold text-gray-700">위험 신호·상담 내용</span></div>
+            </div>
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-gray-400">자녀의 승인·보류는 확인 의견이며 최종 송금은 부모님이 결정해요.</p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setFamilyConfirmationOpen(false)} className="h-12 rounded-xl border border-gray-200 bg-white text-[14px] font-bold text-gray-600 active:scale-[0.98]">아니오</button>
+              <button type="button" onClick={confirmFamilyConfirmation} className="h-12 rounded-xl bg-blue-600 text-[14px] font-bold text-white active:scale-[0.98]">예, 요청할게요</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 금액·확인 화면은 가운데 큰 글씨가 제목 역할을 하므로 뒤로가기만 둔다 */}
       {step === "amount" || step === "confirm" ? (
         <button onClick={goBack} className="w-9 h-9 -ml-1 flex items-center text-gray-500 active:scale-90 transition-transform">
@@ -1310,8 +1422,9 @@ export default function Transfer({
       {/* ── AI 대화 ── */}
       {step === "ai-chat" && (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
-          {/* 냉각이 걸린 상태면 남은 시간을 대화 위에 계속 보여준다 — 대화와 정지가 동시에 진행 중임을 알린다 */}
-          {freezeSecsLeft !== null && freezeSecsLeft > 0 && (
+          {/* 송금이 멈춘 상태면 대화 위에 계속 상태를 보여준다 — 냉각 카운트다운이 있으면 남은
+              시간을, 카운트다운이 끝났거나(재개된 세션 등) 없으면 정지 상태만 알린다. */}
+          {chatDone && analysisHold && (
             <div className="shrink-0 rounded-2xl border border-[var(--ac-100)] bg-gradient-to-r from-[var(--ac-50)] via-white to-[var(--ac-50)] px-4 py-3 shadow-sm flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[var(--ac-600)] shadow-sm">
@@ -1322,12 +1435,18 @@ export default function Transfer({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[12px] font-extrabold text-[var(--ac-700)]">안심동행 AI가 송금을 잠시 멈췄어요</p>
-                  <p className="text-[11px] text-gray-500 truncate">남은 시간 동안 확인 대화를 이어갈 수 있어요</p>
+                  <p className="text-[11px] text-gray-500 truncate">
+                    {freezeSecsLeft !== null && freezeSecsLeft > 0
+                      ? "남은 시간 동안 확인 대화를 이어갈 수 있어요"
+                      : "상담은 끝나지 않았어요. 궁금한 점을 계속 물어보실 수 있어요"}
+                  </p>
                 </div>
               </div>
-              <span className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-[18px] font-black text-[var(--ac-700)] font-mono tracking-[2px] leading-none shadow-sm">
-                {String(Math.floor(freezeSecsLeft / 60)).padStart(2, "0")}:{String(freezeSecsLeft % 60).padStart(2, "0")}
-              </span>
+              {freezeSecsLeft !== null && freezeSecsLeft > 0 && (
+                <span className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-[18px] font-black text-[var(--ac-700)] font-mono tracking-[2px] leading-none shadow-sm">
+                  {String(Math.floor(freezeSecsLeft / 60)).padStart(2, "0")}:{String(freezeSecsLeft % 60).padStart(2, "0")}
+                </span>
+              )}
             </div>
           )}
           <div className="rounded-[22px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-4 py-4 shadow-sm flex flex-col gap-3">
@@ -1387,6 +1506,100 @@ export default function Transfer({
                       </button>
                     )}
                   </div>
+                  {msg.role === "ai" && msg.action === "family_connect" && i === messages.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={requestFamilyConfirmation}
+                      className="mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--ac-500)] text-[13px] font-bold text-white active:scale-[0.98] transition-transform"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>
+                      자녀에게 연결하기
+                    </button>
+                  )}
+                  {msg.role === "ai" && i === messages.length - 1 && extractEmergencyNumbers(msg.text).map((entry) => (
+                    <a
+                      key={entry.number}
+                      href={`tel:${entry.number}`}
+                      className="mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border-2 border-red-500 bg-white text-[13px] font-bold text-red-600 active:scale-[0.98] transition-transform"
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" /></svg>
+                      {entry.label} {entry.number}로 바로 전화하기
+                    </a>
+                  ))}
+                  {msg.role === "ai" && msg.action === "damage_response" && i === messages.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setStep("already-sent")}
+                      className="mt-2 flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-red-600 text-[14px] font-bold text-white active:scale-[0.98] transition-transform"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" /></svg>
+                      피해대응 바로 하러가기
+                    </button>
+                  )}
+                  {/* 공식 사례·영상 — 사기 유형이 확정된 바로 이 메시지에 고정한다.
+                      전역 상태로 관리하면 새 메시지가 쌓일 때마다 카드가 계속 아래로 밀려난다. */}
+                  {msg.role === "ai" && msg.officialContent?.status === "curated" && (
+                    <div className="mt-2 rounded-2xl border border-gray-100 bg-white p-4">
+                      <div className="flex items-center gap-1.5">
+                        <svg viewBox="0 0 24 24" fill="var(--ac-500)" className="h-[18px] w-[18px]"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm6 3.5v7l6-3.5-6-3.5z" /></svg>
+                        <p className="text-[14px] font-bold text-gray-900">실제로 있었던 일</p>
+                        <span className="ml-auto text-[11px] text-gray-400">금융감독원</span>
+                      </div>
+
+                      {msg.officialContent.items.map((item) =>
+                        item.kind === "video" ? (
+                          <div key={item.videoId}>
+                            <p className="mt-2 text-[12px] leading-relaxed text-gray-500">{item.headline}</p>
+
+                            {playingVideo === item.videoId ? (
+                              // 앱을 벗어나지 않고 그 자리에서 본다
+                              <div className="mt-3 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16 / 9" }}>
+                                <iframe
+                                  src={`${item.embedUrl}&autoplay=1`}
+                                  title={item.title}
+                                  allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+                                  allowFullScreen
+                                  className="h-full w-full border-0"
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setPlayingVideo(item.videoId)}
+                                className="group mt-3 w-full text-left active:scale-[0.99] transition-transform"
+                              >
+                                {/* 외부 썸네일은 자동으로 불러오지 않는다. 재생을 누른 뒤에만 YouTube에 연결한다. */}
+                                <span className="relative block w-full overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 via-slate-700 to-blue-900" style={{ aspectRatio: "16 / 9" }}>
+                                  <span className="absolute inset-x-5 top-5 text-[12px] font-semibold leading-relaxed text-white/80">
+                                    금융감독원 공식 예방 영상
+                                  </span>
+                                  <span className="absolute inset-0 flex items-center justify-center">
+                                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/65 shadow-lg transition-transform duration-200 group-hover:scale-110">
+                                      <svg viewBox="0 0 24 24" fill="white" className="ml-1 h-7 w-7"><path d="M8 5v14l11-7z" /></svg>
+                                    </span>
+                                  </span>
+                                  <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                                    {item.duration}
+                                  </span>
+                                </span>
+                                <span className="mt-2.5 block text-[15px] font-bold leading-snug text-gray-900">{item.title}</span>
+                                <span className="mt-1 block text-[12px] text-gray-400">{item.source} 공식 영상</span>
+                                <span className="mt-1 block text-[11px] text-gray-400">재생하면 YouTube에 연결됩니다.</span>
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <a
+                            key={item.url} href={item.url} target="_blank" rel="noreferrer"
+                            className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-[14px] font-semibold text-gray-700 active:scale-[0.99] transition-transform"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></svg>
+                            {item.title}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ml-auto h-4 w-4 text-gray-300"><path d="M9 6l6 6-6 6" /></svg>
+                          </a>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1398,69 +1611,6 @@ export default function Transfer({
                 </div>
               </div>
             )}
-            {/* 공식 사례·영상 — 금감원 자료. 사기 유형이 확정됐을 때만 붙는다 */}
-            {chatDone && analysisHold && official?.status === "curated" && (
-              <div className="ml-10 mr-2 rounded-2xl border border-gray-100 bg-white p-4">
-                <div className="flex items-center gap-1.5">
-                  <svg viewBox="0 0 24 24" fill="var(--ac-500)" className="h-[18px] w-[18px]"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm6 3.5v7l6-3.5-6-3.5z" /></svg>
-                  <p className="text-[14px] font-bold text-gray-900">실제로 있었던 일</p>
-                  <span className="ml-auto text-[11px] text-gray-400">금융감독원</span>
-                </div>
-
-                {official.items.map((item) =>
-                  item.kind === "video" ? (
-                    <div key={item.videoId}>
-                      <p className="mt-2 text-[12px] leading-relaxed text-gray-500">{item.headline}</p>
-
-                      {playingVideo === item.videoId ? (
-                        // 앱을 벗어나지 않고 그 자리에서 본다
-                        <div className="mt-3 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16 / 9" }}>
-                          <iframe
-                            src={`${item.embedUrl}&autoplay=1`}
-                            title={item.title}
-                            allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
-                            allowFullScreen
-                            className="h-full w-full border-0"
-                          />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setPlayingVideo(item.videoId)}
-                          className="group mt-3 w-full text-left active:scale-[0.99] transition-transform"
-                        >
-                          {/* 외부 썸네일은 자동으로 불러오지 않는다. 재생을 누른 뒤에만 YouTube에 연결한다. */}
-                          <span className="relative block w-full overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 via-slate-700 to-blue-900" style={{ aspectRatio: "16 / 9" }}>
-                            <span className="absolute inset-x-5 top-5 text-[12px] font-semibold leading-relaxed text-white/80">
-                              금융감독원 공식 예방 영상
-                            </span>
-                            <span className="absolute inset-0 flex items-center justify-center">
-                              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/65 shadow-lg transition-transform duration-200 group-hover:scale-110">
-                                <svg viewBox="0 0 24 24" fill="white" className="ml-1 h-7 w-7"><path d="M8 5v14l11-7z" /></svg>
-                              </span>
-                            </span>
-                            <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                              {item.duration}
-                            </span>
-                          </span>
-                          <span className="mt-2.5 block text-[15px] font-bold leading-snug text-gray-900">{item.title}</span>
-                          <span className="mt-1 block text-[12px] text-gray-400">{item.source} 공식 영상</span>
-                          <span className="mt-1 block text-[11px] text-gray-400">재생하면 YouTube에 연결됩니다.</span>
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <a
-                      key={item.url} href={item.url} target="_blank" rel="noreferrer"
-                      className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 text-[14px] font-semibold text-gray-700 active:scale-[0.99] transition-transform"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></svg>
-                      {item.title}
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ml-auto h-4 w-4 text-gray-300"><path d="M9 6l6 6-6 6" /></svg>
-                    </a>
-                  )
-                )}
-              </div>
-            )}
             {resumeNotice && (
               <p className="mx-2 rounded-xl bg-gray-50 px-4 py-2.5 text-center text-[12px] leading-relaxed text-gray-500">
                 저장해 두신 상담이에요. 궁금한 점이나 달라진 상황을 말씀해 주세요.
@@ -1468,22 +1618,26 @@ export default function Transfer({
             )}
             <div ref={chatEndRef} />
           </div>
-          {chatDone && analysisHold && (
-            <div className="shrink-0 rounded-2xl border border-[var(--ac-100)] bg-[var(--ac-50)] px-4 py-3">
-              <p className="text-[13px] font-bold text-[var(--ac-700)]">송금만 잠시 멈췄어요</p>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-gray-600">상담은 끝나지 않았어요. 아래에서 계속 물어보실 수 있어요.</p>
-            </div>
+          {cancelRequested && (
+            <button
+              type="button"
+              onClick={goHome}
+              className="flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-gray-300 bg-white text-[13px] font-bold text-gray-700 active:scale-[0.98] transition-transform"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              송금 취소하기
+            </button>
           )}
           <div className="mt-auto flex shrink-0 gap-2 bg-[#fafbfe] pt-1">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} placeholder="더 궁금한 내용을 입력하세요..."
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleSend()} placeholder="더 궁금한 내용을 입력하세요..."
               className="h-14 flex-1 rounded-2xl border border-gray-200 px-5 text-[15px] focus:border-[var(--ac-400)] focus:outline-none transition-colors" />
-            <button onClick={handleSend} disabled={!input.trim() || isTyping} className="h-14 w-14 shrink-0 rounded-2xl bg-[var(--ac-500)] flex items-center justify-center active:scale-95 transition-transform disabled:bg-gray-200">
+            <button onClick={handleSend} disabled={!input.trim()} className="h-14 w-14 shrink-0 rounded-2xl bg-[var(--ac-500)] flex items-center justify-center active:scale-95 transition-transform disabled:bg-gray-200">
               <svg viewBox="0 0 24 24" fill="white" className="w-5.5 h-5.5"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" /></svg>
             </button>
           </div>
           {chatDone && (
             analysisHold && protectionPolicy.allowFamilyDecision ? (
-              <div className="flex shrink-0 flex-col gap-1">
+              <div className="flex shrink-0 flex-col gap-3 rounded-2xl border border-[var(--ac-100)] bg-[var(--ac-50)] p-4">
                 <button
                   onClick={requestFamilyConfirmation}
                   className="h-14 w-full rounded-2xl bg-[var(--ac-500)] text-[15px] font-bold text-white active:scale-[0.98] transition-transform"
@@ -1492,9 +1646,9 @@ export default function Transfer({
                 </button>
                 <button
                   onClick={pauseIntentChat}
-                  className="py-1.5 text-[13px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4 active:scale-[0.98] transition-transform"
+                  className="-mt-2 text-center text-[13px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4 active:scale-[0.98] transition-transform"
                 >
-                  상담을 저장하고 나중에 이어보기
+                  나중에 이어보기
                 </button>
               </div>
             ) : (

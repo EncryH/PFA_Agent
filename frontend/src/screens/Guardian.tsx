@@ -99,6 +99,24 @@ const PROMISES = [
   { t: "언제든 그만두실 수 있어요",             d: "가족 보호 범위를 줄이거나 연결을 해제하는 것은 부모님 뜻대로예요" },
 ];
 
+type AdditionalGuardian = {
+  id: string;
+  name: string;
+  relation: "자녀" | "배우자" | "형제·자매" | "손주";
+  permission: "알림만 받기" | "승인·보류 참여";
+  inviteCode: string;
+};
+
+const ADDITIONAL_GUARDIANS_KEY = "ansimAdditionalGuardiansV1";
+const readAdditionalGuardians = (): AdditionalGuardian[] => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(ADDITIONAL_GUARDIANS_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.slice(0, 2) : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function Guardian({
   onExit, appRole, onResumeIntentChat, onOpenPendingConfirmation, onOpenPendingRequest, onEmergency,
 }: {
@@ -139,6 +157,12 @@ export default function Guardian({
   const [showManageMenu, setShowManageMenu] = useState(false);
   const [draftAiReviewThreshold, setDraftAiReviewThreshold] = useState<AiReviewThreshold>(aiReviewThreshold);
   const [customThresholdManwon, setCustomThresholdManwon] = useState(() => String(Math.floor(aiReviewThreshold / 10_000)));
+  const [additionalGuardians, setAdditionalGuardians] = useState<AdditionalGuardian[]>(readAdditionalGuardians);
+  const [addGuardianOpen, setAddGuardianOpen] = useState(false);
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianRelation, setGuardianRelation] = useState<AdditionalGuardian["relation"]>("자녀");
+  const [guardianPermission, setGuardianPermission] = useState<AdditionalGuardian["permission"]>("알림만 받기");
+  const [createdInviteCode, setCreatedInviteCode] = useState("");
 
   useEffect(() => {
     setDraftAiReviewThreshold(aiReviewThreshold);
@@ -163,6 +187,39 @@ export default function Guardian({
   const applyAiReviewThreshold = () => {
     if (appRole !== "parent" || !customThresholdManwon) return;
     setAiReviewThreshold(draftAiReviewThreshold);
+  };
+
+  const createGuardianInvite = () => {
+    const name = guardianName.trim();
+    if (!name || additionalGuardians.length >= 2) return;
+    const inviteCode = String(Math.floor(1000 + Math.random() * 9000));
+    const next = [
+      ...additionalGuardians,
+      {
+        id: `${Date.now()}`,
+        name,
+        relation: guardianRelation,
+        permission: guardianPermission,
+        inviteCode,
+      },
+    ];
+    localStorage.setItem(ADDITIONAL_GUARDIANS_KEY, JSON.stringify(next));
+    setAdditionalGuardians(next);
+    setCreatedInviteCode(inviteCode);
+  };
+
+  const closeGuardianInvite = () => {
+    setAddGuardianOpen(false);
+    setGuardianName("");
+    setGuardianRelation("자녀");
+    setGuardianPermission("알림만 받기");
+    setCreatedInviteCode("");
+  };
+
+  const removeGuardianInvite = (id: string) => {
+    const next = additionalGuardians.filter((guardian) => guardian.id !== id);
+    localStorage.setItem(ADDITIONAL_GUARDIANS_KEY, JSON.stringify(next));
+    setAdditionalGuardians(next);
   };
 
   const confirmLevelChange = () => {
@@ -244,6 +301,7 @@ export default function Guardian({
     localStorage.setItem(PAIRED_KEY, "true");
     localStorage.setItem(PAIRED_AT_KEY, connectedAt);
     localStorage.removeItem(PAIR_CODE_KEY);
+    localStorage.removeItem(ADDITIONAL_GUARDIANS_KEY);
     setProtectionLevel(0);
     setPairCode("");
     pushNotice("paired");
@@ -273,6 +331,7 @@ export default function Guardian({
     setIsPaired(false);
     setPairedAt(null);
     setPairRole(null);
+    setAdditionalGuardians([]);
     setStep("intro");
     window.dispatchEvent(new Event(PAIRED_EVENT));
   };
@@ -555,6 +614,7 @@ export default function Guardian({
                             ["위험 감지", fmtLogTime(entry.raisedAt)],
                             ["AI 대화 확인", entry.viewedAt ? fmtLogTime(entry.viewedAt) : "열어보지 않음"],
                             ["내 판단", entry.decidedAt ? `${held ? "보류" : "승인"} · ${fmtLogTime(entry.decidedAt)}` : "미처리"],
+                            ...(entry.decisionReason ? [["판단 이유", entry.decisionReason]] : []),
                           ].map(([label, value]) => {
                             const empty = value === "열어보지 않음" || value === "미처리";
                             return (
@@ -746,6 +806,50 @@ export default function Guardian({
             <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
               {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "가족 보호 범위는 부모님만 변경할 수 있어요."}
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[15px] font-bold text-gray-900">연결된 가족 보호자</p>
+                <p className="mt-1 text-[11px] text-gray-500">본인을 제외하고 최대 3명까지 함께 확인할 수 있어요.</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">{1 + additionalGuardians.length}/3명</span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex items-center gap-3 rounded-xl border border-[var(--ac-100)] bg-[var(--ac-50)] px-3.5 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white font-bold text-[var(--ac-600)]">김</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-bold text-gray-900">김지혜 <span className="ml-1 text-[10px] font-medium text-gray-400">자녀</span></p>
+                  <p className="mt-0.5 text-[10px] text-gray-500">대표 보호자 · 승인·보류 참여</p>
+                </div>
+                <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-emerald-600">연결됨</span>
+              </div>
+              {additionalGuardians.map((guardian) => (
+                <div key={guardian.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white font-bold text-gray-600">{guardian.name.slice(0, 1)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-bold text-gray-900">{guardian.name} <span className="ml-1 text-[10px] font-medium text-gray-400">{guardian.relation}</span></p>
+                    <p className="mt-0.5 text-[10px] text-gray-500">{guardian.permission}</p>
+                  </div>
+                  <span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-600">초대 대기</span>
+                  <button type="button" aria-label={`${guardian.name} 초대 삭제`} onClick={() => removeGuardianInvite(guardian.id)} className="text-[18px] text-gray-300 active:scale-90">×</button>
+                </div>
+              ))}
+            </div>
+
+            {appRole === "parent" && (
+              <button
+                type="button"
+                disabled={additionalGuardians.length >= 2}
+                onClick={() => setAddGuardianOpen(true)}
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--ac-200)] bg-white py-3 text-[13px] font-bold text-[var(--ac-600)] active:scale-[0.98] disabled:border-gray-100 disabled:text-gray-300"
+              >
+                <span className="text-[17px] leading-none">＋</span>
+                {additionalGuardians.length >= 2 ? "보호자를 모두 추가했어요" : "가족 보호자 추가"}
+              </button>
+            )}
           </div>
 
           <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-5 shadow-sm">
@@ -1034,19 +1138,120 @@ export default function Guardian({
       )}
 
       {step === "done" && (
-        <div className="bg-white rounded-2xl p-6 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg>
+        <div className="overflow-hidden rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-b from-[var(--ac-50)] via-white to-white shadow-sm">
+          <div className="flex flex-col items-center px-6 pb-5 pt-7 text-center">
+            <div className="relative">
+              <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-sm">
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </span>
+            </div>
+            <span className="mt-4 rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-[var(--ac-600)] shadow-sm">안심동행 AI 연결 완료</span>
+            <h2 className="mt-3 text-[22px] font-extrabold text-gray-950">이제 가족이 함께 지켜요</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
+              {pairRole === "parent"
+                ? "위험한 송금이 감지되면 딸 지혜님과 함께 확인할 수 있어요."
+                : "어머니 김영순님이 위험한 순간에 도움을 요청하면 바로 알려드릴게요."}
+            </p>
           </div>
-          <p className="text-[17px] font-bold text-gray-900">연동 완료!</p>
-          <p className="text-[13px] text-gray-400 text-center whitespace-pre-line">
-            {pairRole === "parent"
-              ? "딸 지혜님과 안심동행이 연결되었습니다.\n원할 때 위험 상황을 함께 확인할 수 있어요."
-              : "어머니 김영순님과 안심동행이 연결되었습니다.\n어머니가 요청한 위험 상황을 함께 확인할 수 있어요."}
-          </p>
-          <button onClick={onExit} className="w-full py-3 rounded-xl text-[15px] font-semibold text-white bg-[var(--ac-500)] active:scale-[0.98] transition-all">
-            홈으로 돌아가기
-          </button>
+
+          <div className="mx-5 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              {[
+                ["김영순", "한결은행", "부모"],
+                ["김지혜", "나눔은행", "자녀"],
+              ].map(([name, bankName, role], index) => (
+                <div key={name} className="contents">
+                  {index === 1 && (
+                    <div className="flex flex-1 items-center px-2">
+                      <span className="h-px flex-1 bg-[var(--ac-200)]" />
+                      <span className="mx-2 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--ac-100)]">
+                        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="var(--ac-500)" strokeWidth="2" strokeLinecap="round" /></svg>
+                      </span>
+                      <span className="h-px flex-1 bg-[var(--ac-200)]" />
+                    </div>
+                  )}
+                  <div className="w-[82px] text-center">
+                    <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ac-50)] text-[var(--ac-600)]">
+                      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8" /><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                    </span>
+                    <p className="mt-2 text-[13px] font-extrabold text-gray-900">{name}</p>
+                    <p className="text-[10px] text-gray-400">{bankName} · {role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl bg-[var(--ac-50)] px-4 py-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[var(--ac-600)] shadow-sm">
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5"><path d="M12 3l8 3.5v5.8c0 4.1-3 7.9-8 9.7-5-1.8-8-5.6-8-9.7V6.5L12 3z" stroke="currentColor" strokeWidth="1.8" /><path d="M8.5 12l2.2 2.2 4.8-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-bold text-gray-900">현재 가족 보호</p>
+              <p className="mt-0.5 text-[11px] text-gray-500">위험 상황의 최소 정보만 가족에게 전달해요</p>
+            </div>
+            <span className="shrink-0 text-[12px] font-extrabold text-[var(--ac-600)]">Lv.{getProtectionDisplayLevel(protectionLevel)} {protection.name}</span>
+          </div>
+
+          <div className="p-5 pt-4">
+            <button onClick={onExit} className="w-full rounded-2xl bg-[var(--ac-500)] py-4 text-[15px] font-bold text-white shadow-sm active:scale-[0.98] transition-all">
+              안심동행 시작하기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {addGuardianOpen && (
+        <div className="fixed inset-0 z-[120] flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="add-guardian-title">
+          <button type="button" aria-label="닫기" className="absolute inset-0 bg-black/40" onClick={closeGuardianInvite} />
+          <div className="relative w-full max-w-[430px] rounded-t-[28px] bg-white px-5 pb-8 pt-4 shadow-2xl" style={{ animation: "sheet-up .24s cubic-bezier(.2,.8,.2,1)" }}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-gray-200" />
+            {!createdInviteCode ? (
+              <>
+                <h2 id="add-guardian-title" className="mt-5 text-[19px] font-extrabold text-gray-950">가족 보호자를 추가할까요?</h2>
+                <p className="mt-1 text-[12px] leading-relaxed text-gray-500">보호자별로 받을 알림과 확인 권한을 정할 수 있어요.</p>
+
+                <label className="mt-5 block text-[12px] font-bold text-gray-700">이름</label>
+                <input value={guardianName} onChange={(event) => setGuardianName(event.target.value.slice(0, 12))} placeholder="가족 이름을 입력하세요" className="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-[14px] outline-none focus:border-[var(--ac-400)] focus:bg-white" />
+
+                <label className="mt-4 block text-[12px] font-bold text-gray-700">관계</label>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {(["자녀", "배우자", "형제·자매", "손주"] as const).map((relation) => (
+                    <button key={relation} type="button" onClick={() => setGuardianRelation(relation)} className={`rounded-xl border py-2.5 text-[11px] font-bold ${guardianRelation === relation ? "border-[var(--ac-400)] bg-[var(--ac-50)] text-[var(--ac-700)]" : "border-gray-200 text-gray-500"}`}>{relation}</button>
+                  ))}
+                </div>
+
+                <label className="mt-4 block text-[12px] font-bold text-gray-700">확인 권한</label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(["알림만 받기", "승인·보류 참여"] as const).map((permission) => (
+                    <button key={permission} type="button" onClick={() => setGuardianPermission(permission)} className={`rounded-xl border px-3 py-3 text-[12px] font-bold ${guardianPermission === permission ? "border-[var(--ac-400)] bg-[var(--ac-50)] text-[var(--ac-700)]" : "border-gray-200 text-gray-500"}`}>{permission}</button>
+                  ))}
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={closeGuardianInvite} className="h-12 rounded-xl border border-gray-200 text-[14px] font-bold text-gray-600">취소</button>
+                  <button type="button" disabled={!guardianName.trim()} onClick={createGuardianInvite} className="h-12 rounded-xl bg-[var(--ac-500)] text-[14px] font-bold text-white disabled:bg-gray-300">연결 코드 만들기</button>
+                </div>
+              </>
+            ) : (
+              <div className="pt-5 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ac-50)] text-[var(--ac-600)]">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M16 11h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </div>
+                <h2 id="add-guardian-title" className="mt-4 text-[19px] font-extrabold text-gray-950">연결 코드를 알려주세요</h2>
+                <p className="mt-2 text-[12px] text-gray-500">{guardianName}님이 가족 앱에서 입력하면 보호자로 연결돼요.</p>
+                <div className="mt-5 rounded-2xl bg-[var(--ac-50)] py-6">
+                  <p className="pl-[0.32em] text-[32px] font-black tracking-[0.32em] text-[var(--ac-700)]">{createdInviteCode.split("").join(" ")}</p>
+                  <p className="mt-2 text-[11px] text-gray-500">1회용 가족 보호자 연결 코드</p>
+                </div>
+                <p className="mt-3 text-[11px] leading-relaxed text-gray-400">연결되기 전까지 보호자 목록에 ‘초대 대기’로 표시돼요.</p>
+                <button type="button" onClick={closeGuardianInvite} className="mt-6 h-12 w-full rounded-xl bg-[var(--ac-500)] text-[14px] font-bold text-white">확인</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1388,9 +1593,10 @@ export default function Guardian({
                 {[
                   ["위험 감지", fmtLogTime(openLog.raisedAt)],
                   ["AI 대화 확인", openLog.viewedAt ? fmtLogTime(openLog.viewedAt) : "열어보지 않음"],
-                  ["내 판단", openLog.decidedAt
+                  [appRole === "parent" ? "자녀 판단" : "내 판단", openLog.decidedAt
                     ? `${openLog.decision === "held" ? "보류" : "승인"} · ${fmtLogTime(openLog.decidedAt)}`
                     : "미처리"],
+                  ...(openLog.decisionReason ? [["판단 이유", openLog.decisionReason]] : []),
                 ].map(([label, value]) => {
                   const empty = value === "열어보지 않음" || value === "미처리";
                   return (

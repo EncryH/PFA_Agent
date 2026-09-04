@@ -5,6 +5,10 @@ export type ChatMessage = {
   role: "ai" | "user";
   text: string;
   display?: "plain" | "structured";
+  action?: "family_connect" | "damage_response" | "cancel_transfer" | null;
+  // 사기 유형이 확정된 바로 그 메시지에 공식 사례·영상을 함께 담아둔다. 전역 상태로
+  // 따로 관리하면 새 메시지가 쌓일 때마다 카드가 대화 맨 아래로 계속 밀려 내려간다.
+  officialContent?: OfficialContent | null;
 };
 
 export type TransferContext = {
@@ -107,12 +111,14 @@ export type Verdict = {
   /** LLM 장애로 사전 정의 시나리오를 쓴 경우 */
   fallback: boolean;
   middleware?: {
-    route: "STATIC" | "GENERAL" | "RISK" | "BLOCK";
+    route: "STATIC" | "GENERAL" | "RISK" | "BLOCK" | "ACTION";
     confidence: number;
     reason: string;
     securityFlags: string[];
     bypassedHeavyPipeline: boolean;
     sessionLocked: boolean;
+    action?: "family_connect" | "cancel_transfer" | null;
+    emergency?: boolean;
   };
 };
 

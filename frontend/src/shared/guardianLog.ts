@@ -29,6 +29,10 @@ export type GuardianLogEntry = {
   viewedAt: string | null;
   decision: GuardianDecision;
   decidedAt: string | null;
+  /** 자녀가 남긴 승인·보류 사유 */
+  decisionReason?: string;
+  /** 부모 앱에서 판단 결과 알림을 확인한 시각 */
+  parentViewedAt?: string | null;
 };
 
 const STORAGE_KEY = "ansimGuardianLogV1";
@@ -91,6 +95,8 @@ export function openGuardianLogEntry(input: {
     viewedAt: null,
     decision: null,
     decidedAt: null,
+    decisionReason: "",
+    parentViewedAt: null,
   };
   write([entry, ...entries]);
 }
@@ -104,11 +110,21 @@ export function markGuardianLogViewed(id: string) {
 }
 
 /** 승인·보류 판단을 기록한다 */
-export function recordGuardianDecision(id: string, decision: Exclude<GuardianDecision, null>) {
+export function recordGuardianDecision(id: string, decision: Exclude<GuardianDecision, null>, reason = "") {
   const entries = readGuardianLog();
   if (!entries.some((entry) => entry.id === id)) return;
   write(entries.map((entry) => (
-    entry.id === id ? { ...entry, decision, decidedAt: new Date().toISOString() } : entry
+    entry.id === id ? { ...entry, decision, decisionReason: reason.trim(), decidedAt: new Date().toISOString(), parentViewedAt: null } : entry
+  )));
+}
+
+/** 부모가 새 승인·보류 알림을 열어본 것으로 표시한다 */
+export function markGuardianDecisionsViewed() {
+  const entries = readGuardianLog();
+  const viewedAt = new Date().toISOString();
+  if (!entries.some((entry) => entry.decision && entry.decidedAt && !entry.parentViewedAt)) return;
+  write(entries.map((entry) => (
+    entry.decision && entry.decidedAt && !entry.parentViewedAt ? { ...entry, parentViewedAt: viewedAt } : entry
   )));
 }
 

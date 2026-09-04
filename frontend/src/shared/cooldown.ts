@@ -18,6 +18,13 @@ export function startGlobalCooldown(seconds: number) {
   window.dispatchEvent(new Event(COOLDOWN_EVENT));
 }
 
+// 심사·데모 중 즉시 재시도가 필요할 때 쓰는 강제 해제. 실제 사용자 플로우에는
+// 노출하지 않는다 — "우회 불가"가 이 기능의 핵심이기 때문이다.
+export function clearGlobalCooldown() {
+  localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new Event(COOLDOWN_EVENT));
+}
+
 export function getCooldownSecondsLeft(): number {
   const endsAt = Number(localStorage.getItem(STORAGE_KEY) ?? 0);
   if (!endsAt) return 0;

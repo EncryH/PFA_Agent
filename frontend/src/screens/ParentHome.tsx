@@ -259,8 +259,11 @@ export default function ParentHome({
                 <p className="text-[18px] font-bold text-gray-900">{acc.balance}원</p>
               </div>
             </button>
-            <button onClick={() => onTransfer(i)} className="shrink-0 ml-2 text-[13px] text-gray-900 bg-blue-50 rounded-md px-4 py-1.5 font-medium active:scale-95 hover:bg-blue-100 transition-all">
-              송금
+            <button
+              onClick={() => acc.name.includes("적금") || acc.name.includes("예금") ? onAccount(i) : onTransfer(i)}
+              className="shrink-0 ml-2 text-[13px] text-gray-900 bg-blue-50 rounded-md px-4 py-1.5 font-medium active:scale-95 hover:bg-blue-100 transition-all"
+            >
+              {acc.name.includes("적금") || acc.name.includes("예금") ? "상세" : "송금"}
             </button>
           </div>
         ))}
