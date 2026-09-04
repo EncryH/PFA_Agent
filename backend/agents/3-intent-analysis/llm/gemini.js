@@ -379,7 +379,9 @@ const VAGUE_PATTERN_EXPRESSION = /기존과\s*다른\s*패턴|평소와\s*다른
 
 export function validateUserResponse(message, mode) {
   let text = normalizeUserResponseLayout(message, mode);
-  text = text.replace(VAGUE_PATTERN_EXPRESSION, "").replace(/\s{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  // \s{2,}로 다중 공백을 접으면 문단을 나누는 \n\n(공백 2개로 간주됨)까지 한 줄로
+  // 뭉개져서 고령 사용자용 줄바꿈 서식이 깨진다 — 줄바꿈은 건드리지 않고 공백·탭만 접는다.
+  text = text.replace(VAGUE_PATTERN_EXPRESSION, "").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
   if (text.length < 20 || text.length > 750) throw new Error("사용자 답변 길이 검증 실패");
   const sourceLeak = text.match(SOURCE_LEAK_PATTERN);
   if (sourceLeak) throw new Error(`내부 출처 노출 감지: ${sourceLeak[0]}`);
