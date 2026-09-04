@@ -1122,17 +1122,6 @@ export default function Transfer({
               </button>
             </div>
           </div>
-        ) : !paired ? (
-          <div className="min-h-[calc(100dvh-260px)] flex flex-col items-center justify-center gap-6">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-100)]" />
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--ac-500)] border-t-transparent animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="var(--ac-500)" className="w-8 h-8"><path d="M12 2L2 7.5v1h20v-1L12 2z" /><path d="M4.5 9h2v8h-2zM9 9h2v8H9zM13 9h2v8h-2zM17.5 9h2v8h-2z" /><path d="M2 17h20v2H2z" /></svg>
-              </div>
-            </div>
-            <p className="text-[16px] font-bold text-gray-900">송금하고 있어요...</p>
-          </div>
         ) : checkPhase === "analyzing" ? (
           <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
