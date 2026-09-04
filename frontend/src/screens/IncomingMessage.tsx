@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { DemoMessage } from '../shared/messages'
 import { screenCall, screenCallImmediate, type CallScreenResult } from '../shared/callscreen'
 import { verifyUrl, type VerifyResult } from '../shared/verify'
+import { DefaultPersonAvatar } from '../shared/ui'
 
 interface Props {
   message: DemoMessage
@@ -202,9 +203,10 @@ export default function IncomingMessage({ message, onDismiss }: Props) {
               : '0 12px 38px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
           }}
         >
-          {/* 안심동행 AI 프로필 */}
+          {/* 발신자 프로필 — 연락처에 없는 번호라 기본 아이콘. 오른쪽 아래 작은 배지가
+              "안심동행 AI가 확인했다"는 표시다(이 원이 AI 로고면 안 된다 — 발신자 자리다) */}
           <div className="relative flex-shrink-0 mt-0.5">
-            <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-9 w-9 rounded-full border border-white/20 bg-white object-cover shadow-sm" />
+            <DefaultPersonAvatar size={36} />
             <div
               className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ac-500)] ring-2 ring-[#404046]"
             >

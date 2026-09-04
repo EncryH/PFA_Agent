@@ -10,11 +10,25 @@ import type { ScriptFlag } from "./callScript";
 
 const LAST_CALL_KEY = "ansimLastCallAt";
 const SCRIPT_FLAGS_KEY = "ansimLastCallScriptFlags";
+const SCRIPT_ID_KEY = "ansimLastCallScriptId";
 const RECENT_WINDOW_MS = 10 * 60 * 1000;
 
 export function markCallStarted() {
   localStorage.setItem(LAST_CALL_KEY, String(Date.now()));
-  localStorage.removeItem(SCRIPT_FLAGS_KEY); // 새 통화가 시작되면 이전 통화에서 감지된 키워드는 지운다
+  // 새 통화가 시작되면 이전 통화에서 감지된 키워드·시나리오는 지운다
+  localStorage.removeItem(SCRIPT_FLAGS_KEY);
+  localStorage.removeItem(SCRIPT_ID_KEY);
+}
+
+/** 지금 재생 중인 통화 시나리오의 id를 기록한다 — 경고 화면 문구를 시나리오별로 고르는 데 쓴다. */
+export function markCallScriptId(id: string) {
+  localStorage.setItem(SCRIPT_ID_KEY, id);
+}
+
+/** 최근 10분 창이 지나면 어떤 시나리오였는지도 더 이상 유효하지 않은 것으로 본다. */
+export function getRecentCallScriptId(): string | null {
+  if (!hasRecentCall()) return null;
+  return localStorage.getItem(SCRIPT_ID_KEY);
 }
 
 export function hasRecentCall(): boolean {

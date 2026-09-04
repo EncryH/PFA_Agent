@@ -66,6 +66,21 @@ export const BANK_LOGOS: Record<string, React.ReactNode> = {
   신한은행: <svg viewBox="0 0 24 24" className="w-full h-full"><text x="12" y="17" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#0046ff">S</text></svg>,
 };
 
+/** 발신자를 특정할 수 없는 문자·통화 알림에 쓰는 기본 프로필 — 연락처에 사진이 없을 때
+ * 휴대폰이 보여주는 그 실루엣이다. "안심동행 AI" 로고를 여기 쓰면 마치 AI가 메시지를
+ * 보낸 것처럼 보여서, 발신자 자리에는 이 기본 아이콘을 쓴다. */
+export const DefaultPersonAvatar = ({ size = 36 }: { size?: number }) => (
+  <div
+    className="flex shrink-0 items-center justify-center overflow-hidden rounded-full"
+    style={{ width: size, height: size, background: "#A9D3E8" }}
+  >
+    <svg viewBox="0 0 24 24" fill="#EAF4FB" style={{ width: size * 0.62, height: size * 0.62 }}>
+      <circle cx="12" cy="8.2" r="4" />
+      <path d="M4 21c0-4.6 3.6-8 8-8s8 3.4 8 8v1.5H4V21z" />
+    </svg>
+  </div>
+);
+
 /** 은행 로고를 흰 원 안에 담은 배지 */
 export const BankLogo = ({ bank, size = 30 }: { bank: string; size?: number }) => (
   <div

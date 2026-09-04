@@ -242,7 +242,9 @@ export default function App() {
                 </button>
               )}
               <button onClick={() => setShowNotifications(true)} aria-label="알림" className="group rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:scale-90 transition-all duration-200">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 origin-top group-hover:[animation:bell-swing_.6s_ease-in-out]"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
+                {/* group-hover 애니메이션은 뺐다 — 검색 아이콘과 같은 이유로, 모바일 탭은
+                    :hover가 안 풀려서 알림함을 열 때마다 종이 흔들리는 게 매번 남아있었다. */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 2a1.5 1.5 0 011.5 1.5v.3A6 6 0 0118 9.5c0 3.5 1 5.5 2 7 .3.4 0 1-.5 1H4.5c-.5 0-.8-.6-.5-1 1-1.5 2-3.5 2-7a6 6 0 014.5-5.7v-.3A1.5 1.5 0 0112 2z" /><path d="M9.5 17.5a2.5 2.5 0 005 0" /></svg>
               </button>
               <button
                 type="button"

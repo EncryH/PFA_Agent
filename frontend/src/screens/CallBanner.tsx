@@ -6,8 +6,9 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { screenCall, screenCallImmediate, type CallScreenResult } from '../shared/callscreen'
-import { pickRandomCallScript, type CallScript } from '../shared/callScript'
-import { markCallScriptFlag } from '../shared/callActivity'
+import { pickRandomCallScript, getUnknownCallerScript, type CallScript, type LinkMessagePreview } from '../shared/callScript'
+import { markCallScriptFlag, markCallScriptId } from '../shared/callActivity'
+import { DefaultPersonAvatar } from '../shared/ui'
 
 interface Props {
   call: { display: string; number: string; label: string }
@@ -123,26 +124,42 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
   }, [phase])
 
   // 실제 녹취를 구할 수 없어(개인정보·저작권), 통화 중 대사를 자막으로 대신 보여준다.
-  // 위험(danger) 통화를 받을 때마다 5가지 시나리오 중 하나를 무작위로 고르고, 한 줄씩
-  // "사람이 읽는 속도"만큼 시간을 두고 다음 줄로 넘어간다. 각 줄에 달린 flags(이체한도
-  // 상향 요구·적금 해지 요구·송금 요구)는 나올 때마다 callActivity에 기록해, 이체한도
-  // 화면·적금 해지 화면·송금 화면이 나중에 그걸 참조할 수 있게 한다.
+  // 위험(danger) 통화를 받을 때마다 5가지 시나리오 중 하나를 무작위로 고르고, 발신자를
+  // 특정할 수 없는(unknown) 전화는 위험 신호가 하나도 없는 광고성 통화 스크립트를 쓴다
+  // (모든 전화를 다 위험하다고 우기지 않는다는 대비 사례). 한 줄씩 "사람이 읽는 속도"만큼
+  // 시간을 두고 다음 줄로 넘어간다. 각 줄에 달린 flags(이체한도 상향 요구·적금 해지
+  // 요구·송금 요구)는 나올 때마다 callActivity에 기록해, 이체한도 화면·적금 해지 화면·
+  // 송금 화면이 나중에 그걸 참조할 수 있게 한다.
   const [script, setScript] = useState<CallScript | null>(null)
   const [scriptLineIdx, setScriptLineIdx] = useState(-1)
   // 한 번이라도 voiceClone 대사가 나오면, 그 뒤로는 계속 배지를 띄워둔다(다시 꺼지지 않음).
   const [voiceCloneWarning, setVoiceCloneWarning] = useState(false)
+  // 통화 중 문자로 링크가 왔다는 연출 — 한 번 뜨면 통화가 끝날 때까지 계속 남아있는다
+  // (실제 문자 알림함도 그렇게 동작한다).
+  const [linkMessage, setLinkMessage] = useState<LinkMessagePreview | null>(null)
   useEffect(() => {
-    if (phase !== 'active' || result.status !== 'danger') return
-    const chosen = pickRandomCallScript()
+    if (phase !== 'active') return
+    if (result.status !== 'danger' && result.status !== 'unknown') return
+    const chosen = result.status === 'danger' ? pickRandomCallScript() : getUnknownCallerScript()
     setScript(chosen)
+    setLinkMessage(null)
+    markCallScriptId(chosen.id)
     let cancelled = false
     const timers: ReturnType<typeof setTimeout>[] = []
 
     const showLine = (i: number) => {
-      if (cancelled || i >= chosen.lines.length) return
+      if (cancelled) return
+      // 마지막 줄까지 다 보여줬으면, 1초 있다가 자동으로 끊는다 — 대사가 끝났는데도
+      // 통화가 계속 떠 있으면 사용자가 직접 끊어야 해서 어색했다.
+      if (i >= chosen.lines.length) {
+        const t = setTimeout(() => { if (!cancelled) hangUp() }, 1000)
+        timers.push(t)
+        return
+      }
       setScriptLineIdx(i)
       chosen.lines[i].flags?.forEach(markCallScriptFlag)
       if (chosen.lines[i].voiceClone) setVoiceCloneWarning(true)
+      if (chosen.lines[i].linkMessage) setLinkMessage(chosen.lines[i].linkMessage!)
       const t = setTimeout(() => showLine(i + 1), lineDurationMs(chosen.lines[i].text))
       timers.push(t)
     }
@@ -403,35 +420,79 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
           )}
         </div>
       </div>
+
+      {/* 통화 중 문자로 온 링크 — 기존 문자 수신 배너(IncomingMessage)와 같은 스타일로,
+          통화 카드 바로 아래에 뜬다. capsule과 같은 absolute 좌표계를 써서 통화 카드가
+          접히고 펼쳐질 때도 항상 카드 바로 밑에 붙어 따라온다. */}
+      {linkMessage && (
+        <div
+          className="pointer-events-none absolute overflow-hidden rounded-[20px] border border-white/15 shadow-2xl"
+          style={{
+            left: expandedLeft,
+            top: capsuleTop + capsuleHeight + 8,
+            width: expandedWidth,
+            background: 'rgba(64,64,70,0.94)',
+            backdropFilter: 'blur(36px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(36px) saturate(140%)',
+            transition: `top 300ms ${MORPH}`,
+          }}
+        >
+          <div className="flex items-start gap-2.5 px-3 py-2.5">
+            <DefaultPersonAvatar size={36} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-bold leading-tight text-white">{linkMessage.sender}</p>
+              <p className="mt-0.5 line-clamp-2 break-all text-[11px] leading-snug text-white/70">{linkMessage.body}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 
     {/* 실시간 캡션 스타일 자막 — 안드로이드 라이브 캡션처럼 화면 맨 아래, 옅은 회색
         배경에 하얀 글씨로 떠 있다. wrapRef 안에 넣으면 그 div의 transform(-translate-x-1/2)이
         새 containing block이 되어 이 자막의 fixed가 화면이 아니라 wrapRef 기준으로 붙어버려서,
         독립된 형제 엘리먼트로 뺐다. */}
-    {phase === 'active' && script && scriptLineIdx >= 0 && (
-      <div className="pointer-events-none fixed bottom-4 left-1/2 z-[95] w-full max-w-[430px] -translate-x-1/2 px-3">
-        <div
-          key={scriptLineIdx}
-          className="rounded-2xl px-4 py-3 shadow-lg"
-          style={{ background: 'rgba(120,120,128,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
-        >
-          <p className="text-[13px] font-medium leading-relaxed">
-            {wordTimings(script.lines[scriptLineIdx].text).map((w, i) => (
-              <span
-                key={i}
-                className={`opacity-0 [animation:caption-word-in_0.5s_ease-out_forwards] ${
-                  script.lines[scriptLineIdx].flags?.length ? 'font-bold text-red-200' : 'text-white'
-                }`}
-                style={{ animationDelay: `${w.delay}ms` }}
-              >
-                {w.text}
-              </span>
-            ))}
-          </p>
+    {phase === 'active' && script && scriptLineIdx >= 0 && (() => {
+      const line = script.lines[scriptLineIdx]
+      // 실시간 탐지 경고는 사람이 말하는 대사가 아니라 시스템 알림이라, 단어 하나씩
+      // 페이드인하는 대신 통째로 바로 보여주고 스타일도 빨간 경고로 다르게 구분한다.
+      if (line.detectionAlert) {
+        return (
+          <div className="pointer-events-none fixed bottom-4 left-1/2 z-[95] w-full max-w-[430px] -translate-x-1/2 px-3">
+            <div
+              key={scriptLineIdx}
+              className="rounded-2xl border border-red-300/40 px-4 py-3 shadow-lg"
+              style={{ background: 'rgba(220,38,38,0.94)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+            >
+              <p className="text-[13px] font-bold leading-relaxed text-white">{line.text}</p>
+            </div>
+          </div>
+        )
+      }
+      return (
+        <div className="pointer-events-none fixed bottom-4 left-1/2 z-[95] w-full max-w-[430px] -translate-x-1/2 px-3">
+          <div
+            key={scriptLineIdx}
+            className="rounded-2xl px-4 py-3 shadow-lg"
+            style={{ background: 'rgba(120,120,128,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+          >
+            <p className="text-[13px] font-medium leading-relaxed">
+              {wordTimings(line.text).map((w, i) => (
+                <span
+                  key={i}
+                  className={`opacity-0 [animation:caption-word-in_0.5s_ease-out_forwards] ${
+                    line.flags?.length ? 'font-bold text-red-200' : 'text-white'
+                  }`}
+                  style={{ animationDelay: `${w.delay}ms` }}
+                >
+                  {w.text}
+                </span>
+              ))}
+            </p>
+          </div>
         </div>
-      </div>
-    )}
+      )
+    })()}
     </>
   )
 }
