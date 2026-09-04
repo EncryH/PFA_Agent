@@ -37,18 +37,27 @@ type PendingAlert = {
   signals?: string[];
   time?: string;
   sessionId?: string;
+  _ts?: number;
 };
 
-const readPendingAlert = (): PendingAlert | null => {
+const readPendingAlerts = (): PendingAlert[] => {
   try {
-    const stored = localStorage.getItem("ansimAlert");
-    if (!stored) return null;
-    const parsed = JSON.parse(stored) as PendingAlert;
-    return { ...parsed, account: maskAccountForFamily(parsed.account, parsed.bank) };
+    const stored = localStorage.getItem("ansimAlerts");
+    if (stored) {
+      const arr = JSON.parse(stored) as PendingAlert[];
+      if (Array.isArray(arr) && arr.length)
+        return arr.map((a) => ({ ...a, account: maskAccountForFamily(a.account, a.bank) }));
+    }
+    // 하위 호환 — 단일 키만 있는 경우
+    const single = localStorage.getItem("ansimAlert");
+    if (!single) return [];
+    const parsed = JSON.parse(single) as PendingAlert;
+    return [{ ...parsed, account: maskAccountForFamily(parsed.account, parsed.bank) }];
   } catch {
-    return null;
+    return [];
   }
 };
+
 
 const PAIR_CODE_KEY = "ansimPairCode";
 const PAIRED_KEY = "ansimPaired";
@@ -97,7 +106,7 @@ export default function Guardian({
   appRole: "parent" | "child";
   onResumeIntentChat?: (id: string) => void;
   onOpenPendingConfirmation?: (id: string) => void;
-  onOpenPendingRequest?: () => void;
+  onOpenPendingRequest?: (alertIndex?: number) => void;
   onEmergency?: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
@@ -117,7 +126,7 @@ export default function Guardian({
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [historyPromptOpen, setHistoryPromptOpen] = useState(false);
   const [historyImportStatus, setHistoryImportStatus] = useState<HistoryImportStatus>("prompt");
-  const [pendingAlert, setPendingAlert] = useState<PendingAlert | null>(readPendingAlert);
+  const [pendingAlerts, setPendingAlerts] = useState<PendingAlert[]>(readPendingAlerts);
   const [protectionLevel, setProtectionLevel] = useProtectionLevel();
   const [aiReviewThreshold, setAiReviewThreshold] = useAiReviewThreshold();
   const protection = PROTECTION_LEVELS[protectionLevel];
@@ -201,7 +210,7 @@ export default function Guardian({
   }, []);
 
   useEffect(() => {
-    const syncAlert = () => setPendingAlert(readPendingAlert());
+    const syncAlert = () => setPendingAlerts(readPendingAlerts());
     window.addEventListener("ansim-alert", syncAlert);
     window.addEventListener("storage", syncAlert);
     return () => {
@@ -415,37 +424,44 @@ export default function Guardian({
             )}
           </div>
 
-          {pendingAlert && (
-            <button
-              type="button"
-              onClick={() => {
-                if (appRole === "child") {
-                  onOpenPendingRequest?.();
-                  return;
-                }
-                const sessionId = pendingAlert.sessionId ?? intentChats[0]?.id;
-                if (sessionId) onOpenPendingConfirmation?.(sessionId);
-              }}
-              className="group w-full cursor-pointer rounded-2xl border border-[var(--ac-200)] bg-[var(--ac-50)] p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--ac-300)] hover:bg-[var(--ac-100)] hover:shadow-md active:translate-y-0 active:scale-[0.99]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[16px] font-bold text-gray-900">확인이 필요한 송금이 있어요</p>
-                  <p className="mt-1 text-[12px] text-gray-500">
-                    {appRole === "parent" ? "자녀의 확인을 기다리고 있어요." : "부모님이 확인을 요청했어요."}
-                  </p>
+          {pendingAlerts.map((pa, idx) => {
+            const alertTime = pa._ts ? new Date(pa._ts).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
+            return (
+              <button
+                key={pa._ts ?? idx}
+                type="button"
+                onClick={() => {
+                  if (appRole === "child") {
+                    onOpenPendingRequest?.(idx);
+                    return;
+                  }
+                  const sessionId = pa.sessionId ?? intentChats[0]?.id;
+                  if (sessionId) onOpenPendingConfirmation?.(sessionId);
+                }}
+                className="group w-full cursor-pointer rounded-2xl border border-[var(--ac-200)] bg-[var(--ac-50)] p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--ac-300)] hover:bg-[var(--ac-100)] hover:shadow-md active:translate-y-0 active:scale-[0.99]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[16px] font-bold text-gray-900">
+                      {pendingAlerts.length > 1 ? `${idx + 1}. ` : ""}확인이 필요한 송금이 있어요
+                    </p>
+                    <p className="mt-1 text-[12px] text-gray-500">
+                      {appRole === "parent" ? "자녀의 확인을 기다리고 있어요." : "부모님이 확인을 요청했어요."}
+                      {alertTime ? ` · ${alertTime}` : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">가족 확인 중</span>
                 </div>
-                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">가족 확인 중</span>
-              </div>
-              <div className="mt-4 rounded-xl bg-white/80 px-4 py-4">
-                <p className="text-[22px] font-bold text-gray-900">{Number(pendingAlert.amount).toLocaleString()}원</p>
-                <p className="mt-1 truncate text-[13px] text-gray-500">받는 사람: {pendingAlert.account}</p>
-              </div>
-              <p className="mt-4 rounded-xl bg-[var(--ac-600)] py-3 text-center text-[14px] font-bold text-white transition-transform duration-200 group-hover:-translate-y-0.5">
-                확인하러 가기
-              </p>
-            </button>
-          )}
+                <div className="mt-4 rounded-xl bg-white/80 px-4 py-4">
+                  <p className="text-[22px] font-bold text-gray-900">{Number(pa.amount).toLocaleString()}원</p>
+                  <p className="mt-1 truncate text-[13px] text-gray-500">받는 사람: {pa.account}{pa.bank ? ` · ${pa.bank}` : ""}</p>
+                </div>
+                <p className="mt-4 rounded-xl bg-[var(--ac-600)] py-3 text-center text-[14px] font-bold text-white transition-transform duration-200 group-hover:-translate-y-0.5">
+                  확인하러 가기
+                </p>
+              </button>
+            );
+          })}
 
           {appRole === "parent" && emergencyReceipts.length > 0 && (
             <div className="rounded-2xl bg-white p-5">

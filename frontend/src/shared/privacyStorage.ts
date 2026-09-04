@@ -20,6 +20,7 @@ export const ANSIM_LOCAL_STORAGE_KEYS = [
   "ansimCooldownUntil",
   "ansimPortfolio_parent",
   "ansimPortfolio_child",
+  "ansimLastCallAt",
 ] as const;
 
 export function maskAccountForFamily(value: string, bank = "") {

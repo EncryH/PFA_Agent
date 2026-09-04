@@ -18,21 +18,21 @@
 
 ### 목적
 
-- 이 프로젝트는 AI_Challenge 작업 중 장기적으로 재사용할 기획, 스펙, UX, 심사 전략 지식을 `C:\second`에 동기화한다.
+- 이 프로젝트는 AI_Challenge 작업 중 장기적으로 재사용할 기획, 스펙, UX, 심사 전략 지식을 `/Users/kanghumin/Developer/second`에 동기화한다.
 - Second에는 대화 전체나 작업 전체가 아니라, 나중에 다시 판단과 유지보수에 도움이 되는 요약 지식만 저장한다.
 - 작업 종료 시 항상 Second 업데이트 여부를 점검하고, 최종 답변에 `second 파일 업데이트 완료` 또는 `second 파일에 새로 저장할 내용은 없음`을 명시한다.
 
 ### 작업 시작 시 확인할 Second 파일
 
 - 의미 있는 작업을 시작할 때는 아래 가벼운 컨텍스트만 먼저 확인한다.
-  - `C:\second\wiki\overview.md`
-  - `C:\second\wiki\index.md`
-  - `C:\second\wiki\patterns\작업스타일.md`
-  - `C:\second\wiki\patterns\Second운영규칙.md`
-  - `C:\second\wiki\experiences\AI_Challenge.md`
-- `C:\second` 전체나 `raw\memories` 전체를 읽지 않는다.
+  - `/Users/kanghumin/Developer/second/wiki/overview.md`
+  - `/Users/kanghumin/Developer/second/wiki/index.md`
+  - `/Users/kanghumin/Developer/second/wiki/patterns/작업스타일.md`
+  - `/Users/kanghumin/Developer/second/wiki/patterns/Second운영규칙.md`
+  - `/Users/kanghumin/Developer/second/wiki/experiences/AI_Challenge.md`
+- `/Users/kanghumin/Developer/second` 전체나 `raw/memories` 전체를 읽지 않는다.
 - 추가 정보가 필요하면 `index.md`를 보고 직접 관련 있는 wiki 페이지 1~3개만 고른다.
-- 원본 검증이 필요할 때만 특정 `raw\memories` 파일을 읽는다.
+- 원본 검증이 필요할 때만 특정 `raw/memories` 파일을 읽는다.
 
 ### AI_Challenge에서 Second에 저장할 내용
 
@@ -40,15 +40,15 @@
 
 | 분류 | 저장할 내용 | 기본 저장 위치 |
 |---|---|---|
-| 문제 정의 | 해결하려는 금융/AI 문제, 대상 사용자, 사용 시나리오가 확정되거나 바뀐 경우 | `wiki\experiences\AI_Challenge.md` |
-| 서비스 콘셉트 | 서비스명, 핵심 가치, 차별점, 기능 범위, MVP 방향 | `wiki\experiences\AI_Challenge.md` |
-| 기능 스펙 | 금융 AI 기능, 추천/분석/상담 흐름, 데이터 입력/출력, 예외 처리 정책 | `wiki\experiences\AI_Challenge.md` |
-| UX/UI | 모바일/웹 흐름, 화면 구조, 벤치마크, 시각 콘셉트, 접근성 원칙 | `wiki\experiences\AI_Challenge.md` 또는 `wiki\patterns\작업스타일.md` |
-| 문서 산출물 | 기획서/제안서/스펙 템플릿 구조, 제출본 구성, 심사 기준 대응 | `wiki\experiences\AI_Challenge.md` |
-| 기술/구현 | AI 모델 사용 방식, 데이터 처리, 개인정보 보호, 금융 보안, 배포/프로토타입 전략 | `wiki\experiences\AI_Challenge.md` |
-| 심사 전략 | 평가 포인트, 강점/리스크, 발표 서사, 데모 우선순위 | `wiki\experiences\AI_Challenge.md` |
-| 반복 문제 | 문서 변환/HWPX 편집/이미지 산출/UX 반복에서 다시 만날 가능성이 높은 해결책 | `wiki\experiences\AI_Challenge.md`와 `wiki\log.md` |
-| 유지보수 원칙 | 앞으로 AI_Challenge 작업에서 지켜야 할 검증 루틴, 금지사항, 파일 관리 규칙 | `wiki\experiences\AI_Challenge.md` 또는 `wiki\patterns\Second운영규칙.md` |
+| 문제 정의 | 해결하려는 금융/AI 문제, 대상 사용자, 사용 시나리오가 확정되거나 바뀐 경우 | `wiki/experiences/AI_Challenge.md` |
+| 서비스 콘셉트 | 서비스명, 핵심 가치, 차별점, 기능 범위, MVP 방향 | `wiki/experiences/AI_Challenge.md` |
+| 기능 스펙 | 금융 AI 기능, 추천/분석/상담 흐름, 데이터 입력/출력, 예외 처리 정책 | `wiki/experiences/AI_Challenge.md` |
+| UX/UI | 모바일/웹 흐름, 화면 구조, 벤치마크, 시각 콘셉트, 접근성 원칙 | `wiki/experiences/AI_Challenge.md` 또는 `wiki/patterns/작업스타일.md` |
+| 문서 산출물 | 기획서/제안서/스펙 템플릿 구조, 제출본 구성, 심사 기준 대응 | `wiki/experiences/AI_Challenge.md` |
+| 기술/구현 | AI 모델 사용 방식, 데이터 처리, 개인정보 보호, 금융 보안, 배포/프로토타입 전략 | `wiki/experiences/AI_Challenge.md` |
+| 심사 전략 | 평가 포인트, 강점/리스크, 발표 서사, 데모 우선순위 | `wiki/experiences/AI_Challenge.md` |
+| 반복 문제 | 문서 변환/HWPX 편집/이미지 산출/UX 반복에서 다시 만날 가능성이 높은 해결책 | `wiki/experiences/AI_Challenge.md`와 `wiki/log.md` |
+| 유지보수 원칙 | 앞으로 AI_Challenge 작업에서 지켜야 할 검증 루틴, 금지사항, 파일 관리 규칙 | `wiki/experiences/AI_Challenge.md` 또는 `wiki/patterns/Second운영규칙.md` |
 
 ### 저장하지 않을 내용
 
@@ -68,21 +68,21 @@
 1. 이번 작업이 AI_Challenge의 장기 기획/스펙/UX/심사 전략 지식인가?
 2. 2주 뒤에도 다시 참고할 가능성이 높은가?
 3. 문제 정의, 서비스 콘셉트, 기능 스펙, UX/UI, 문서 산출물, 구현 전략, 심사 전략 중 하나에 해당하는가?
-4. 이미 `C:\second`에 같은 의미로 저장되어 있지 않은가?
+4. 이미 `/Users/kanghumin/Developer/second`에 같은 의미로 저장되어 있지 않은가?
 5. 민감정보가 포함되어 있지 않은가?
 
 위 질문 중 2개 이상이 `예`이면 Second 업데이트를 수행한다. 애매하면 저장하지 말고 사용자에게 확인한다.
 
 ### 업데이트 방식
 
-- 기본 업데이트 대상은 `C:\second\wiki\experiences\AI_Challenge.md`이다.
-- 모든 의미 있는 업데이트는 `C:\second\wiki\log.md`에 append-only로 짧게 기록한다.
-- 큰 방향 변화가 있으면 `C:\second\wiki\overview.md`도 함께 갱신한다.
-- 새로운 AI_Challenge 세부 페이지가 생기면 `C:\second\wiki\index.md`에 링크를 추가한다.
-- `raw\memories`의 기존 파일은 원본이므로 수정하지 않는다.
-- `C:\second` 쓰기 권한이 막히면 다른 위치에 복사본을 만들지 말고 권한 승인을 요청한다.
+- 기본 업데이트 대상은 `/Users/kanghumin/Developer/second/wiki/experiences/AI_Challenge.md`이다.
+- 모든 의미 있는 업데이트는 `/Users/kanghumin/Developer/second/wiki/log.md`에 append-only로 짧게 기록한다.
+- 큰 방향 변화가 있으면 `/Users/kanghumin/Developer/second/wiki/overview.md`도 함께 갱신한다.
+- 새로운 AI_Challenge 세부 페이지가 생기면 `/Users/kanghumin/Developer/second/wiki/index.md`에 링크를 추가한다.
+- `raw/memories`의 기존 파일은 원본이므로 수정하지 않는다.
+- `/Users/kanghumin/Developer/second` 쓰기 권한이 막히면 다른 위치에 복사본을 만들지 말고 권한 승인을 요청한다.
 
-### `wiki\log.md` 기록 템플릿
+### `wiki/log.md` 기록 템플릿
 
 ```md
 ## [YYYY-MM-DD] codex | AI_Challenge 작업 요약

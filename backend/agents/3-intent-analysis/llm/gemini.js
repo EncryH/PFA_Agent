@@ -118,7 +118,8 @@ const SYSTEM_PROMPT = `당신은 한국 은행 앱 '안심동행 AI'의 송금 �
 [출력 규칙]
 - 신호가 하나도 없고 목적이 분명하면 done=true, next_question 은 빈 문자열
 - 더 확인할 게 있으면 done=false, next_question 에 다음 질문 하나만
-- reply 는 부모님의 직전 답변을 자연스럽게 받아주는 한 문장입니다. 답변 내용을 언급하며 공감하거나 확인해 주세요. 첫 턴(부모님 답변이 아직 없을 때)에는 빈 문자열로 두세요. 예) "돌려준다는 약속이 없었군요.", "전화로 연락이 왔다고 하셨군요."
+- reply 는 부모님의 직전 답변을 자연스럽게 받아주는 한 문장입니다. 답변 내용에서 새로 확인된 사실을 구체적으로 언급하세요. 첫 턴(부모님 답변이 아직 없을 때)에는 빈 문자열로 두세요. 예) "돌려준다는 약속이 없었군요.", "전화로 연락이 왔다고 하셨군요."
+- reply 에 '기존과 다른 패턴', '평소와 다른', '패턴이 달라요' 같은 막연한 표현을 쓰지 마세요. 무엇이 구체적으로 달라지거나 걱정되는지 말하세요.
 - explanation 은 신호가 있을 때만 작성. 왜 위험한지 어르신 눈높이로 2~3문장. 없으면 빈 문자열
 - 확인된 신호만으로 범죄를 확정하지 마세요. "100% 사기", "확실한 사기"라고 단정하지 말고 "사기일 가능성이 있습니다"라고 표현하세요.
 - fraud_type 은 가장 가까운 의심 유형 하나만 선택하고, 위험 신호가 없으면 none 으로 작성
@@ -374,8 +375,11 @@ function normalizeUserResponseLayout(message, mode = "") {
   ].filter(Boolean).join("\n\n");
 }
 
+const VAGUE_PATTERN_EXPRESSION = /기존과\s*다른\s*패턴|평소와\s*다른\s*패턴|패턴이\s*달라|패턴이\s*다르|비정상적인\s*패턴/g;
+
 export function validateUserResponse(message, mode) {
-  const text = normalizeUserResponseLayout(message, mode);
+  let text = normalizeUserResponseLayout(message, mode);
+  text = text.replace(VAGUE_PATTERN_EXPRESSION, "").replace(/\s{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
   if (text.length < 20 || text.length > 750) throw new Error("사용자 답변 길이 검증 실패");
   const sourceLeak = text.match(SOURCE_LEAK_PATTERN);
   if (sourceLeak) throw new Error(`내부 출처 노출 감지: ${sourceLeak[0]}`);
@@ -488,6 +492,12 @@ export async function generateUserResponse({
 - 사용자가 위험한 상황을 말해 준 점을 먼저 인정하고, 겁을 주거나 사용자를 탓하지 마세요.
 - 범죄를 확정하지 말고 '사기 가능성이 높아요', '기관사칭 수법과 매우 비슷해요'처럼 표현하세요.
 - 답변만 JSON message로 출력하세요.
+
+[금지 표현]
+- '기존과 다른 패턴', '평소와 다른 패턴', '패턴이 달라요' — 이 표현은 사용하지 마세요.
+- 대신 구체적으로 무엇이 걱정인지 말하세요. 예) "처음 보내는 계좌로 큰 금액을 보내려 하고 계세요."
+- 이전 AI 답변에서 이미 말한 내용을 같은 표현으로 반복하지 마세요.
+- 사용자가 답변한 내용을 그대로 되풀이하지 말고, 그 답변에서 확인된 새로운 사실에 반응하세요.
 
 [이번 답변]
 ${modeRule}`;

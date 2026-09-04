@@ -8,6 +8,7 @@ import { PROTECTION_LEVELS, getProtectionDisplayLevel } from "./protection";
 type NotificationShadeProps = {
   role: "parent" | "child";
   hasRiskAlert?: boolean;
+  riskAlertCount?: number;
   onClose: () => void;
   onOpenRiskAlert?: () => void;
   /** 지금 세션에서 새로 생긴 거래 (송금·중도해지 등) — 저장된 내역보다 먼저 보여준다 */
@@ -32,7 +33,7 @@ const ICONS: Record<Notice["icon"], React.ReactNode> = {
   unlink: <><path d="M9.5 14.5l-2 2a3.5 3.5 0 01-5-5l2-2M14.5 9.5l2-2a3.5 3.5 0 015 5l-2 2" /><path d="M3 3l18 18" /></>,
 };
 
-export default function NotificationShade({ role, hasRiskAlert = false, onClose, onOpenRiskAlert, extraTxns = [] }: NotificationShadeProps) {
+export default function NotificationShade({ role, hasRiskAlert = false, riskAlertCount = 1, onClose, onOpenRiskAlert, extraTxns = [] }: NotificationShadeProps) {
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
   const closeTimer = useRef<number | null>(null);
@@ -68,12 +69,14 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
   // 가족 보호 범위는 부모가 정하지만, 바뀐 사실은 양쪽 앱에 똑같이 남는다.
   const levelName = (level?: number) => PROTECTION_LEVELS[level ?? 2]?.name ?? "";
 
-  const pairingNotices: Notice[] = readNotices()
+  const pairingNotices: (Notice & { _ts: number })[] = readNotices()
     .slice()
     .reverse()
     .map((e) => {
+      const _ts = new Date(e.at).getTime();
       if (e.type === "level-changed") {
         return {
+          _ts,
           icon: "shield" as const,
           title: "안심동행 가족 보호 범위가 바뀌었어요",
           body: role === "parent"
@@ -84,6 +87,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
       }
       return e.type === "paired"
         ? {
+            _ts,
             icon: "family" as const,
             title: `${familyWith} 안심동행이 연결됐어요`,
             body: role === "parent"
@@ -92,6 +96,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
             date: stamp(e.at),
           }
         : {
+            _ts,
             icon: "unlink" as const,
             title: `${familyWith} 안심동행 연결이 해제됐어요`,
             body: "이제 위험 거래 알림이 전달되지 않아요. 계좌와 거래내역은 그대로예요.",
@@ -99,17 +104,26 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
           };
     });
 
-  const fresh: Notice[] =
-    role === "child" && hasRiskAlert
-      ? [{
-          icon: "shield",
-          title: "어머니의 위험 송금을 확인해주세요",
-          body: "평소와 다른 300만원 송금이 잠시 보류됐어요.",
+  const FRESH_WINDOW_MS = 5 * 60 * 1000;
+  const now = Date.now();
+
+  const freshPairing = pairingNotices.filter((n) => n._ts && now - n._ts < FRESH_WINDOW_MS);
+  const olderPairing = pairingNotices.filter((n) => !n._ts || now - n._ts >= FRESH_WINDOW_MS);
+
+  const alertCount = hasRiskAlert ? Math.max(1, riskAlertCount) : 0;
+  const fresh: Notice[] = [
+    ...(role === "child" && alertCount > 0
+      ? Array.from({ length: alertCount }, (_, i) => ({
+          icon: "shield" as const,
+          title: `어머니의 위험 송금을 확인해주세요${alertCount > 1 ? ` (${i + 1}/${alertCount})` : ""}`,
+          body: "평소와 다른 송금이 잠시 보류됐어요.",
           date: "방금",
           accent: true,
           onClick: () => requestClose(onOpenRiskAlert ?? onClose),
-        }]
-      : [];
+        }))
+      : []),
+    ...freshPairing,
+  ];
 
   // 계좌의 입출금 내역도 알림처럼 보여준다 — 실제 은행 앱처럼 거래가 생길 때마다 알림이 쌓이는 걸 재현.
   const txnDate = (mmdd: string) => {
@@ -131,7 +145,7 @@ export default function NotificationShade({ role, hasRiskAlert = false, onClose,
     ? [{ icon: "gift" as const, title: "안심 정기예금 금리가 올랐어요",  body: "연 3.5%로 12개월 예치하실 수 있어요.", date: "7월 28일" }]
     : [{ icon: "gift" as const, title: "나눔 적금 이벤트가 시작됐어요",   body: "매주 저축할 때마다 추가 금리를 드려요.", date: "7월 25일" }];
 
-  const earlier: Notice[] = [...pairingNotices, ...txnNotices, ...marketingNotices];
+  const earlier: Notice[] = [...olderPairing, ...txnNotices, ...marketingNotices];
 
   const row = (n: Notice, i: number) => {
     const Tag = n.onClick ? "button" : "div";

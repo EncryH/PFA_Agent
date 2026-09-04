@@ -543,10 +543,12 @@ export default function Transfer({
   }, [step]);
 
   // hold 화면 도달 시 자녀 탭에 알림 공유 — 페어링 전에는 알림을 받을 자녀가 없으므로 쓰지 않는다.
+  // 여러 건의 확인 요청이 동시에 쌓일 수 있도록 배열(ansimAlerts)에 append 한다.
   useEffect(() => {
     if (step !== "hold" || !paired) return;
     const summarySignals = riskLabels.length ? riskLabels : DEMO_ALERT.signals;
-    localStorage.setItem("ansimAlert", JSON.stringify({
+    const ts = Date.now();
+    const newAlert = {
       amount: parseAmt(amt),
       account: maskAccountForFamily(account, bank),
       bank,
@@ -559,8 +561,18 @@ export default function Transfer({
       sessionId: intentSessionId,
       protectionLevel,
       time,
-      _ts: Date.now(),
-    }));
+      _ts: ts,
+    };
+    try {
+      const existing = JSON.parse(localStorage.getItem("ansimAlerts") ?? "[]") as any[];
+      if (!existing.some((a: any) => a.sessionId === intentSessionId))
+        existing.push(newAlert);
+      localStorage.setItem("ansimAlerts", JSON.stringify(existing));
+    } catch {
+      localStorage.setItem("ansimAlerts", JSON.stringify([newAlert]));
+    }
+    // 하위 호환 — 기존 단일 키도 최신 값으로 유지
+    localStorage.setItem("ansimAlert", JSON.stringify(newAlert));
     window.dispatchEvent(new Event("ansim-alert"));
   }, [step, intentSessionId, protectionLevel, fraudTypeLabel]);
 
@@ -1511,83 +1523,101 @@ export default function Transfer({
       {/* ── 홀드 ── */}
       {step === "hold" && (
         <div className="flex flex-col gap-4">
-          {/* ── 헤더 ── */}
-          <div className="bg-gradient-to-br from-[var(--ac-hero-from)] via-[var(--ac-hero-via)] to-[var(--ac-hero-to)] rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 48 48" fill="white" fillOpacity="0.9" className="w-7 h-7"><circle cx="14" cy="12" r="4.5" /><path d="M14 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /><circle cx="34" cy="12" r="4.5" /><path d="M34 17c-4 0-7 3-7 7v6h14v-6c0-4-3-7-7-7z" /></svg>
+          {/* ── 안심동행 AI 보호 안내 ── */}
+          <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-[var(--ac-hero-from)] via-[var(--ac-hero-via)] to-[var(--ac-hero-to)] p-5 shadow-lg shadow-blue-100/70">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/80 bg-white shadow-md">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
               </div>
-              <div>
-                <p className="text-white font-bold text-[17px]">{paired ? "따님에게 확인을 요청했어요" : "5분 동안 송금이 멈췄어요"}</p>
-                <p className="text-white/80 text-[12px] mt-0.5">{paired ? "차단이 아니에요 — 함께 확인하는 거예요" : "그 사이에 아래 내용을 꼭 확인해 주세요"}</p>
+              <div className="min-w-0">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-200" />
+                  안심동행 AI 보호 안내
+                </span>
+                <p className="mt-1.5 text-[18px] font-extrabold leading-tight text-white">
+                  {paired ? "따님과 함께 확인하고 있어요" : "송금을 잠시 멈춰 두었어요"}
+                </p>
+                <p className="mt-1 text-[11px] text-white/80">제가 안전하게 확인하는 순서를 알려드릴게요.</p>
               </div>
             </div>
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-white/70 text-[11px] font-medium tracking-wide">위험도 판정</span>
-                <span className="bg-red-400 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">HIGH</span>
+
+            <div className="mt-4 rounded-2xl border border-white/20 bg-white/15 p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold text-white/75">AI가 찾은 위험 신호</span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-red-600">주의 필요</span>
               </div>
-              <p className="text-white text-[13px] font-medium">{riskLabels.length ? riskLabels.join(" · ") + " 감지" : "위험 신호 감지"}</p>
-              <p className="text-white/70 text-[12px]">{amt}원 · {account}{bank ? ` · ${bank}` : ""}</p>
+              <p className="mt-2 text-[13px] font-bold leading-relaxed text-white">{riskLabels.length ? riskLabels.join(" · ") : "평소와 다른 송금 정황"}</p>
+              <p className="mt-1 text-[11px] text-white/70">{amt}원 · {account}{bank ? ` · ${bank}` : ""}</p>
             </div>
           </div>
 
-          {/* ── 1. 지금 할 수 있는 것 ── */}
-          <div className="bg-white rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100 text-[11px] font-black text-red-600">!</span>
-              <p className="text-[15px] font-bold text-gray-900">지금 할 수 있는 것</p>
+          {/* ── AI가 안내하는 우선 행동 ── */}
+          <div className="rounded-[24px] border border-[var(--ac-100)] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[var(--ac-100)] bg-[var(--ac-50)]">
+                <img src="/ansim-ai-profile.png" alt="" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <p className="text-[15px] font-extrabold text-gray-950">지금은 이렇게 해주세요</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">안심동행 AI가 안전한 순서대로 안내해요.</p>
+              </div>
             </div>
             <div className="flex flex-col gap-2.5">
-              <button className="flex items-center gap-3.5 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3.5 text-left active:scale-[0.98] transition-all">
+              <div className="flex w-full items-center gap-3.5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-left">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
                   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M16.5 3.5a1.5 1.5 0 011.5 1.5v14a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 016 19V5a1.5 1.5 0 011.5-1.5h9z" stroke="#dc2626" strokeWidth="1.8" /><path d="M4 4l16 16" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" /></svg>
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
+                  <span className="mb-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-extrabold text-red-600">가장 먼저</span>
                   <p className="text-[14px] font-bold text-red-700">통화 중이라면 지금 끊으세요</p>
                   <p className="text-[11px] text-red-400 mt-0.5">수사기관은 전화로 송금을 요구하지 않아요</p>
                 </div>
-              </button>
+              </div>
               {paired && (
-                <a href="tel:010-0000-0000" className="flex items-center gap-3.5 w-full rounded-xl border border-[var(--ac-200)] bg-[var(--ac-50)] px-4 py-3.5 text-left active:scale-[0.98] transition-all">
+                <a href="tel:010-0000-0000" className="group flex w-full items-center gap-3.5 rounded-2xl border border-[var(--ac-200)] bg-[var(--ac-50)] px-4 py-3.5 text-left transition-all hover:border-[var(--ac-300)] active:scale-[0.98]">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ac-100)]">
                     <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="var(--ac-600)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-bold text-gray-900">자녀에게 직접 전화하기</p>
                     <p className="text-[11px] text-gray-400 mt-0.5">확인 알림을 보냈지만 직접 통화가 가장 빨라요</p>
                   </div>
+                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--ac-300)] transition-transform group-hover:translate-x-0.5"><path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </a>
               )}
-              <button onClick={goHome} className="flex items-center gap-3.5 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-left active:scale-[0.98] transition-all">
+              <button onClick={goHome} className="group flex w-full items-center gap-3.5 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-left transition-all hover:bg-gray-100 active:scale-[0.98]">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
                   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M18 6L6 18M6 6l12 12" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" /></svg>
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-bold text-gray-900">송금 직접 취소하기</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">언제든 부모님이 직접 취소할 수 있어요</p>
                 </div>
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5"><path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </div>
           </div>
 
-          {/* ── 2. 직접 확인해 보세요 ── */}
-          <div className="bg-white rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100">
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4"><path d="M9 11l3 3L22 4" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </span>
-              <p className="text-[15px] font-bold text-gray-900">직접 확인해 보세요</p>
+          {/* ── AI 확인 질문 ── */}
+          <div className="rounded-[24px] border border-[var(--ac-100)] bg-gradient-to-br from-white to-[var(--ac-50)] p-5 shadow-sm">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[var(--ac-100)] bg-white">
+                <img src="/ansim-ai-profile.png" alt="" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <p className="text-[15px] font-extrabold text-gray-950">제가 세 가지만 확인할게요</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">천천히 하나씩 생각해 보세요.</p>
+              </div>
             </div>
-            <div className="flex flex-col gap-0">
+            <div className="flex flex-col gap-2">
               {[
                 <>그 번호가 맞는지, <span className="font-semibold text-gray-900">114 또는 공식 대표번호</span>로 직접 걸어 확인하셨나요?</>,
                 <>받는 분 이름이 <span className="font-semibold text-gray-900">내가 아는 사람</span>이 맞나요?</>,
                 <>"<span className="font-semibold text-gray-900">급하니까 빨리</span>" 라는 말을 들으셨다면, 한 번 더 생각해 보세요.</>,
               ].map((text, i) => (
-                <div key={i} className={`flex items-start gap-3 py-3 ${i < 2 ? "border-b border-gray-100" : ""}`}>
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-50 text-[12px] font-bold text-amber-600 mt-0.5">{i + 1}</span>
-                  <span className="text-[13px] text-gray-600 leading-relaxed">{text}</span>
+                <div key={i} className="flex items-start gap-3 rounded-2xl border border-white bg-white/90 px-3.5 py-3 shadow-sm">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--ac-50)] text-[12px] font-extrabold text-[var(--ac-600)]">{i + 1}</span>
+                  <span className="text-[13px] leading-relaxed text-gray-600">{text}</span>
                 </div>
               ))}
             </div>

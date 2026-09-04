@@ -41,7 +41,7 @@ function applyForcedHold(risk, safeTransfer) {
  * @param {{transfer: object, messages: {role: string, text: string}[], turn: number}} body
  * @param {string} apiKey
  */
-export async function handleIntent(body, apiKey, { graphConfig = {}, databaseConfig = {} } = {}) {
+export async function handleIntent(body, apiKey, { graphConfig = {}, databaseConfig = {}, middleware = {} } = {}) {
   const { transfer = {}, messages = [], turn = 1 } = body;
   const initialTransfer = safeTransferContext(transfer);
   const safeMessages = sanitizeMessages(messages);
@@ -81,6 +81,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     };
   }
 
+  const isEmergency = middleware.emergency === true;
   const contradictions = normalizeStringList(llm.answer_contradictions);
   const hasConversationContradiction = contradictions.length > 0
     && safeMessages.filter((message) => message.role !== "ai").length >= 2;
@@ -101,6 +102,22 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   const officialContent = retrieveOfficialContent(fraudType.code);
   const analysis = buildAnalysis(llm, risk, fraudType, retrieval, officialContent);
   const outOfTurns = turn >= MAX_TURNS;
+
+  // ── 긴급 피해 신고: 사용자가 직접 피해를 호소하면 즉시 대응한다 ──
+  if (isEmergency) {
+    const emergencyRisk = { ...risk, score: Math.max(risk.score, HOLD_THRESHOLD), level: "HIGH" };
+    const emergencyMessage = buildEmergencyResponse(fraudType, emergencyRisk);
+    return {
+      message: emergencyMessage,
+      hold: true,
+      done: true,
+      risk: emergencyRisk,
+      intent: pickIntent(llm),
+      analysis,
+      fallback: false,
+      responseFallback: false,
+    };
+  }
 
   // ── 판정: 규칙만이 결정한다 ──
   //
@@ -368,7 +385,8 @@ export function selectProbeQuestion(llm = {}, risk = {}, messages = [], transfer
 function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestion = "") {
   const aiMessages = messages.filter((m) => m.role === "ai");
   const asked = aiMessages.map((m) => m.text).join("\n");
-  // FIRST_QUESTION("처음 보내는 계좌예요...")은 프로브가 아니므로 제외
+  const userMessages = messages.filter((m) => m.role !== "ai");
+  const lastUserMsg = userMessages.at(-1)?.text || "";
   const probeTurn = aiMessages.filter((m) => !m.text.includes("처음 보내는 계좌")).length;
 
   if (probeTurn === 0) {
@@ -385,7 +403,6 @@ function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestio
     ].filter(Boolean).join("\n\n");
   }
 
-  // 후속 턴: Gemini reply(맞춤 응답) 우선, 없으면 고정 서두
   const reply = llm.reply?.trim();
   const FOLLOWUPS = [
     "한 가지만 더 확인할게요.",
@@ -393,19 +410,18 @@ function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestio
     "마지막으로 확인할 게 있어요.",
   ];
   const fallbackOpener = FOLLOWUPS[Math.min(probeTurn - 1, FOLLOWUPS.length - 1)];
-  const opener = reply || fallbackOpener;
+  const opener = sanitizeReply(reply, asked) || buildContextualOpener(lastUserMsg, llm) || fallbackOpener;
 
-  // 질문: 서버가 고른 근거 공백 질문을 우선 사용한다.
   const question = preferredQuestion || selectProbeQuestion(llm, risk, messages);
 
-  // 새 위험 사유가 있으면 추가 (이미 말한 건 반복 안 함)
   const unusedConcern = risk.codes
     .filter((code) => EASY_REASONS[code] && !asked.includes(EASY_REASONS[code]))
     .map((code) => EASY_REASONS[code])[0];
 
-  // Gemini explanation이 있고 이전에 안 나왔으면 활용
   const explanation = llm.explanation?.trim();
-  const newExplanation = explanation && !asked.includes(explanation) ? explanation : "";
+  const newExplanation = explanation && !asked.includes(explanation)
+    ? sanitizeReply(explanation, asked)
+    : "";
 
   const concern = unusedConcern
     ? `추가로 확인된 점이에요.\n${unusedConcern}`
@@ -417,6 +433,28 @@ function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestio
     "한 가지만 확인할게요",
     question,
   ].filter(Boolean).join("\n\n");
+}
+
+const VAGUE_PATTERN_PHRASES = /기존과\s*다른\s*패턴|평소와\s*다른\s*패턴|패턴이\s*달라|패턴이\s*다르|일반적이지\s*않|특이한\s*패턴|비정상적인\s*패턴/g;
+
+function sanitizeReply(text, alreadySaid = "") {
+  if (!text) return "";
+  let cleaned = text.replace(VAGUE_PATTERN_PHRASES, "").replace(/\s{2,}/g, " ").trim();
+  if (cleaned.length < 5) return "";
+  if (alreadySaid.includes(cleaned)) return "";
+  return cleaned;
+}
+
+function buildContextualOpener(lastUserMsg, llm) {
+  if (!lastUserMsg) return "";
+  const purpose = llm.purpose?.trim();
+  const requester = llm.requester?.trim();
+  const channel = llm.channel?.trim();
+  if (requester && channel) return `${requester}에게 ${channel}으로 연락받으셨군요.`;
+  if (purpose) return `${purpose} 때문에 보내시는 거군요.`;
+  if (requester) return `${requester}이(가) 보내라고 했군요.`;
+  if (lastUserMsg.length < 30) return `"${lastUserMsg.slice(0, 20)}" — 알겠어요.`;
+  return "";
 }
 
 function buildRiskMessage(llm, risk, fraudType) {
@@ -526,8 +564,11 @@ function softenExplanation(value = "") {
 }
 
 function compactExplanation(value = "") {
-  const softened = softenExplanation(value).replace(/\s+/g, " ").trim();
-  if (!softened) return "말씀하신 내용에 위험한 점이 있어 다시 확인해야 해요.";
+  const softened = softenExplanation(value)
+    .replace(VAGUE_PATTERN_PHRASES, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!softened || softened.length < 5) return "말씀하신 내용에 위험한 점이 있어 다시 확인해야 해요.";
   return softened
     .split(/(?<=[.!?요다])\s+/)
     .filter(Boolean)
@@ -625,6 +666,15 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
     score_components: risk.components,
     official_content: officialContent,
   };
+}
+
+function buildEmergencyResponse(fraudType, risk) {
+  const opening = "말씀해 주셔서 감사해요. 바로 도와드릴게요.";
+  const situation = fraudType.code && fraudType.code !== "none"
+    ? `${RISK_OPENINGS[fraudType.code] || "금융사기가 의심돼요."}`
+    : "말씀하신 상황이 금융사기와 비슷해요.";
+  const action = safeActionFor(fraudType.code || "unknown", risk.codes || []);
+  return [opening, situation, action].filter(Boolean).join("\n\n");
 }
 
 function safeUserId(pattern = {}) {
