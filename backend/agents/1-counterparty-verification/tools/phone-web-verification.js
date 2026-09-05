@@ -392,6 +392,20 @@ export async function verifyPhoneWithNaverSearch(rawPhone, config = {}) {
   }
 
   if (official && (analysis.danger || analysis.caution)) {
+    const officialConfirmations = [
+      Boolean(localOfficial),
+      Boolean(kdicPhoneMatch || kdicInstitutionMatch || webKdicInstitution),
+      Boolean(webOfficial),
+    ].filter(Boolean).length;
+    if (officialConfirmations >= 2) {
+      return {
+        ...common,
+        status: "safe",
+        label: `${official.name} 공식 대표번호예요`,
+        institutionName: official.name,
+        detail: `예금보험공사·공식번호 근거가 다중 확인됐습니다. 웹 검색에서 이 번호를 사칭한 사기·피싱 사례가 발견됐지만, 번호 자체는 ${official.name}의 공식 연락처입니다. 다만 발신번호 조작 가능성은 있으므로 중요한 요청은 공식 앱에서 다시 확인하세요.`,
+      };
+    }
     return {
       ...common,
       status: "caution",

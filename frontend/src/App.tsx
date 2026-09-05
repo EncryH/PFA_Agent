@@ -107,12 +107,14 @@ export default function App() {
       "ansimAlerts",
       "ansimIntentChatsV1",
       "ansimGuardianLogV1",
-      "ansimCooldownUntil",
       "ansimEmergencyReceipts",
       "ansimNotices",
       "ansimLastCallAt",
       "ansimLastCallScriptFlags",
     ].forEach((key) => localStorage.removeItem(key));
+    // 쿨다운은 전용 함수로 지운다 — 키 삭제와 동기화 이벤트를 한 곳에서 관리해야
+    // 저장 키 이름이 바뀌어도 초기화가 조용히 새지 않는다.
+    clearGlobalCooldown();
 
     setBalanceOverrides({});
     setClosedAccounts(new Set());
@@ -144,7 +146,6 @@ export default function App() {
     window.dispatchEvent(new Event("ansim-intent-chat-updated"));
     window.dispatchEvent(new Event("ansim-guardian-log"));
     window.dispatchEvent(new Event("ansim-emergency-receipts"));
-    window.dispatchEvent(new Event("ansim-cooldown"));
     window.setTimeout(() => setAmountResetNotice(false), 2_000);
   };
 
@@ -553,17 +554,6 @@ export default function App() {
           </svg>
           시나리오 초기화
         </button>
-        {cooldownSecondsLeft > 0 && (
-          <button
-            type="button"
-            onClick={clearGlobalCooldown}
-            className="group flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-3 text-[13px] font-bold text-red-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl active:scale-95 transition-all duration-200"
-            aria-label="심사용 쿨다운 강제 해제"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
-            쿨다운 해제(심사용)
-          </button>
-        )}
       </div>
 
       {showAmountResetConfirm && (

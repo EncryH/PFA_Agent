@@ -31,6 +31,7 @@
     { "value": "tossbank.com", "name": "토스뱅크" },
     { "value": "fss.or.kr", "name": "금융감독원" },
     { "value": "fsc.go.kr", "name": "금융위원회" },
+    { "value": "fsec.or.kr", "name": "금융보안원" },
     { "value": "bok.or.kr", "name": "한국은행" },
     { "value": "kdic.or.kr", "name": "예금보험공사" },
     { "value": "krx.co.kr", "name": "한국거래소" },

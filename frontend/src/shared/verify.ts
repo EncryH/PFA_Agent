@@ -281,13 +281,25 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
   } catch {
     hostname = "";
   }
-  const whiteHit = OFFICIAL_DOMAINS.find((d) => hostname === d || hostname.endsWith(`.${d}`));
+  const whiteHit = officialContacts.domains.find(
+    ({ value }) => hostname === value || hostname.endsWith(`.${value}`),
+  );
   if (whiteHit) {
     // HTTPS 여부도 확인
     if (!lower.startsWith("https")) {
-      return { status: "caution", label: "공식 도메인 · HTTP", detail: `${whiteHit}의 공식 도메인이나 HTTPS가 아닙니다. 주소창을 다시 확인하세요.` };
+      return {
+        status: "caution",
+        label: `${whiteHit.name} 공식 도메인 · HTTP`,
+        detail: `입력한 주소는 ${whiteHit.name}의 공식 도메인(${whiteHit.value})이지만 HTTPS 연결이 아닙니다. 주소창을 다시 확인하세요.`,
+        institutionName: whiteHit.name,
+      };
     }
-    return { status: "safe", label: "공식 도메인", detail: `${whiteHit}의 공식 도메인으로 확인됩니다.` };
+    return {
+      status: "safe",
+      label: `${whiteHit.name} 공식 도메인`,
+      detail: `입력한 주소는 ${whiteHit.name}의 공식 도메인(${whiteHit.value})으로 확인됩니다.`,
+      institutionName: whiteHit.name,
+    };
   }
 
   // KISA 국내 피싱사이트 목록 → Google Safe Browsing — 화이트리스트에 없는 URL만 조회 (쿼터 절약)

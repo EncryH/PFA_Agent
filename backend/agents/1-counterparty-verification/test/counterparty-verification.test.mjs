@@ -25,6 +25,13 @@ test("공식 도메인의 서브도메인은 화이트리스트로 통과한다"
   assert.equal(hit.name, "금융감독원");
 });
 
+test("금융보안원 공식 도메인과 www 서브도메인을 통과시킨다", () => {
+  const rootHit = matchWhitelist({ domain: "fsec.or.kr" });
+  const wwwHit = matchWhitelist({ domain: "www.fsec.or.kr" });
+  assert.equal(rootHit?.name, "금융보안원");
+  assert.equal(wwwHit?.name, "금융보안원");
+});
+
 test("더치트 신고 이력이 있는 계좌는 즉시 차단한다", () => {
   const result = runCounterpartyVerificationAgent({ account: "1104421783" });
   assert.equal(result.decision, "BLOCK");

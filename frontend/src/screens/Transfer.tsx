@@ -43,12 +43,13 @@ const GRADE_STYLE = {
 } as const;
 
 function RiskGradeCard({
-  result, onProceed, freezeSecsLeft, onSkipFreeze,
+  result, onProceed, freezeSecsLeft, onSkipFreeze, delaySeconds,
 }: {
   result: RiskResult;
   onProceed: () => void;
   freezeSecsLeft: number | null;
   onSkipFreeze: () => void;
+  delaySeconds: number;
 }) {
   const s = GRADE_STYLE[result.gradeColor];
   const isHigh = result.grade === "C" || result.grade === "D";
@@ -130,8 +131,8 @@ function RiskGradeCard({
           </button>
           <p className="text-[12px] text-gray-400 text-center">위험 신호가 감지됐어요 — AI가 목적을 여쭤볼게요</p>
         </>
-      ) : (
-        /* D등급 — 송금을 5분 정지시키고 그 시간에 AI가 목적을 확인한다 */
+      ) : delaySeconds > 0 ? (
+        /* D등급 + 지연 보호 단계 — 송금을 정지시키고 그 시간에 AI가 목적을 확인한다 */
         <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-[var(--ac-50)] via-white to-[var(--ac-50)] p-5 shadow-sm flex flex-col items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white bg-white shadow-sm">
             <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
@@ -155,6 +156,24 @@ function RiskGradeCard({
           <button onClick={onSkipFreeze} className="text-[11px] text-gray-400 underline underline-offset-2 active:scale-95 transition-transform">
             데모 건너뛰기 →
           </button>
+        </div>
+      ) : (
+        /* Lv.1 알림 단계 — 고위험이어도 자동 지연 없이 부모에게 위험을 알리고 목적만 확인한다. */
+        <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-[var(--ac-50)] via-white to-[var(--ac-50)] p-5 shadow-sm flex flex-col items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white bg-white shadow-sm">
+            <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[var(--ac-700)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+            고위험 거래 알림
+          </div>
+          <p className="text-center text-[13px] leading-relaxed text-gray-600">
+            매우 높은 위험 신호가 감지됐어요.<br />송금을 지연하지 않고 AI가 거래 목적을 확인할게요.
+          </p>
+          <div className="flex items-center gap-2 pt-1 text-[var(--ac-600)]">
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--ac-200)] border-t-[var(--ac-600)] animate-spin" />
+            <span className="text-[12px] font-semibold">안심동행 AI 연결 중</span>
+          </div>
         </div>
       )}
 
@@ -525,10 +544,12 @@ export default function Transfer({
         setCheckPhase("result");
         if (result.grade === "A") setTimeout(() => { if (!cancelled) setStep("success"); }, 1500);
         else if (result.grade === "D") {
-          // 5분 냉각을 걸어두고 곧바로 의도 분석 대화로 넘어간다.
-          // 냉각은 송금을 막는 장치이고, 그 시간을 AI 대화로 채운다.
-          setFreezeSecsLeft(300);
-          startGlobalCooldown(300); // 화면을 벗어나도(뒤로가기·홈) 앱 전체에서 정지가 유지된다
+          // D등급이어도 자동 지연은 사용자가 선택한 보호 단계의 정책을 따른다.
+          // 화면에 Lv.1로 표시되는 알림 단계(내부 level 0)는 경고와 대화만 제공한다.
+          if (protectionPolicy.delaySeconds > 0) {
+            setFreezeSecsLeft(protectionPolicy.delaySeconds);
+            startGlobalCooldown(protectionPolicy.delaySeconds);
+          }
           setRiskLabels((prev) => (prev.length ? prev : result.reasons));
           setTimeout(goAiChat, 2200);
         }
@@ -1311,6 +1332,7 @@ export default function Transfer({
           <RiskGradeCard
             result={riskResult}
             freezeSecsLeft={freezeSecsLeft}
+            delaySeconds={protectionPolicy.delaySeconds}
             onSkipFreeze={() => { setRiskLabels((prev) => prev.length ? prev : (riskResult?.reasons ?? [])); setStep("hold"); }}
             onProceed={() => {
               // A등급은 버튼 없이 자동 진행되므로 여기 도달하지 않는다.
