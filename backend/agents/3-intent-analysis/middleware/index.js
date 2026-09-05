@@ -1,4 +1,5 @@
 import { generateGeneralResponse } from "./general-llm.js";
+import { resolveSituation, needsDamageResponse, isHypothetical } from "../../../../shared/conversation-state.js";
 import { inspectPromptInjection } from "./injection-guard.js";
 import { lastUserText, normalizeRequest } from "./normalize.js";
 import {
@@ -45,6 +46,15 @@ export async function routeIntentRequest(input = {}, {
   }
 
   const decision = classifyRoute({ text, activeTransfer, injection });
+  const situation = resolveSituation(normalized.input.messages, conversationState.situation);
+  normalized.input.conversationState.situation = situation;
+  // 짧은 답변도 직전 질문과 연결해 피해 대응 문맥을 유지한다.
+  if (!injection.blocked && !injection.quoted && needsDamageResponse(situation)
+    && decision.route !== ROUTES.ACTION && !decision.howToUse) {
+    Object.assign(decision, { route: ROUTES.RISK, emergency: true, reason: "피해 상황을 반영한 후속 상담" });
+  } else if (!injection.blocked && !injection.quoted && isHypothetical(text)) {
+    Object.assign(decision, { route: ROUTES.GENERAL, emergency: false, reason: "가정 상황 질문" });
+  }
   const flags = [...normalized.flags, ...injection.flags];
 
   if (decision.route === ROUTES.ACTION) {
@@ -123,11 +133,11 @@ export async function routeIntentRequest(input = {}, {
     };
   }
 
-  const general = await generalChat(text, apiKey, isResumedConversation ? {
+  const general = await generalChat(text, apiKey, normalized.input.messages.length > 1 ? {
     messages: normalized.input.messages,
     conversationState,
   } : undefined);
-  const reminder = activeTransfer && !isResumedConversation
+  const reminder = activeTransfer && normalized.input.messages.length <= 1 && !isHypothetical(text)
     ? "\n\n지금 진행 중인 송금도 안전하게 확인할게요. 누구의 요청으로 보내시는 돈인지 알려주세요."
     : "";
   return {

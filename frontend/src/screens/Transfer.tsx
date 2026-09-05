@@ -27,6 +27,7 @@ import { startGlobalCooldown } from "../shared/cooldown";
 import { hasRecentCall, getRecentCallScriptFlags } from "../shared/callActivity";
 import { extractEmergencyNumbers, formatAiSpeechText, isStructuredAiMessage, ReadableAiMessage } from "../shared/ReadableAiMessage";
 import { maskAccountForFamily } from "../shared/privacyStorage";
+import { resolveSituation, needsDamageResponse, type Situation } from "../../../shared/conversation-state.js";
 
 type EmergencyStage = "review" | "submitting" | "submitted";
 
@@ -236,6 +237,7 @@ export default function Transfer({
 
   // AI 대화 상태
   const [messages, setMessages]   = useState<ChatMessage[]>([]);
+  const situationRef = useRef<Situation>(resolveSituation());
   const [input, setInput]         = useState("");
   const [turnCount, setTurnCount] = useState(0);   // 부모님이 답한 횟수
   const [chatDone, setChatDone]   = useState(false);
@@ -282,6 +284,7 @@ export default function Transfer({
   useEffect(() => { riskLabelsRef.current = riskLabels; }, [riskLabels]);
   useEffect(() => { fraudTypeLabelRef.current = fraudTypeLabel; }, [fraudTypeLabel]);
   const [intentSessionId, setIntentSessionId] = useState<string | null>(null);
+  const intentSessionIdRef = useRef<string | null>(null);
   const [emergencyStage, setEmergencyStage] = useState<EmergencyStage>("review");
   const [emergencyConsent, setEmergencyConsent] = useState(false);
   const [emergencyReceipt, setEmergencyReceipt] = useState("");
@@ -292,7 +295,7 @@ export default function Transfer({
   const [policeReportDone, setPoliceReportDone] = useState(false);
   const [policeDraftOpen, setPoliceDraftOpen] = useState(false);
   const [policeDraftConfirmed, setPoliceDraftConfirmed] = useState(false);
-  const [policeDraft, setPoliceDraft] = useState("오늘 확인되지 않은 상대방의 안내를 받고 송금했습니다. 송금 직후 사기 의심 정황을 확인했으며, 지급정지와 피해 신고를 요청합니다. 상대방 연락처와 대화 기록, 송금확인증을 보관하고 있습니다.");
+  const [policeDraft, setPoliceDraft] = useState("");
   const [safetyConfirmed, setSafetyConfirmed] = useState(false);
   const [bankFollowupConfirmed, setBankFollowupConfirmed] = useState(false);
   const [reliefDocumentOpen, setReliefDocumentOpen] = useState(false);
@@ -392,6 +395,7 @@ export default function Transfer({
     if (!session) return;
 
     setIntentSessionId(session.id);
+    intentSessionIdRef.current = session.id;
     setAccount(session.transfer.account);
     setBank(session.transfer.bank);
     setName(session.transfer.name);
@@ -410,6 +414,7 @@ export default function Transfer({
         })()
       : session.messages;
     setMessages(restoredMessages);
+    situationRef.current = resolveSituation(restoredMessages, session.situation);
     setResumeNotice(true);
     setTurnCount(session.turnCount);
     setRiskLabels(session.riskLabels);
@@ -641,6 +646,8 @@ export default function Transfer({
 
   // ── Handlers ──
   const reset = () => {
+    situationRef.current = resolveSituation();
+    intentSessionIdRef.current = null;
     setStep("input");
     setAccount(""); setBank(""); setName(""); setAmt(""); setBankOpen(false);
     setMessages([]); setInput(""); setTurnCount(0); setChatDone(false);
@@ -663,26 +670,38 @@ export default function Transfer({
 
   const goHome = () => { reset(); onExit(); };
 
-  const saveCurrentIntentChat = () => {
+  const saveCurrentIntentChat = (snapshot: {
+    messages?: ChatMessage[];
+    turnCount?: number;
+    riskLabels?: string[];
+    fraudTypeLabel?: string;
+    fallback?: boolean;
+    analysisDone?: boolean;
+    analysisHold?: boolean;
+    official?: OfficialContent | null;
+    freezeSecsLeft?: number | null;
+  } = {}) => {
     const now = new Date().toISOString();
-    const existing = intentSessionId ? readIntentChatSession(intentSessionId) : null;
+    const existing = intentSessionIdRef.current ? readIntentChatSession(intentSessionIdRef.current) : null;
     const session: IntentChatSession = {
       schemaVersion: 1,
+      situation: situationRef.current,
       id: existing?.id ?? `intent-${Date.now()}`,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
       transfer: { account, bank, name, amount: amt, fromIdx },
-      messages,
-      turnCount,
-      riskLabels,
-      fraudTypeLabel,
-      fallback,
-      analysisDone: chatDone,
-      analysisHold,
-      official,
-      freezeSecsLeft,
+      messages: snapshot.messages ?? messages,
+      turnCount: snapshot.turnCount ?? turnCount,
+      riskLabels: snapshot.riskLabels ?? riskLabels,
+      fraudTypeLabel: snapshot.fraudTypeLabel ?? fraudTypeLabel,
+      fallback: snapshot.fallback ?? fallback,
+      analysisDone: snapshot.analysisDone ?? chatDone,
+      analysisHold: snapshot.analysisHold ?? analysisHold,
+      official: snapshot.official === undefined ? official : snapshot.official,
+      freezeSecsLeft: snapshot.freezeSecsLeft === undefined ? freezeSecsLeft : snapshot.freezeSecsLeft,
     };
     saveIntentChatSession(session);
+    intentSessionIdRef.current = session.id;
     setIntentSessionId(session.id);
     return session;
   };
@@ -702,11 +721,65 @@ export default function Transfer({
     setStep("hold");
   };
 
+  const buildPoliceDraft = () => {
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+    const timeStr = `${now.getHours().toString().padStart(2, "0")}시 ${now.getMinutes().toString().padStart(2, "0")}분경`;
+    const amtNum = parseAmt(amt);
+    const amtStr = amtNum ? `${amtNum.toLocaleString()}원` : "금액 미확인";
+    const bs = behaviorSignalsRef.current;
+    const fraud = fraudTypeLabelRef.current || "보이스피싱";
+    const labels = riskLabelsRef.current;
+    const grade = riskResult;
+
+    const sections: string[] = [];
+
+    sections.push(`신고 일시: ${dateStr} ${timeStr}`);
+    sections.push(`피해 유형: ${fraud} 의심`);
+    sections.push("");
+
+    sections.push("1. 사건 개요");
+    sections.push(`${dateStr} ${timeStr}, 한결은행 모바일뱅킹 앱을 통해 ${bank || "상대 은행"} ${account || "계좌번호 미상"}(예금주: ${name || "미상"}) 계좌로 ${amtStr}을 송금하였습니다.`);
+    sections.push("");
+
+    sections.push("2. 피해 경위");
+    const howParts: string[] = [];
+    if (bs.isOnCall) howParts.push("송금 당시 상대방과 통화 중이었으며, 통화 상대의 지시에 따라 이체를 진행하였습니다.");
+    if (Number(bs.limitIncreased ?? 0) >= 1) howParts.push("송금 직전 이체한도를 상향 조정하였으며, 이는 상대방의 요구에 의한 것으로 보입니다.");
+    if (Number(bs.savingsEarlyClose ?? 0) >= 1) howParts.push(`예·적금 ${Number(bs.savingsEarlyClose)}건을 중도해지한 후 해당 자금을 즉시 이체하였습니다.`);
+    if (howParts.length === 0) howParts.push("상대방의 안내에 따라 송금을 진행하였으며, 송금 직후 사기 의심 정황을 인지하였습니다.");
+    sections.push(howParts.join(" "));
+    sections.push("");
+
+    sections.push("3. AI 위험 분석 결과");
+    if (grade) sections.push(`종합 위험 등급: ${grade.gradeLabel} (${grade.score}점/100점)`);
+    if (labels.length > 0) sections.push(`감지된 위험 신호: ${labels.join(", ")}`);
+    sections.push("");
+
+    sections.push("4. 조치 사항");
+    sections.push("- 한결은행에 해당 계좌 지급정지를 요청하였습니다.");
+    sections.push("- 수취 금융회사로 지급정지 전달을 요청하였습니다.");
+    sections.push("- 피해구제 신청서를 작성하였습니다.");
+    sections.push("");
+
+    sections.push("5. 보관 중인 증거");
+    sections.push("- 송금확인증");
+    sections.push("- AI 대화 분석 기록");
+    if (bs.isOnCall) sections.push("- 통화 기록");
+    sections.push("- 상대방 계좌 정보 및 거래 상세");
+    sections.push("");
+
+    sections.push("본 내용은 한결은행 안심동행 AI가 자동 작성한 신고 초안입니다. 사실과 다른 내용은 직접 수정해 주세요.");
+
+    return sections.join("\n");
+  };
+
   const submitEmergencyResponse = () => {
     if (!emergencyConsent || emergencyStage !== "review") return;
     setEmergencyStage("submitting");
     window.setTimeout(() => {
       setEmergencyReceipt(`HG-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(Date.now()).slice(-6)}`);
+      setPoliceDraft(buildPoliceDraft());
       setEmergencyStage("submitted");
     }, 900);
   };
@@ -814,7 +887,8 @@ export default function Transfer({
         history,
         turn,
         {
-          resumed: intentSessionId !== null,
+          resumed: intentSessionIdRef.current !== null,
+          situation: situationRef.current,
           analysisDone: analysisWasAlreadyDone,
           analysisHold: analysisHoldRef.current,
           fraudTypeLabel: fraudTypeLabelRef.current,
@@ -822,7 +896,8 @@ export default function Transfer({
         },
       );
 
-      setFallback(verdict.fallback);
+      situationRef.current = verdict.situation ?? resolveSituation(history, situationRef.current);
+      setFallback(verdict.fallback || verdict.responseFallback === true);
       if (verdict.risk.labels.length) {
         riskLabelsRef.current = verdict.risk.labels;
         setRiskLabels(verdict.risk.labels);
@@ -838,13 +913,13 @@ export default function Transfer({
       const display: ChatMessage["display"] = middlewareRoute && middlewareRoute !== "RISK" ? "plain" : "structured";
       // 사용자가 직접 피해를 호소한 긴급 신고는 4단계 긴급 대응(지급정지·피해구제) 화면으로
       // 바로 연결하는 버튼을 함께 준다 — 전화만 안내하고 끝내면 다음 행동이 막막해진다.
-      const action = verdict.middleware?.emergency
+      const action = verdict.action ?? (needsDamageResponse(situationRef.current)
         ? "damage_response"
-        : verdict.middleware?.action ?? null;
+        : verdict.middleware?.action ?? null);
       if (action === "cancel_transfer") setCancelRequested(true);
       // 사기 유형이 확정된 바로 이 메시지에 공식 사례·영상을 함께 붙인다. 전역 상태로만
       // 관리하면 계속 대화할 때마다 카드가 맨 아래로 밀려 내려가는 것처럼 보인다.
-      const showOfficial = !officialShownRef.current && verdict.done && verdict.hold && officialContent?.status === "curated";
+      const showOfficial = !needsDamageResponse(situationRef.current) && !officialShownRef.current && verdict.done && verdict.hold && officialContent?.status === "curated";
       if (showOfficial) officialShownRef.current = true;
       const withAiReply: ChatMessage[] = [...history, {
         role: "ai" as const, text: verdict.message, display, action,
@@ -865,6 +940,26 @@ export default function Transfer({
           setFreezeSecsLeft((current) => Math.max(current ?? 0, protectionPolicy.delaySeconds));
           startGlobalCooldown(protectionPolicy.delaySeconds);
         }
+      }
+
+      // 보호 단계와 최종 위험도에 관계없이 채팅 완료 시 저장하고, 완료 후 이어지는
+      // 모든 사용자·AI 대화도 같은 상담 기록에 계속 반영한다.
+      if (verdict.done || analysisWasAlreadyDone) {
+        saveCurrentIntentChat({
+          messages: withAiReply,
+          turnCount: turn,
+          riskLabels: verdict.risk.labels.length ? verdict.risk.labels : riskLabelsRef.current,
+          fraudTypeLabel: suspectedType && !["none", "unknown"].includes(suspectedType.code)
+            ? suspectedType.label
+            : fraudTypeLabelRef.current,
+          fallback: verdict.fallback || verdict.responseFallback === true,
+          analysisDone: true,
+          analysisHold: verdict.done ? verdict.hold : analysisHoldRef.current,
+          official: officialContent ?? official,
+          freezeSecsLeft: !analysisWasAlreadyDone && verdict.hold && protectionPolicy.delaySeconds > 0
+            ? Math.max(freezeSecsLeft ?? 0, protectionPolicy.delaySeconds)
+            : freezeSecsLeft,
+        });
       }
     }
 
@@ -1446,7 +1541,7 @@ export default function Transfer({
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           {/* 송금이 멈춘 상태면 대화 위에 계속 상태를 보여준다 — 냉각 카운트다운이 있으면 남은
               시간을, 카운트다운이 끝났거나(재개된 세션 등) 없으면 정지 상태만 알린다. */}
-          {chatDone && analysisHold && (
+          {chatDone && analysisHold && !needsDamageResponse(situationRef.current) && (
             <div className="shrink-0 rounded-2xl border border-[var(--ac-100)] bg-gradient-to-r from-[var(--ac-50)] via-white to-[var(--ac-50)] px-4 py-3 shadow-sm flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[var(--ac-600)] shadow-sm">
@@ -1477,8 +1572,8 @@ export default function Transfer({
                 <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
                 안심동행 AI 확인
               </div>
-              <p className="mt-2 text-[16px] font-extrabold text-gray-950">안전을 위해 한 번 더 확인할게요</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-gray-600">처음 보내는 계좌에 큰 금액을 보내려고 해요.</p>
+              <p className="mt-2 text-[16px] font-extrabold text-gray-950">{needsDamageResponse(situationRef.current) ? "지금 필요한 피해대응을 도와드릴게요" : "송금 상황을 함께 확인할게요"}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-gray-600">{needsDamageResponse(situationRef.current) ? "말씀하신 피해 상황과 이미 하신 조치를 바탕으로 안내해요." : "송금 목적과 상대방의 요청 내용을 알려주세요."}</p>
             </div>
             {riskLabels.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -1658,7 +1753,14 @@ export default function Transfer({
             </button>
           </div>
           {chatDone && (
-            analysisHold && protectionPolicy.allowFamilyDecision ? (
+            needsDamageResponse(situationRef.current) ? (
+              <div className="flex shrink-0 flex-col gap-2">
+                <button onClick={() => { saveCurrentIntentChat(); setStep("already-sent"); }} className="h-14 w-full rounded-2xl bg-red-600 text-[15px] font-bold text-white">
+                  피해대응 이어가기
+                </button>
+                <button onClick={pauseIntentChat} className="py-2 text-[13px] text-gray-500 underline">상담 저장하고 홈으로 돌아가기</button>
+              </div>
+            ) : analysisHold && protectionPolicy.allowFamilyDecision ? (
               <div className="flex shrink-0 flex-col gap-3 rounded-2xl border border-[var(--ac-100)] bg-[var(--ac-50)] p-4">
                 <button
                   onClick={requestFamilyConfirmation}
@@ -1677,7 +1779,10 @@ export default function Transfer({
               /* 냉각이 남아 있으면 대화가 끝나도 보낼 수 없다 — 정지는 대화 결과로 우회되지 않는다 */
               <div className="flex shrink-0 flex-col gap-2">
                 <button
-                  onClick={() => setStep("success")}
+                  onClick={() => {
+                    if (analysisHold) saveCurrentIntentChat();
+                    setStep("success");
+                  }}
                   disabled={freezeSecsLeft !== null && freezeSecsLeft > 0}
                   className="h-14 w-full rounded-2xl bg-[var(--ac-500)] text-[15px] font-bold text-white active:scale-[0.98] transition-transform disabled:bg-gray-200 disabled:text-gray-400"
                 >
@@ -1686,7 +1791,7 @@ export default function Transfer({
                     : analysisHold ? "위험을 확인했고 송금 계속하기" : "송금 계속하기"}
                 </button>
                 {analysisHold && (
-                  <button onClick={goHome} className="py-2 text-[13px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4">
+                  <button onClick={pauseIntentChat} className="py-2 text-[13px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4">
                     송금 취소하고 홈으로 돌아가기
                   </button>
                 )}
@@ -1858,55 +1963,67 @@ export default function Transfer({
       {/* ── 골든타임 ── */}
       {step === "already-sent" && (
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl bg-gradient-to-br from-red-700 via-red-600 to-orange-500 p-5 text-white shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">Lv.3 긴급 대응 에이전트</span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black text-red-600">DEMO</span>
-            </div>
-            <p className="mt-3 text-[21px] font-bold">피해 대응을 바로 시작할게요</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-red-100">거래정보를 확인하고 한 번 승인하면 지급정지 요청과 피해구제 서류를 자동으로 준비해요.</p>
-          </div>
-
           {emergencyStage !== "submitted" && (
-            <div className="rounded-2xl bg-white p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[14px] font-bold text-gray-900">1. 피해 거래 확인</p>
-                  <p className="mt-1 text-[11px] text-gray-400">현재 송금 화면에서 자동으로 불러온 정보예요.</p>
+            <div className="overflow-hidden rounded-[28px] shadow-sm">
+              <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 px-5 pt-5 pb-4 text-white">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">Lv.3 긴급 대응 에이전트</span>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black text-red-600">DEMO</span>
                 </div>
-                <span className="rounded-full bg-green-50 px-2 py-1 text-[9px] font-bold text-green-700">자동 입력</span>
+                <p className="mt-3 text-[20px] font-bold">피해 대응을 바로 시작할게요</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-red-100">거래정보를 확인하고 한 번 승인하면 지급정지 요청과 피해구제 서류를 자동으로 준비해요.</p>
               </div>
-              <div className="mt-4 rounded-xl bg-gray-50 p-4 text-[12px]">
-                {[
-                  ["수취 계좌", account || "확인 필요"],
-                  ["수취 은행", bank || "확인 필요"],
-                  ["송금 금액", amt ? `${amt}원` : "확인 필요"],
-                  ["송금 시각", time],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 last:border-0">
-                    <span className="text-gray-400">{label}</span>
-                    <span className={`truncate text-right font-semibold ${label === "송금 금액" ? "text-red-600" : "text-gray-800"}`}>{value}</span>
+              <div className="border border-t-0 border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-5 pb-5 pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+                    <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
                   </div>
-                ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                        <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                        피해 거래 확인
+                      </div>
+                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-bold text-green-700 shadow-sm">자동 입력</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-gray-500">현재 송금 화면에서 자동으로 불러온 정보예요.</p>
+                  </div>
+                </div>
+                <div className="mt-3 rounded-2xl bg-white p-3.5 shadow-sm text-[12px]">
+                  {[
+                    ["수취 계좌", account || "확인 필요"],
+                    ["수취 은행", bank || "확인 필요"],
+                    ["송금 금액", amt ? `${amt}원` : "확인 필요"],
+                    ["송금 시각", time],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 last:border-0">
+                      <span className="text-gray-400">{label}</span>
+                      <span className={`truncate text-right font-semibold ${label === "송금 금액" ? "text-red-600" : "text-gray-800"}`}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+                {(!account || !bank || !amt) && (
+                  <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">확인되지 않은 정보는 실제 접수 전에 부모님이 직접 입력해야 해요.</p>
+                )}
               </div>
-              {(!account || !bank || !amt) && (
-                <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">확인되지 않은 정보는 실제 접수 전에 부모님이 직접 입력해야 해요.</p>
-              )}
             </div>
           )}
 
           {emergencyStage === "review" && (
-            <div className="rounded-2xl bg-white p-5">
-              <p className="text-[14px] font-bold text-gray-900">2. 긴급 접수로 진행되는 일</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-gray-400">본인인증 후 아래 절차를 한 번에 시작해요.</p>
+            <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-5 shadow-sm">
+              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                긴급 접수 절차
+              </div>
+              <p className="text-[11px] leading-relaxed text-gray-500">본인인증 후 아래 절차를 한 번에 시작해요.</p>
               <div className="mt-4 flex flex-col gap-3">
                 {[
                   ["지급정지 요청", "한결은행에 접수하고 수취 금융회사로 전달을 요청해요."],
                   ["경찰 신고 초안 작성", "송금정보·위험 신호·대화 근거를 사건 순서로 정리해요."],
                   ["피해구제 신청서 작성", "은행 제출용 신청정보와 필요한 증거 목록을 정리해요."],
                 ].map(([title, description], index) => (
-                  <div key={title} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-600 text-[11px] font-bold text-white">{index + 1}</span>
+                  <div key={title} className="flex items-start gap-3 rounded-2xl border border-[var(--ac-100)] bg-white px-3.5 py-3 shadow-sm">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-600 text-[12px] font-bold text-white shadow-sm">{index + 1}</span>
                     <span>
                       <span className="block text-[12px] font-bold text-gray-900">{title}</span>
                       <span className="mt-0.5 block text-[11px] leading-relaxed text-gray-500">{description}</span>
@@ -1918,7 +2035,7 @@ export default function Transfer({
               <button
                 type="button"
                 onClick={() => setEmergencyConsent((value) => !value)}
-                className={`mt-4 flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${emergencyConsent ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-gray-200 bg-white"}`}
+                className={`mt-4 flex w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition-all ${emergencyConsent ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-[var(--ac-100)] bg-white"}`}
               >
                 <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${emergencyConsent ? "border-[var(--ac-500)] bg-[var(--ac-500)]" : "border-gray-300"}`}>
                   {emergencyConsent && <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5"><path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -1933,7 +2050,7 @@ export default function Transfer({
                 type="button"
                 disabled={!emergencyConsent}
                 onClick={() => setEmergencyAuthOpen(true)}
-                className="mt-3 h-14 w-full rounded-xl bg-red-600 text-[15px] font-bold text-white transition-all active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400"
+                className="mt-3 h-14 w-full rounded-2xl bg-red-600 text-[15px] font-bold text-white transition-all active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400"
               >
                 본인인증 후 긴급 접수하기
               </button>
@@ -1942,7 +2059,7 @@ export default function Transfer({
           )}
 
           {emergencyStage === "submitting" && (
-            <div className="rounded-2xl bg-white p-6 text-center">
+            <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-6 text-center shadow-sm">
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
                 <span className="h-7 w-7 animate-spin rounded-full border-3 border-red-100 border-t-red-600" />
               </span>
@@ -1950,7 +2067,7 @@ export default function Transfer({
               <p className="mt-1 text-[12px] text-gray-500">지급정지 요청과 신고·피해구제 자료를 함께 준비 중이에요.</p>
               <div className="mt-5 flex flex-col gap-2 text-left">
                 {["피해 거래 확인 완료", "지급정지 요청서 생성 중", "신고·피해구제 자료 정리 중"].map((label, index) => (
-                  <div key={label} className="flex items-center gap-2.5 rounded-xl bg-gray-50 px-3 py-2.5">
+                  <div key={label} className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 shadow-sm">
                     <span className={`h-2 w-2 rounded-full ${index === 0 ? "bg-green-500" : "animate-pulse bg-red-400"}`} />
                     <span className="text-[11px] font-medium text-gray-600">{label}</span>
                   </div>
@@ -2020,61 +2137,77 @@ export default function Transfer({
 
           {emergencyStage === "submitted" && completedEmergencyFollowups < 5 && (
             <div className="flex flex-col gap-3">
-              <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500">
-                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5"><path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[16px] font-bold text-green-800">긴급 대응 가상 접수 완료</p>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-black text-red-600">DEMO</span>
-                    </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-green-700">실서비스에서는 기관의 접수 응답을 받은 뒤에만 접수 완료로 표시해요.</p>
+              {/* 긴급 대응 + 접수 완료 통합 카드 */}
+              <div className="overflow-hidden rounded-[28px] shadow-sm">
+                <div className="bg-gradient-to-br from-red-700 via-red-600 to-orange-500 px-5 pt-5 pb-4 text-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">Lv.3 긴급 대응 에이전트</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black text-red-600">DEMO</span>
                   </div>
+                  <p className="mt-3 text-[20px] font-bold">긴급 접수가 완료됐어요</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-red-100">지급정지 요청과 피해구제 서류가 자동으로 준비됐어요. 아래 후속 절차를 진행해 주세요.</p>
                 </div>
-                <div className="mt-4 rounded-xl bg-white/80 px-4 py-3">
-                  <div className="flex justify-between gap-3 text-[11px]"><span className="text-gray-400">가상 접수번호</span><span className="font-bold text-gray-800">{emergencyReceipt}</span></div>
-                  <div className="mt-2 flex justify-between gap-3 text-[11px]"><span className="text-gray-400">접수 시각</span><span className="font-semibold text-gray-700">{nowTime()}</span></div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-white p-5">
-                <p className="text-[14px] font-bold text-gray-900">처리 현황</p>
-                <div className="mt-4 flex flex-col">
-                  {[
-                    ["한결은행 지급정지 요청", "가상 접수 완료", "complete"],
-                    ["수취 금융회사 전달", "기관 확인 대기", "pending"],
-                    ["경찰 신고서 초안", "작성 완료", "complete"],
-                    ["피해구제 신청서", reliefSigned ? "가상 서명 완료" : "전자서명 대기", reliefSigned ? "complete" : "pending"],
-                  ].map(([title, status, state], index, items) => (
-                    <div key={title} className="relative flex gap-3 pb-4 last:pb-0">
-                      {index < items.length - 1 && <span className="absolute left-[11px] top-6 h-[calc(100%-12px)] w-px bg-gray-200" />}
-                      <span className={`relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${state === "complete" ? "bg-green-500" : "bg-amber-100"}`}>
-                        {state === "complete" ? <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5"><path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg> : <span className="h-2 w-2 rounded-full bg-amber-500" />}
-                      </span>
-                      <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                        <span className="text-[12px] font-semibold text-gray-800">{title}</span>
-                        <span className={`shrink-0 text-[10px] font-bold ${state === "complete" ? "text-green-600" : "text-amber-600"}`}>{status}</span>
+                <div className="border border-t-0 border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white px-5 pb-5 pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+                      <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700 shadow-sm">
+                        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        가상 접수 완료
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-white p-3.5 shadow-sm">
+                    <div className="flex justify-between gap-3 text-[11px]"><span className="text-gray-400">가상 접수번호</span><span className="font-bold text-gray-800">{emergencyReceipt}</span></div>
+                    <div className="mt-2 flex justify-between gap-3 text-[11px]"><span className="text-gray-400">접수 시각</span><span className="font-semibold text-gray-700">{nowTime()}</span></div>
+                  </div>
+
+                  <div className="mt-4 border-t border-[var(--ac-100)] pt-4">
+                    <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                      <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                      처리 현황
+                    </div>
+                    <div className="flex flex-col">
+                      {([
+                        ["한결은행 지급정지 요청", "가상 접수 완료", "complete"],
+                        ["수취 금융회사 전달", "기관 확인 대기", "pending"],
+                        ["경찰 신고서 초안", "작성 완료", "complete"],
+                        ["피해구제 신청서", reliefSigned ? "가상 서명 완료" : "전자서명 대기", reliefSigned ? "complete" : "pending"],
+                      ] as const).map(([title, status, state], index, items) => (
+                        <div key={title} className="relative flex gap-3 pb-4 last:pb-0">
+                          {index < items.length - 1 && <span className="absolute left-[11px] top-6 h-[calc(100%-12px)] w-px bg-[var(--ac-100)]" />}
+                          <span className={`relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${state === "complete" ? "bg-[var(--ac-500)]" : "bg-amber-100"}`}>
+                            {state === "complete" ? <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5"><path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg> : <span className="h-2 w-2 rounded-full bg-amber-500" />}
+                          </span>
+                          <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                            <span className="text-[12px] font-semibold text-gray-800">{title}</span>
+                            <span className={`shrink-0 text-[10px] font-bold ${state === "complete" ? "text-[var(--ac-700)]" : "text-amber-600"}`}>{status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[15px] font-bold text-gray-900">다음 절차를 진행해 주세요</p>
-                    <p className="mt-1 text-[11px] text-gray-400">접수에 이어 필요한 절차를 순서대로 확인해 주세요.</p>
+              {/* 다음 절차 안내 */}
+              <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-5 shadow-sm">
+                <div className="mb-1 flex items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                    안심동행 AI 안내
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${completedEmergencyFollowups === 5 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>{completedEmergencyFollowups}/5 완료</span>
+                  <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold shadow-sm ${completedEmergencyFollowups === 5 ? "bg-green-50 text-green-700" : "bg-white text-[var(--ac-700)]"}`}>{completedEmergencyFollowups}/5 완료</span>
                 </div>
+                <p className="mb-4 text-[12px] text-gray-500">접수에 이어 필요한 절차를 순서대로 확인해 주세요.</p>
 
-                <div className="mt-4 flex flex-col gap-3">
-                  <div className={`rounded-xl border p-4 ${reliefSigned ? "border-green-200 bg-green-50" : "border-red-100 bg-red-50/60"}`}>
+                <div className="flex flex-col gap-3">
+                  {/* 1. 피해구제 신청서 전자서명 */}
+                  <div className={`rounded-2xl border p-4 ${reliefSigned ? "border-green-200 bg-green-50" : "border-red-200 bg-gradient-to-br from-red-50 to-white"}`}>
                     <div className="flex items-start gap-3">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${reliefSigned ? "bg-green-500" : "bg-red-600"}`}>{reliefSigned ? "✓" : "1"}</span>
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white shadow-sm ${reliefSigned ? "bg-green-500" : "bg-red-600"}`}>{reliefSigned ? "✓" : "1"}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-[13px] font-bold text-gray-900">피해구제 신청서 전자서명</p>
@@ -2085,7 +2218,7 @@ export default function Transfer({
                           type="button"
                           disabled={reliefSigned}
                           onClick={() => setReliefDocumentOpen(true)}
-                          className="mt-3 rounded-lg bg-red-600 px-3 py-2 text-[11px] font-bold text-white transition-all active:scale-[0.98] disabled:bg-green-500"
+                          className="mt-3 rounded-xl bg-red-600 px-4 py-2.5 text-[11px] font-bold text-white transition-all active:scale-[0.98] disabled:bg-green-500"
                         >
                           {reliefSigned ? "가상 전자서명 완료" : "신청서 PDF 확인하고 전자서명"}
                         </button>
@@ -2093,9 +2226,10 @@ export default function Transfer({
                     </div>
                   </div>
 
-                  <div className={`rounded-xl border p-4 ${policeReportDone ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50"}`}>
+                  {/* 2. 112 피해 신고 */}
+                  <div className={`rounded-2xl border p-4 ${policeReportDone ? "border-green-200 bg-green-50" : "border-[var(--ac-100)] bg-white"}`}>
                     <div className="flex items-start gap-3">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${policeReportDone ? "bg-green-500" : "bg-gray-800"}`}>{policeReportDone ? "✓" : "2"}</span>
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white shadow-sm ${policeReportDone ? "bg-green-500" : "bg-[var(--ac-500)]"}`}>{policeReportDone ? "✓" : "2"}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-[13px] font-bold text-gray-900">112에 피해 신고 접수</p>
@@ -2103,29 +2237,30 @@ export default function Transfer({
                         </div>
                         <p className="mt-1 text-[11px] leading-relaxed text-gray-500">에이전트가 작성한 신고 초안을 먼저 확인하고, 틀린 내용은 직접 수정해 주세요.</p>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => setPoliceDraftOpen(true)} className="rounded-lg bg-gray-900 px-3 py-2 text-[11px] font-bold text-white active:scale-[0.98] transition-transform">
+                          <button type="button" onClick={() => setPoliceDraftOpen(true)} className="rounded-xl bg-[var(--ac-500)] px-4 py-2.5 text-[11px] font-bold text-white active:scale-[0.98] transition-transform">
                             {policeDraftConfirmed ? "신고 초안 다시 보기" : "신고 초안 확인하기"}
                           </button>
                           {policeDraftConfirmed && !policeReportDone && (
-                            <a href="tel:112" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[11px] font-bold text-white active:scale-[0.98] transition-transform">
+                            <a href="tel:112" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-[11px] font-bold text-white active:scale-[0.98] transition-transform">
                               <svg viewBox="0 0 24 24" fill="white" className="h-3.5 w-3.5"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" /></svg>
                               112 전화 연결
                             </a>
                           )}
                           {policeDraftConfirmed && (
-                            <button type="button" disabled={policeReportDone} onClick={() => setPoliceReportDone(true)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 active:scale-[0.98] disabled:border-green-200 disabled:text-green-700">
+                            <button type="button" disabled={policeReportDone} onClick={() => setPoliceReportDone(true)} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-[11px] font-bold text-gray-700 active:scale-[0.98] disabled:border-green-200 disabled:text-green-700">
                               {policeReportDone ? "신고 접수 완료" : "접수 완료"}
                             </button>
                           )}
                         </div>
-                        {policeDraftConfirmed && !policeReportDone && <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-[10px] font-medium leading-relaxed text-blue-700">초안 확인이 끝났어요. 112 연결 후 상담원의 응답을 기다리고, 신고 내용을 전달해 주세요.</p>}
+                        {policeDraftConfirmed && !policeReportDone && <p className="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-[10px] font-medium leading-relaxed text-blue-700">초안 확인이 끝났어요. 112 연결 후 상담원의 응답을 기다리고, 신고 내용을 전달해 주세요.</p>}
                       </div>
                     </div>
                   </div>
 
-                  <div className={`rounded-xl border p-4 ${evidenceSaved ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50"}`}>
+                  {/* 3. 증거 보관 */}
+                  <div className={`rounded-2xl border p-4 ${evidenceSaved ? "border-green-200 bg-green-50" : "border-[var(--ac-100)] bg-white"}`}>
                     <div className="flex items-start gap-3">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${evidenceSaved ? "bg-green-500" : "bg-gray-400"}`}>{evidenceSaved ? "✓" : "3"}</span>
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white shadow-sm ${evidenceSaved ? "bg-green-500" : "bg-gray-400"}`}>{evidenceSaved ? "✓" : "3"}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-bold text-gray-900">증거를 삭제하지 말고 보관</p>
                         <p className="mt-1 text-[11px] leading-relaxed text-gray-500">문자·메신저·통화기록·상대 번호·송금확인증을 삭제하지 마세요. 에이전트가 현재 자료 목록을 묶어둘게요.</p>
@@ -2133,7 +2268,7 @@ export default function Transfer({
                           type="button"
                           disabled={evidenceSaved}
                           onClick={() => setEvidenceSaved(true)}
-                          className="mt-3 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 transition-all active:scale-[0.98] disabled:border-green-200 disabled:text-green-700"
+                          className="mt-3 rounded-xl border border-[var(--ac-200)] bg-white px-4 py-2.5 text-[11px] font-bold text-[var(--ac-700)] transition-all active:scale-[0.98] disabled:border-green-200 disabled:bg-green-50 disabled:text-green-700"
                         >
                           {evidenceSaved ? "증거 목록 보관 완료" : "증거 목록 보관하기"}
                         </button>
@@ -2141,32 +2276,38 @@ export default function Transfer({
                     </div>
                   </div>
 
-                  <div className={`flex items-start gap-3 rounded-xl border p-4 ${safetyConfirmed ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-black text-white ${safetyConfirmed ? "bg-green-500" : "bg-amber-500"}`}>{safetyConfirmed ? "✓" : "4"}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className={`text-[13px] font-bold ${safetyConfirmed ? "text-gray-900" : "text-amber-900"}`}>추가 송금·앱 설치·원격제어 금지</p>
-                        {safetyConfirmed && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-green-700">확인 완료</span>}
+                  {/* 4. 추가 피해 방지 */}
+                  <div className={`rounded-2xl border p-4 ${safetyConfirmed ? "border-green-200 bg-green-50" : "border-amber-200 bg-gradient-to-br from-amber-50 to-white"}`}>
+                    <div className="flex items-start gap-3">
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[12px] font-black text-white shadow-sm ${safetyConfirmed ? "bg-green-500" : "bg-amber-500"}`}>{safetyConfirmed ? "✓" : "4"}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className={`text-[13px] font-bold ${safetyConfirmed ? "text-gray-900" : "text-amber-900"}`}>추가 송금·앱 설치·원격제어 금지</p>
+                          {safetyConfirmed && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-green-700">확인 완료</span>}
+                        </div>
+                        <p className="mt-1 text-[11px] leading-relaxed text-amber-800">피해금 반환이나 수사 협조를 이유로 돈을 더 보내거나 앱을 설치하라는 연락에는 응하지 마세요.</p>
+                        <button type="button" disabled={safetyConfirmed} onClick={() => setSafetyConfirmed(true)} className="mt-3 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-[11px] font-bold text-amber-800 active:scale-[0.98] disabled:border-green-200 disabled:bg-green-50 disabled:text-green-700">
+                          {safetyConfirmed ? "주의사항 확인 완료" : "주의사항 확인했어요"}
+                        </button>
                       </div>
-                      <p className="mt-1 text-[11px] leading-relaxed text-amber-800">피해금 반환이나 수사 협조를 이유로 돈을 더 보내거나 앱을 설치하라는 연락에는 응하지 마세요.</p>
-                      <button type="button" disabled={safetyConfirmed} onClick={() => setSafetyConfirmed(true)} className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2 text-[11px] font-bold text-amber-800 active:scale-[0.98] disabled:border-green-200 disabled:text-green-700">
-                        {safetyConfirmed ? "주의사항 확인 완료" : "주의사항 확인했어요"}
-                      </button>
                     </div>
                   </div>
-                </div>
 
-                <div className={`mt-4 flex items-start gap-3 rounded-xl border px-4 py-3 ${bankFollowupConfirmed ? "border-green-200 bg-green-50" : "border-blue-100 bg-blue-50"}`}>
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${bankFollowupConfirmed ? "bg-green-500" : "bg-blue-600"}`}>{bankFollowupConfirmed ? "✓" : "5"}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className={`text-[11px] font-bold ${bankFollowupConfirmed ? "text-gray-900" : "text-blue-800"}`}>은행 연락을 확인해 주세요</p>
-                      {bankFollowupConfirmed && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-green-700">확인 완료</span>}
+                  {/* 5. 은행 후속 연락 */}
+                  <div className={`rounded-2xl border p-4 ${bankFollowupConfirmed ? "border-green-200 bg-green-50" : "border-blue-100 bg-gradient-to-br from-blue-50 to-white"}`}>
+                    <div className="flex items-start gap-3">
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold text-white shadow-sm ${bankFollowupConfirmed ? "bg-green-500" : "bg-blue-600"}`}>{bankFollowupConfirmed ? "✓" : "5"}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className={`text-[13px] font-bold ${bankFollowupConfirmed ? "text-gray-900" : "text-blue-800"}`}>은행 연락을 확인해 주세요</p>
+                          {bankFollowupConfirmed && <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-green-700">확인 완료</span>}
+                        </div>
+                        <p className={`mt-1 text-[11px] leading-relaxed ${bankFollowupConfirmed ? "text-gray-600" : "text-blue-700"}`}>지급정지 처리 결과나 추가 서류 요청은 은행 앱 알림 또는 공식 대표번호로 확인하세요. 접수만으로 피해금 회수가 보장되지는 않아요.</p>
+                        <button type="button" disabled={bankFollowupConfirmed} onClick={() => setBankFollowupConfirmed(true)} className="mt-3 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-[11px] font-bold text-blue-700 active:scale-[0.98] disabled:border-green-200 disabled:bg-green-50 disabled:text-green-700">
+                          {bankFollowupConfirmed ? "은행 연락 확인 완료" : "은행 연락 확인했어요"}
+                        </button>
+                      </div>
                     </div>
-                    <p className={`mt-1 text-[10px] leading-relaxed ${bankFollowupConfirmed ? "text-gray-600" : "text-blue-700"}`}>지급정지 처리 결과나 추가 서류 요청은 은행 앱 알림 또는 공식 대표번호로 확인하세요. 접수만으로 피해금 회수가 보장되지는 않아요.</p>
-                    <button type="button" disabled={bankFollowupConfirmed} onClick={() => setBankFollowupConfirmed(true)} className="mt-3 rounded-lg border border-blue-200 bg-white px-3 py-2 text-[11px] font-bold text-blue-700 active:scale-[0.98] disabled:border-green-200 disabled:text-green-700">
-                      {bankFollowupConfirmed ? "은행 연락 확인 완료" : "은행 연락 확인했어요"}
-                    </button>
                   </div>
                 </div>
               </div>
@@ -2207,8 +2348,8 @@ export default function Transfer({
                     id="police-draft"
                     value={policeDraft}
                     onChange={(event) => setPoliceDraft(event.target.value)}
-                    rows={8}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-[12px] leading-relaxed text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    rows={16}
+                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-[12px] leading-[1.8] text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
                 <p className="mt-3 text-[10px] leading-relaxed text-amber-700">확인 완료는 실제 112 신고 접수가 아닙니다. 다음 단계에서 112 상담원에게 내용을 전달해야 해요.</p>

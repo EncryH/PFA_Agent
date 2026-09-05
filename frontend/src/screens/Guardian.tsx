@@ -414,18 +414,23 @@ export default function Guardian({
 
       {step === "intro" && isPaired && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-5 shadow-sm">
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)]/30 to-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[18px] font-bold text-gray-900">안심동행 AI</p>
-                <p className="mt-2 text-[14px] leading-relaxed text-gray-600">
-                  {appRole === "parent" ? "딸 김지혜님과 연결되어 있어요." : "어머니 김영순님과 연결되어 있어요."}
-                </p>
-                <p className="mt-1 text-[13px] font-semibold text-gray-900">
-                  현재 가족 보호: {protection.name}
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+                  <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <p className="text-[17px] font-bold text-gray-900">안심동행 AI</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-gray-600">
+                    {appRole === "parent" ? "딸 김지혜님과 연결되어 있어요." : "어머니 김영순님과 연결되어 있어요."}
+                  </p>
+                  <p className="mt-0.5 text-[12px] font-semibold text-gray-900">
+                    현재 가족 보호: {protection.name}
+                  </p>
+                </div>
               </div>
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--ac-50)] px-3 py-1.5 text-[12px] font-semibold text-[var(--ac-600)]">
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-[var(--ac-600)] shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />연결됨
               </span>
             </div>
@@ -433,7 +438,7 @@ export default function Guardian({
             <button
               type="button"
               onClick={() => setShowPairDetails((current) => !current)}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 py-3 text-[13px] font-bold text-gray-700 active:scale-[0.98] transition-all"
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-[14px] border border-[var(--ac-100)] bg-white py-3 text-[13px] font-bold text-gray-700 active:scale-[0.98] transition-all"
             >
               {showPairDetails ? "자세히 접기" : "자세히 보기"}
               <svg viewBox="0 0 24 24" fill="none" className={`h-4 w-4 transition-transform ${showPairDetails ? "rotate-180" : ""}`}>
@@ -674,10 +679,13 @@ export default function Guardian({
           )}
 
           {appRole === "parent" && intentChats.length > 0 && (
-            <div className="bg-white rounded-2xl p-5">
+            <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)]/30 to-white p-5 shadow-sm">
               <div className="mb-3">
-                <p className="text-[14px] font-bold text-gray-900">AI 상담 기록</p>
-                <p className="mt-1 text-[11px] text-gray-400">보류한 송금 상담을 눌러서 이어갈 수 있어요.</p>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  AI 상담 기록
+                </div>
+                <p className="mt-2 text-[11px] text-gray-400">완료된 송금 상담과 판단 근거를 다시 확인할 수 있어요.</p>
               </div>
               <div className="flex flex-col gap-2">
                 {intentChats.map((chat) => (
@@ -699,14 +707,18 @@ export default function Guardian({
                           <p className="truncate text-[13px] font-bold text-gray-900">
                             {chat.fraudTypeLabel || "위험 송금 상담"}
                           </p>
-                          <span className="mr-7 shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-0.5 text-[10px] font-bold text-[var(--ac-700)]">송금 보류</span>
+                          <span className="mr-7 shrink-0 rounded-full bg-[var(--ac-50)] px-2 py-0.5 text-[10px] font-bold text-[var(--ac-700)]">
+                            {chat.analysisHold ? "송금 보류" : "상담 완료"}
+                          </span>
                         </div>
                         <p className="mt-1 truncate text-[12px] text-gray-500">
                           {chat.transfer.name || "받는 분"} · {Number(chat.transfer.amount.replace(/,/g, "")).toLocaleString()}원
                         </p>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <p className="truncate text-[11px] text-gray-400">{chat.riskLabels.slice(0, 2).join(" · ")}</p>
-                          <span className="shrink-0 text-[11px] font-semibold text-[var(--ac-500)] group-hover:translate-x-0.5 transition-transform">이어서 대화하기 ›</span>
+                          <span className="shrink-0 text-[11px] font-semibold text-[var(--ac-500)] group-hover:translate-x-0.5 transition-transform">
+                            {chat.analysisDone ? "상담 기록 보기 ›" : "이어서 대화하기 ›"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -741,11 +753,11 @@ export default function Guardian({
             </div>
           )}
 
-          <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-4 shadow-sm">
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)]/30 to-white p-4 shadow-sm">
             <button
               type="button"
               onClick={() => setShowManageMenu((current) => !current)}
-              className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-left active:scale-[0.98] transition-all"
+              className="flex w-full items-center justify-between rounded-[14px] border border-[var(--ac-100)] bg-white px-4 py-3.5 text-left active:scale-[0.98] transition-all"
             >
               <span className="text-[14px] font-bold text-gray-900">관리 메뉴</span>
               <svg viewBox="0 0 24 24" fill="none" className={`h-5 w-5 text-gray-400 transition-transform ${showManageMenu ? "rotate-180" : ""}`}>
@@ -779,7 +791,7 @@ export default function Guardian({
             <button
               type="button"
               onClick={onEmergency}
-              className="group flex w-full items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-left shadow-sm transition-all hover:border-red-200 hover:bg-red-100/70 active:scale-[0.98]"
+              className="group flex w-full items-center gap-3 rounded-[22px] border border-red-100 bg-gradient-to-br from-red-50 to-white p-4 text-left shadow-sm transition-all hover:border-red-200 hover:bg-red-100/70 active:scale-[0.98]"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-sm shadow-red-200">
                 <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
@@ -801,20 +813,30 @@ export default function Guardian({
 
       {step === "permissions" && isPaired && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-2xl bg-white p-5">
-            <p className="text-[16px] font-bold text-gray-900">가족 보호 범위를 선택해 주세요</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
-              {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "가족 보호 범위는 부모님만 변경할 수 있어요."}
-            </p>
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)] to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+                <img src="/ansim-ai-profile.png" alt="안심동행 AI" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <p className="text-[16px] font-bold text-gray-900">가족 보호 범위를 선택해 주세요</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-gray-500">
+                  {appRole === "parent" ? "부모님이 직접 선택하고 언제든 변경할 수 있어요." : "가족 보호 범위는 부모님만 변경할 수 있어요."}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-5 shadow-sm">
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)]/30 to-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[15px] font-bold text-gray-900">연결된 가족 보호자</p>
-                <p className="mt-1 text-[11px] text-gray-500">본인을 제외하고 최대 3명까지 함께 확인할 수 있어요.</p>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  연결된 가족 보호자
+                </div>
+                <p className="mt-2 text-[11px] text-gray-500">본인을 제외하고 최대 3명까지 함께 확인할 수 있어요.</p>
               </div>
-              <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">{1 + additionalGuardians.length}/3명</span>
+              <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)] shadow-sm">{1 + additionalGuardians.length}/3명</span>
             </div>
 
             <div className="mt-4 flex flex-col gap-2">
@@ -852,15 +874,18 @@ export default function Guardian({
             )}
           </div>
 
-          <div className="rounded-2xl border border-[var(--ac-100)] bg-white p-5 shadow-sm">
+          <div className="rounded-[28px] border border-[var(--ac-100)] bg-gradient-to-br from-white via-[var(--ac-50)]/30 to-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[15px] font-bold text-gray-900">AI 확인 시작 금액</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--ac-700)] shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-[var(--ac-500)]" />
+                  AI 확인 시작 금액
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
                   이 금액 이상 송금할 때만 AI가 송금 이유를 한 번 더 확인해요.
                 </p>
               </div>
-              <span className="shrink-0 rounded-full bg-[var(--ac-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)]">
+              <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-[var(--ac-700)] shadow-sm">
                 현재 {aiReviewThreshold.toLocaleString()}원
               </span>
             </div>
@@ -923,7 +948,7 @@ export default function Guardian({
               return (
                 <div
                   key={item.level}
-                  className={`overflow-hidden rounded-2xl border transition-all duration-200 ${active ? "border-[var(--ac-300)] bg-[var(--ac-50)]" : "border-gray-100 bg-white"} ${expanded ? "shadow-sm" : ""}`}
+                  className={`overflow-hidden rounded-[22px] border transition-all duration-200 ${active ? "border-[var(--ac-300)] bg-gradient-to-br from-[var(--ac-50)] to-white" : "border-gray-100 bg-white"} ${expanded ? "shadow-sm" : ""}`}
                 >
                   <button
                     type="button"
@@ -980,8 +1005,8 @@ export default function Guardian({
             })}
           </div>
 
-          <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
-            <p className="text-[11px] leading-relaxed text-green-800">어떤 보호 범위를 선택해도 자녀에게 잔액과 전체 거래내역은 공개되지 않으며, 최종 결정권은 부모님에게 있어요.</p>
+          <div className="rounded-[22px] border border-[var(--ac-100)] bg-[var(--ac-50)]/50 px-4 py-3">
+            <p className="text-[11px] leading-relaxed text-[var(--ac-800)]">어떤 보호 범위를 선택해도 자녀에게 잔액과 전체 거래내역은 공개되지 않으며, 최종 결정권은 부모님에게 있어요.</p>
           </div>
 
           {/* 변경 재확인 — 보호 강도가 바뀌면 위험 판정 결과가 달라지므로 한 번 더 묻는다 */}
