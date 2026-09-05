@@ -70,11 +70,15 @@ test("피해 상태와 모순되는 안내를 거부하고 한 가지 행동만 
   assert.equal(validateUserResponse(text, "damage", plan), text);
 });
 
-test("피해 후속 질문도 상태를 유지해 전체 분석 경로로 전달한다", async () => {
+test("피해 후 개념 질문은 상황을 보존하되 새 위험 분석 없이 설명한다", async () => {
   const state = resolveSituation([user("돈을 이미 보냈어요")]);
-  const routed = await routeIntentRequest({messages:[user("지급정지가 뭐예요?")], conversationState:{situation:state}});
-  assert.equal(routed.handled, false);
-  assert.equal(routed.middleware.emergency, true);
+  let context;
+  const routed = await routeIntentRequest({messages:[user("지급정지가 뭐예요?")], conversationState:{situation:state}}, {
+    generalChat:async (_text,_key,c) => {context=c;return {message:"지급정지는 계좌의 돈을 더 인출하지 못하도록 제한하는 조치예요.",fallback:false};},
+  });
+  assert.equal(routed.handled, true);
+  assert.equal(routed.response.middleware.action, "damage_response");
+  assert.equal(context.responsePlan.situation.facts.transfer.status, "yes");
 });
 
 test("LLM 장애에서도 이미 송금한 사실과 피해대응 연결을 보존한다", async () => {

@@ -37,7 +37,7 @@ export function staticMessage(text, activeTransfer) {
     : "도움이 되었다니 다행이에요.";
 
   if (!activeTransfer) return `${opening}\n\n무엇을 도와드릴까요?`;
-  return `${opening}\n\n송금을 안전하게 확인하고 있어요. 이 돈은 누가 보내 달라고 했나요?`;
+  return `${opening}\n\n송금하면서 궁금하거나 걱정되는 점을 말씀해 주세요.`;
 }
 
 export function howToUseMessage(activeTransfer) {
@@ -58,4 +58,3 @@ export function blockedMessage(activeTransfer) {
   if (!activeTransfer) return `${base}\n\n금융 안전과 관련된 질문을 말씀해 주세요.`;
   return `${base}\n\n송금 확인은 계속할게요. 이 돈은 누가 보내 달라고 했나요?`;
 }
-

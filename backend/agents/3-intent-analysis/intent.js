@@ -17,6 +17,7 @@ import { safeTransferContext, sanitizeMessages } from "./sanitize.js";
 import { retrieveTransactionPattern } from "./text2sql/transaction-pattern.js";
 import { resolveSituation, needsDamageResponse } from "../../../shared/conversation-state.js";
 import { damageResponsePlan } from "./response-plan.js";
+import { dialoguePlan } from "./middleware/dialogue.js";
 
 const FALLBACK_QUESTIONS = [
   "누가 보내 달라고 했나요?",
@@ -61,6 +62,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   const safeTransfer = {
     ...initialTransfer,
     analysis_done: body.conversationState?.analysisDone === true,
+    dialogue_plan: dialoguePlan(body.dialogue),
     pattern_risk_score: Math.max(
       Number(initialTransfer.pattern_risk_score) || 0,
       Number(transactionPattern.risk_score) || 0,
@@ -121,6 +123,8 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     const emergencyRisk = { ...risk, score: Math.max(risk.score, HOLD_THRESHOLD), level: "HIGH" };
     const latestUserText = [...safeMessages].reverse().find((message) => message.role !== "ai")?.text || "";
     const plan = damageResponsePlan(situation, latestUserText);
+    plan.dialogueKind = safeTransfer.dialogue_plan.dialogueKind;
+    plan.instruction += ` ${safeTransfer.dialogue_plan.instruction}`;
     const response = await personalizeResponse({
       mode: "damage", fallbackMessage: plan.fallback, requiredMessage: plan.actions.join("\n"),
       responsePlan: plan, safeTransfer, safeMessages, llm, risk: emergencyRisk, fraudType, retrieval, apiKey,
@@ -230,15 +234,20 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     };
   }
 
+  const nextQuestion = llm.next_question || FALLBACK_QUESTIONS[0];
+  const response = await personalizeResponse({
+    mode:"probe",fallbackMessage:[llm.reply,nextQuestion].filter(Boolean).join("\n\n"),
+    requiredMessage:nextQuestion,safeTransfer,safeMessages,llm,risk,fraudType,retrieval,apiKey,
+  });
   return {
-    message: [llm.reply, llm.next_question || FALLBACK_QUESTIONS[0]].filter(Boolean).join("\n\n"),
+    message: response.message,
     hold: false,
     done: false,
     risk,
     intent: pickIntent(llm),
     analysis,
     fallback: false,
-    responseFallback: false,
+    responseFallback: response.fallback,
   };
 }
 
@@ -247,9 +256,10 @@ async function personalizeResponse({
   requiredMessage = fallbackMessage,
   llm, risk, fraudType, retrieval, apiKey, responsePlan = {
     situation: resolveSituation(safeMessages),
-    instruction: safeTransfer.analysis_done
+    dialogueKind: safeTransfer.dialogue_plan?.dialogueKind,
+    instruction: (safeTransfer.analysis_done
       ? "분석 완료 후의 후속 대화입니다. 지금 질문에 직접 답하고, 기존 위험 설명과 행동 목록을 반복하지 마세요."
-      : "현재 질문과 새로 확인한 사실을 중심으로 설명하세요.",
+      : "현재 질문과 새로 확인한 사실을 중심으로 설명하세요.") + ` ${safeTransfer.dialogue_plan?.instruction || ""}`,
   },
 }) {
   try {
