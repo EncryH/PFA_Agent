@@ -111,6 +111,13 @@ export default function App() {
       "ansimNotices",
       "ansimLastCallAt",
       "ansimLastCallScriptFlags",
+      "ansimPoints_parent",
+      "ansimPointsSpent_parent",
+      "ansimPoints_child",
+      "ansimPointsSpent_child",
+      "ansimLoanApplications_parent",
+      "ansimLoanApplications_child",
+      "ansimLinkedBanks_child",
     ].forEach((key) => localStorage.removeItem(key));
     // 쿨다운은 전용 함수로 지운다 — 키 삭제와 동기화 이벤트를 한 곳에서 관리해야
     // 저장 키 이름이 바뀌어도 초기화가 조용히 새지 않는다.
@@ -146,6 +153,7 @@ export default function App() {
     window.dispatchEvent(new Event("ansim-intent-chat-updated"));
     window.dispatchEvent(new Event("ansim-guardian-log"));
     window.dispatchEvent(new Event("ansim-emergency-receipts"));
+    window.dispatchEvent(new Event("ansim-demo-reset"));
     window.setTimeout(() => setAmountResetNotice(false), 2_000);
   };
 
@@ -195,6 +203,20 @@ export default function App() {
     const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
     const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
     const row: TxnRow = { date, time, name: productTitle, memo: "가입", amount: -amount, balance: next };
+    setExtraTxns((prev) => ({ ...prev, [acc.account]: [row, ...(prev[acc.account] ?? [])] }));
+  };
+
+  // 포인트 환급 — 혜택 탭에서 포인트를 쓰면 입출금 계좌(0번)에 그만큼 입금된다.
+  const handleRedeemPoints = (amount: number) => {
+    const acc = liveAccounts[0];
+    const current = parseAmt(acc.balance);
+    const next = current + amount;
+    setBalanceOverrides((prev) => ({ ...prev, 0: next.toLocaleString("ko-KR") }));
+
+    const now = new Date();
+    const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+    const time = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const row: TxnRow = { date, time, name: "포인트 환급", memo: "포인트 사용", amount, balance: next };
     setExtraTxns((prev) => ({ ...prev, [acc.account]: [row, ...(prev[acc.account] ?? [])] }));
   };
 
@@ -451,9 +473,9 @@ export default function App() {
               />
             )}
             {page === "home" && tab === "상품" && (
-              <ProductsTab onSavings={(i) => { setSavingsIdx(i); setPage("savings"); }} />
+              <ProductsTab onSavings={(i) => { setSavingsIdx(i); setPage("savings"); }} role="parent" onSubscribe={handleSubscribe} />
             )}
-            {page === "home" && tab === "혜택" && <BenefitsTab />}
+            {page === "home" && tab === "혜택" && <BenefitsTab role="parent" onRedeem={handleRedeemPoints} />}
             {page === "home" && tab === "주식" && <StocksTab role="parent" />}
           </main>
 

@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { MY_ACCOUNTS, SAVINGS_INFO, parseAmt } from "../shared/data";
 import { BankLogo } from "../shared/ui";
+import { usePoints } from "../shared/points";
+import { applyForLoan } from "../shared/loanApplications";
 
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 
@@ -104,15 +106,85 @@ export function FinancialTab({ onAccount, accounts = MY_ACCOUNTS }: { onAccount:
 // ═══════════════════════════════════════════════════════════════════════════════
 const SAVINGS_INDICES = [1, 2];
 
-const RECOMMEND = [
-  { title: "프리미엄 예금",   desc: "연 3.8% · 24개월",   tag: "금리우대" },
-  { title: "청년 희망 적금",  desc: "연 5.0% · 청년전용", tag: "인기" },
-  { title: "중금리 신용대출", desc: "최저 연 5.9%",        tag: "신규" },
-  { title: "ISA 절세 계좌",  desc: "비과세 · 소득공제",   tag: "절세" },
+type RecommendDetail = {
+  title: string;
+  desc: string;
+  tag: string;
+  details: { label: string; value: string }[];
+  tagline: string;
+  /** deposit·savings = 신청하면 입출금 계좌에서 즉시 이체돼요. loan = 심사 신청만 접수돼요. */
+  kind: "deposit" | "savings" | "loan";
+  minAmount?: number;
+  maxAmount?: number;
+};
+
+const RECOMMEND: RecommendDetail[] = [
+  {
+    title: "프리미엄 예금", desc: "연 3.8% · 24개월", tag: "금리우대",
+    details: [
+      { label: "가입기간", value: "24개월" },
+      { label: "금리",     value: "연 3.8%" },
+      { label: "최소금액", value: "100만원" },
+    ],
+    tagline: "긴 호흡으로 더 높은 금리를 받아보세요",
+    kind: "deposit",
+    minAmount: 1_000_000,
+  },
+  {
+    title: "청년 희망 적금", desc: "연 5.0% · 청년전용", tag: "인기",
+    details: [
+      { label: "가입기간", value: "24개월" },
+      { label: "금리",     value: "연 5.0%" },
+      { label: "납입금액", value: "월 10만원부터" },
+    ],
+    tagline: "청년 전용 우대금리로 목돈을 모아보세요",
+    kind: "savings",
+    minAmount: 100_000,
+  },
+  {
+    title: "중금리 신용대출", desc: "최저 연 5.9%", tag: "신규",
+    details: [
+      { label: "한도",     value: "최대 2천만원" },
+      { label: "금리",     value: "최저 연 5.9%" },
+      { label: "상환방식", value: "원리금균등" },
+    ],
+    tagline: "필요한 만큼만 합리적인 금리로",
+    kind: "loan",
+    maxAmount: 20_000_000,
+  },
+  {
+    title: "ISA 절세 계좌", desc: "비과세 · 소득공제", tag: "절세",
+    details: [
+      { label: "세금혜택", value: "비과세" },
+      { label: "소득공제", value: "연말정산" },
+      { label: "최소납입", value: "월 10만원부터" },
+    ],
+    tagline: "절세 효과까지 챙기는 자산 관리",
+    kind: "savings",
+    minAmount: 100_000,
+  },
 ];
 
-export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: number) => void; showOwned?: boolean }) {
-  const [comingSoon, setComingSoon] = useState<string | null>(null);
+export function ProductsTab({
+  onSavings, showOwned = true, role = "parent", onSubscribe,
+}: {
+  onSavings?: (i: number) => void;
+  showOwned?: boolean;
+  role?: string;
+  /** 예금·적금 가입 확정 시 입출금 계좌에서 실제로 돈을 빼는 건 화면(App)이 담당한다. */
+  onSubscribe?: (amount: number, productTitle: string) => void;
+}) {
+  const [selected, setSelected] = useState<RecommendDetail | null>(null);
+  const [applyStep, setApplyStep] = useState<"detail" | "amount" | "done">("detail");
+  const [applyAmount, setApplyAmount] = useState("");
+  const mainBalance = parseAmt(MY_ACCOUNTS[0].balance);
+
+  const openProduct = (p: RecommendDetail) => {
+    setSelected(p);
+    setApplyStep("detail");
+    setApplyAmount(p.minAmount ? p.minAmount.toLocaleString("ko-KR") : "");
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {showOwned && (
@@ -155,7 +227,7 @@ export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: n
             <button
               key={p.title}
               type="button"
-              onClick={() => setComingSoon(p.title)}
+              onClick={() => openProduct(p)}
               className="rounded-xl bg-blue-50/60 p-4 text-left cursor-pointer hover:bg-blue-100/60 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all"
             >
               <span
@@ -171,27 +243,133 @@ export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: n
         </div>
       </div>
 
-      {comingSoon && (
+      {/* ─── 추천 상품 상세 바텀시트 (상세 → 금액 입력 → 완료) ────────────── */}
+      {selected && (
         <div className="fixed inset-0 z-50">
           <div
             className="absolute inset-0 bg-black/40"
             style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setComingSoon(null)}
+            onClick={() => { setSelected(null); setApplyStep("detail"); }}
           />
           <div
             className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
             style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
           >
             <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[18px] font-bold text-gray-900">{comingSoon}</p>
-            <p className="text-[13px] text-gray-500 mt-2">곧 만나보실 수 있어요. 조금만 기다려주세요!</p>
-            <button
-              onClick={() => setComingSoon(null)}
-              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
-              style={{ background: "var(--ac-500)" }}
-            >
-              확인
-            </button>
+
+            {applyStep === "detail" && (
+              <>
+                <p className="text-[20px] font-bold text-gray-900">{selected.title}</p>
+                <p className="text-[13px] text-gray-400 mt-1">{selected.desc}</p>
+                <p className="text-[14px] text-blue-600 font-semibold mt-3 mb-4">{selected.tagline}</p>
+                <div className="flex flex-col gap-3 bg-gray-50 rounded-2xl p-4 mb-5">
+                  {selected.details.map((d) => (
+                    <div key={d.label} className="flex items-center justify-between">
+                      <span className="text-[13px] text-gray-500">{d.label}</span>
+                      <span className="text-[13px] font-semibold text-gray-900">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setApplyStep("amount")}
+                  className="w-full py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+                  style={{ background: "var(--ac-500)" }}
+                >
+                  신청하기
+                </button>
+              </>
+            )}
+
+            {applyStep === "amount" && (() => {
+              const amt = parseInt(applyAmount.replace(/,/g, ""), 10) || 0;
+              const belowMin = !!selected.minAmount && amt < selected.minAmount;
+              const exceedsBalance = selected.kind !== "loan" && amt > mainBalance;
+              const exceedsMax = selected.kind === "loan" && !!selected.maxAmount && amt > selected.maxAmount;
+              return (
+                <>
+                  <p className="text-[18px] font-bold text-gray-900">{selected.title} {selected.kind === "loan" ? "신청" : "가입"}</p>
+                  <p className="text-[13px] text-gray-400 mt-1">
+                    {selected.kind === "deposit" ? "예치할 금액을 입력하세요"
+                      : selected.kind === "loan" ? "대출 희망 금액을 입력하세요"
+                      : "첫 회차 납입 금액을 입력하세요"}
+                  </p>
+                  <div className="mt-6 mb-1">
+                    <input
+                      autoFocus
+                      type="text"
+                      inputMode="numeric"
+                      value={applyAmount}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "");
+                        setApplyAmount(digits ? parseInt(digits, 10).toLocaleString("ko-KR") : "");
+                      }}
+                      placeholder="0"
+                      className="w-full text-right text-[28px] font-black text-gray-900 outline-none border-b-2 border-gray-100 focus:border-blue-400 pb-2 transition-colors"
+                    />
+                    <p className="text-right text-[13px] text-gray-400 mt-1">원</p>
+                  </div>
+                  {selected.minAmount && (
+                    <p className={`text-[11px] text-center mb-4 ${belowMin && applyAmount ? "text-red-500" : "text-gray-400"}`}>
+                      최소 {selected.minAmount.toLocaleString()}원부터 {selected.kind === "loan" ? "신청" : "가입"} 가능해요
+                    </p>
+                  )}
+                  {exceedsBalance && applyAmount && (
+                    <p className="text-[11px] text-center mb-4 text-red-500">
+                      입출금 계좌 잔액({mainBalance.toLocaleString()}원)을 넘을 수 없어요
+                    </p>
+                  )}
+                  {exceedsMax && applyAmount && (
+                    <p className="text-[11px] text-center mb-4 text-red-500">
+                      대출 한도({selected.maxAmount!.toLocaleString()}원)를 넘을 수 없어요
+                    </p>
+                  )}
+                  <p className="text-[12px] text-gray-400 text-center mb-4">
+                    {selected.kind === "loan" ? "심사 후 대출금이 입출금 계좌로 입금돼요" : "가입 즉시 입출금 계좌에서 이체돼요"}
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (selected.kind === "loan") applyForLoan(role, selected.title, amt);
+                      else onSubscribe?.(amt, selected.title);
+                      setApplyStep("done");
+                    }}
+                    disabled={!applyAmount || belowMin || exceedsBalance || exceedsMax}
+                    className="w-full py-4 rounded-xl text-[16px] font-bold text-white disabled:opacity-40 active:scale-[0.98] transition-all"
+                    style={{ background: "var(--ac-500)" }}
+                  >
+                    {selected.kind === "loan" ? "신청 확정" : "가입 확정"}
+                  </button>
+                  <button onClick={() => setApplyStep("detail")} className="w-full mt-2 py-2.5 text-[13px] text-gray-400 active:scale-95 transition-transform">
+                    이전으로
+                  </button>
+                </>
+              );
+            })()}
+
+            {applyStep === "done" && (
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg>
+                </div>
+                <div>
+                  <p className="text-[13px] text-green-600 font-semibold mb-1">
+                    {selected.kind === "loan" ? "신청 접수 완료" : "가입 완료"}
+                  </p>
+                  <p className="text-[20px] font-bold text-gray-900">{selected.title}</p>
+                  <p className="text-[13px] text-gray-400 mt-1">
+                    {selected.kind === "loan"
+                      ? "심사 후 결과를 알려드릴게요"
+                      : `${(parseInt(applyAmount.replace(/,/g, ""), 10) || 0).toLocaleString()}원이 입출금 계좌에서 이체됐어요`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setSelected(null); setApplyStep("detail"); }}
+                  className="w-full py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+                  style={{ background: "var(--ac-500)" }}
+                >
+                  확인
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -203,44 +381,72 @@ export function ProductsTab({ onSavings, showOwned = true }: { onSavings?: (i: n
 // 3. BenefitsTab — 포인트, 혜택 목록, 월별 요약
 // ═══════════════════════════════════════════════════════════════════════════════
 const BENEFITS = [
-  { title: "자동이체 우대",     desc: "아파트 관리비 자동이체 등록", savings: "월 2,000원 할인" },
-  { title: "급여이체 우대금리", desc: "입출금통장 급여이체 인정",    savings: "+0.3%p 적용" },
-  { title: "인터넷뱅킹 할인",  desc: "이체 수수료 전액 면제",       savings: "월 최대 5,000원" },
-  { title: "시니어 우대",      desc: "60세 이상 고객 대상",         savings: "환전 50% 할인" },
+  { title: "자동이체 우대",     desc: "아파트 관리비 자동이체 등록", savings: "월 2,000원 할인", detail: "관리비·공과금을 자동이체로 등록하면 매달 자동으로 적용돼요. 이미 등록되어 있어 별도로 신청하실 필요는 없어요." },
+  { title: "급여이체 우대금리", desc: "입출금통장 급여이체 인정",    savings: "+0.3%p 적용",    detail: "최근 3개월 이상 급여이체 실적이 확인되면 입출금통장 금리에 0.3%p가 추가로 붙어요." },
+  { title: "인터넷뱅킹 할인",  desc: "이체 수수료 전액 면제",       savings: "월 최대 5,000원", detail: "인터넷·모바일뱅킹으로 이체하면 타행 이체 수수료가 월 최대 5,000원까지 면제돼요." },
+  { title: "시니어 우대",      desc: "60세 이상 고객 대상",         savings: "환전 50% 할인",   detail: "만 60세 이상 고객은 환전 우대율이 50%까지 적용돼요. 창구·모바일 모두 자동으로 반영돼요." },
 ];
 
-const MONTHLY_SUMMARY = [
-  { label: "획득 포인트", value: "340P" },
-  { label: "사용 포인트", value: "0P" },
-  { label: "절약 금액",   value: "7,000원" },
-];
+const ACQUIRED_POINTS_THIS_MONTH = 340;
+const SAVED_AMOUNT_THIS_MONTH = 7_000;
 
-export function BenefitsTab() {
+export function BenefitsTab({
+  role = "parent", onRedeem,
+}: {
+  role?: string;
+  /** 포인트 환급 확정 시 입출금 계좌에 실제로 돈을 넣는 건 화면(App)이 담당한다. */
+  onRedeem?: (amount: number) => void;
+}) {
+  const { points, spent, redeem } = usePoints(role);
+  const [selectedBenefit, setSelectedBenefit] = useState<(typeof BENEFITS)[number] | null>(null);
+  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [redeemStep, setRedeemStep] = useState<"input" | "done">("input");
+  const [redeemInput, setRedeemInput] = useState("");
+
+  const openRedeem = () => {
+    setRedeemStep("input");
+    setRedeemInput(points > 0 ? points.toLocaleString("ko-KR") : "");
+    setRedeemOpen(true);
+  };
+
+  const closeRedeem = () => { setRedeemOpen(false); setRedeemStep("input"); };
+
+  const confirmRedeem = () => {
+    const amount = parseInt(redeemInput.replace(/,/g, ""), 10) || 0;
+    if (!redeem(amount)) return;
+    onRedeem?.(amount);
+    setRedeemStep("done");
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className="rounded-2xl p-6 flex items-center justify-between hover:shadow-xl hover:-translate-y-0.5 transition-all"
+      <button
+        type="button"
+        onClick={openRedeem}
+        className="rounded-2xl p-6 flex items-center justify-between hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99] transition-all text-left"
         style={{ background: "linear-gradient(135deg, var(--ac-600), var(--ac-400))" }}
       >
         <div>
           <p className="text-[13px] text-white/70 mb-1">보유 포인트</p>
-          <p className="text-[34px] font-bold text-white tracking-tight">12,340P</p>
-          <p className="text-[12px] text-white/60 mt-1">현금 12,340원 상당</p>
+          <p className="text-[34px] font-bold text-white tracking-tight">{points.toLocaleString("ko-KR")}P</p>
+          <p className="text-[12px] text-white/60 mt-1">현금 {points.toLocaleString("ko-KR")}원 상당 · 눌러서 환급받기</p>
         </div>
-        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8">
             <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14.5V18h-2v-1.5a3.5 3.5 0 01-3.5-3.5H9a1.5 1.5 0 001.5 1.5h3a1.5 1.5 0 000-3h-3a3.5 3.5 0 010-7V6h2v1.5a3.5 3.5 0 013.5 3.5H15a1.5 1.5 0 00-1.5-1.5h-3a1.5 1.5 0 000 3h3a3.5 3.5 0 010 7z" />
           </svg>
         </div>
-      </div>
+      </button>
 
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">활성 혜택</p>
         <div className="flex flex-col gap-2">
           {BENEFITS.map((b) => (
-            <div
+            <button
               key={b.title}
-              className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+              type="button"
+              onClick={() => setSelectedBenefit(b)}
+              className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 text-left hover:bg-gray-100 active:scale-[0.98] transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "var(--ac-500)" }} />
@@ -252,7 +458,7 @@ export function BenefitsTab() {
               <span className="text-[11px] font-bold shrink-0 ml-2" style={{ color: "var(--ac-600)" }}>
                 {b.savings}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -260,7 +466,11 @@ export function BenefitsTab() {
       <div className="bg-white rounded-2xl p-5 hover:shadow-lg transition-all">
         <p className="text-[14px] font-bold text-gray-900 mb-3">9월 혜택 요약</p>
         <div className="flex justify-around text-center">
-          {MONTHLY_SUMMARY.map((item, i) => (
+          {[
+            { label: "획득 포인트", value: `${ACQUIRED_POINTS_THIS_MONTH.toLocaleString("ko-KR")}P` },
+            { label: "사용 포인트", value: `${spent.toLocaleString("ko-KR")}P` },
+            { label: "절약 금액",   value: `${SAVED_AMOUNT_THIS_MONTH.toLocaleString("ko-KR")}원` },
+          ].map((item, i) => (
             <div
               key={item.label}
               className={`${i > 0 ? "border-l border-gray-100 pl-4" : ""} flex-1`}
@@ -271,6 +481,110 @@ export function BenefitsTab() {
           ))}
         </div>
       </div>
+
+      {/* ─── 혜택 상세 바텀시트 ─────────────────────────────────────────── */}
+      {selectedBenefit && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            style={{ animation: "fade-in 180ms ease-out both" }}
+            onClick={() => setSelectedBenefit(null)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+          >
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+            <p className="text-[18px] font-bold text-gray-900">{selectedBenefit.title}</p>
+            <div className="mt-2 flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+              <span className="text-[13px] text-gray-500">적용 혜택</span>
+              <span className="text-[13px] font-bold" style={{ color: "var(--ac-600)" }}>{selectedBenefit.savings}</span>
+            </div>
+            <p className="text-[13px] text-gray-500 leading-relaxed mt-4">{selectedBenefit.detail}</p>
+            <button
+              onClick={() => setSelectedBenefit(null)}
+              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+              style={{ background: "var(--ac-500)" }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 포인트 환급 바텀시트 (입력 → 완료) ─────────────────────────── */}
+      {redeemOpen && (() => {
+        const amount = parseInt(redeemInput.replace(/,/g, ""), 10) || 0;
+        const exceedsPoints = amount > points;
+        return (
+          <div className="fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-black/40"
+              style={{ animation: "fade-in 180ms ease-out both" }}
+              onClick={closeRedeem}
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
+              style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
+            >
+              <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+
+              {redeemStep === "input" && (
+                <>
+                  <p className="text-[18px] font-bold text-gray-900">포인트 환급</p>
+                  <p className="text-[13px] text-gray-400 mt-1">1P는 1원으로 입출금 계좌에 환급돼요</p>
+                  <div className="mt-6 mb-1">
+                    <input
+                      autoFocus
+                      type="text"
+                      inputMode="numeric"
+                      value={redeemInput}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "");
+                        setRedeemInput(digits ? parseInt(digits, 10).toLocaleString("ko-KR") : "");
+                      }}
+                      placeholder="0"
+                      className="w-full text-right text-[28px] font-black text-gray-900 outline-none border-b-2 border-gray-100 focus:border-blue-400 pb-2 transition-colors"
+                    />
+                    <p className="text-right text-[13px] text-gray-400 mt-1">P</p>
+                  </div>
+                  <p className={`text-[11px] text-center mb-4 ${exceedsPoints && redeemInput ? "text-red-500" : "text-gray-400"}`}>
+                    보유 포인트 {points.toLocaleString("ko-KR")}P까지 환급할 수 있어요
+                  </p>
+                  <button
+                    onClick={confirmRedeem}
+                    disabled={!redeemInput || amount <= 0 || exceedsPoints}
+                    className="w-full py-4 rounded-xl text-[16px] font-bold text-white disabled:opacity-40 active:scale-[0.98] transition-all"
+                    style={{ background: "var(--ac-500)" }}
+                  >
+                    환급 받기
+                  </button>
+                </>
+              )}
+
+              {redeemStep === "done" && (
+                <div className="flex flex-col items-center gap-4 py-2 text-center">
+                  <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-[13px] text-green-600 font-semibold mb-1">환급 완료</p>
+                    <p className="text-[20px] font-bold text-gray-900">{amount.toLocaleString("ko-KR")}원</p>
+                    <p className="text-[13px] text-gray-400 mt-1">입출금 계좌로 입금됐어요</p>
+                  </div>
+                  <button
+                    onClick={closeRedeem}
+                    className="w-full py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
+                    style={{ background: "var(--ac-500)" }}
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
