@@ -6,11 +6,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { embedDocuments, embeddingConfig } from "../retrieval/gemini-embeddings.js";
+import { encodeEmbedding } from "../retrieval/vector-search.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "../../../..");
 const corpusPath = resolve(here, "../datasets/rag/runtime/intent-rag-corpus.json");
 const outputPath = resolve(here, "../datasets/rag/runtime/vector/intent-vector-index.json");
+// 배포본이 읽는 인덱스. 임베딩을 base64 float32 로 담아 저장소에 커밋할 수 있는 크기로 유지한다.
+const packedPath = resolve(here, "../datasets/rag/runtime/intent-vector-index.packed.json");
 
 function loadEnv(path) {
   if (!existsSync(path)) return;
@@ -81,6 +84,12 @@ function saveIndex(metadata, records) {
   writeFileSync(outputPath, `${JSON.stringify({ ...metadata, records }, null, 2)}\n`, "utf8");
 }
 
+function savePackedIndex(metadata, records) {
+  const packed = records.map((record) => ({ ...record, embedding: encodeEmbedding(record.embedding) }));
+  writeFileSync(packedPath, `${JSON.stringify({ ...metadata, records: packed })}\n`, "utf8");
+  return packedPath;
+}
+
 loadEnv(resolve(projectRoot, ".env"));
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -132,5 +141,7 @@ for (let offset = 0; offset < pending.length; offset += batchSize) {
 
 const order = new Map(chunks.map((chunk, index) => [chunk.chunk_id, index]));
 completed.sort((left, right) => order.get(left.chunk_id) - order.get(right.chunk_id));
-saveIndex({ ...metadata, generated_at: new Date().toISOString() }, completed);
-console.log(JSON.stringify({ outputPath, records: completed.length, model, dimensions }, null, 2));
+const finalMetadata = { ...metadata, generated_at: new Date().toISOString() };
+saveIndex(finalMetadata, completed);
+savePackedIndex(finalMetadata, completed);
+console.log(JSON.stringify({ outputPath, packedPath, records: completed.length, model, dimensions }, null, 2));

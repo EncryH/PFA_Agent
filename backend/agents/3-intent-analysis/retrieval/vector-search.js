@@ -2,18 +2,45 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 
 import { embedQuery } from "./gemini-embeddings.js";
 
-const indexUrl = new URL("../datasets/rag/runtime/vector/intent-vector-index.json", import.meta.url);
+// 배포본에는 packed 인덱스만 들어간다. 임베딩을 JSON 숫자 배열로 두면 41MB 라
+// 저장소에서 제외돼 있었고, 그 결과 서버에서는 벡터 검색이 조용히 꺼진 채
+// 키워드 검색으로만 동작했다. float32 를 base64 로 담으면 8MB 로 줄어 커밋된다.
+const packedIndexUrl = new URL("../datasets/rag/runtime/intent-vector-index.packed.json", import.meta.url);
+// 원본(숫자 배열) 인덱스는 재생성 직후 로컬에서만 쓴다.
+const rawIndexUrl = new URL("../datasets/rag/runtime/vector/intent-vector-index.json", import.meta.url);
 const DEFAULT_MIN_SIMILARITY = 0.32;
 
 let cachedIndex = null;
-let cachedMtime = -1;
+let cachedKey = "";
+
+export function encodeEmbedding(values) {
+  return Buffer.from(Float32Array.from(values).buffer).toString("base64");
+}
+
+export function decodeEmbedding(encoded) {
+  const buffer = Buffer.from(encoded, "base64");
+  const values = new Float32Array(buffer.byteLength / 4);
+  for (let index = 0; index < values.length; index += 1) {
+    values[index] = buffer.readFloatLE(index * 4);
+  }
+  return values;
+}
 
 function loadVectorIndex() {
-  if (!existsSync(indexUrl)) return null;
-  const mtime = statSync(indexUrl).mtimeMs;
-  if (cachedIndex && cachedMtime === mtime) return cachedIndex;
-  cachedIndex = JSON.parse(readFileSync(indexUrl, "utf8"));
-  cachedMtime = mtime;
+  const url = existsSync(packedIndexUrl) ? packedIndexUrl
+    : existsSync(rawIndexUrl) ? rawIndexUrl
+    : null;
+  if (!url) return null;
+
+  const key = `${url.pathname}:${statSync(url).mtimeMs}`;
+  if (cachedIndex && cachedKey === key) return cachedIndex;
+
+  const index = JSON.parse(readFileSync(url, "utf8"));
+  for (const record of index.records || []) {
+    if (typeof record.embedding === "string") record.embedding = decodeEmbedding(record.embedding);
+  }
+  cachedIndex = index;
+  cachedKey = key;
   return cachedIndex;
 }
 
@@ -36,7 +63,7 @@ export function rankVectorRecords(records, queryEmbedding, kind, {
   const bestByRecord = new Map();
 
   for (const record of records) {
-    if (record.kind !== kind || !Array.isArray(record.embedding)) continue;
+    if (record.kind !== kind || !record.embedding?.length) continue;
     const score = dotProduct(queryEmbedding, record.embedding);
     if (!Number.isFinite(score) || score < minSimilarity) continue;
     const previous = bestByRecord.get(record.record_id);
