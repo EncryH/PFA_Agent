@@ -7,7 +7,7 @@
 // 위험 이벤트의 최소 정보(금액·수취계좌·판정 근거)만 전달된다.
 
 import { useState, useEffect, useRef } from "react";
-import { parentTabs, parentIcons } from "../shared/ui";
+import { parentTabs, parentIcons, BankLogo } from "../shared/ui";
 import { DEMO_ALERT, CHILD_ACCOUNT, fmtAccount, parseAmt, type DemoAlert, type TxnRow } from "../shared/data";
 import History from "./History";
 import Transfer from "./Transfer";
@@ -46,6 +46,25 @@ const readAlertQueue = (): AlertEntry[] => {
 };
 
 const EMERGENCY_LIMIT = 500_000;
+
+const LINKED_BANKS_KEY = "ansimLinkedBanks_child";
+
+type LinkableBank = { bank: string; accountName: string; account: string; balance: string };
+
+const LINKABLE_BANKS: LinkableBank[] = [
+  { bank: "한결은행", accountName: "한결은행 입출금통장", account: "1109988776", balance: "1,240,000" },
+  { bank: "토스뱅크", accountName: "토스뱅크 통장",       account: "1000552211", balance: "580,000" },
+  { bank: "신한은행", accountName: "신한 주거래통장",     account: "1103344556", balance: "2,150,000" },
+];
+
+const readLinkedBanks = (): LinkableBank[] => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LINKED_BANKS_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+};
 
 function AnsimBanner({ paired, protectionLevel, protectionName, hasPendingAlert, onOpen, onVerify }: {
   paired: boolean;
@@ -173,8 +192,23 @@ export default function ChildApp() {
   };
   const pendingAlerts = alerts.filter((a) => !responses[String((a as any)._ts ?? "demo")]);
   const hasPendingAlerts = pendingAlerts.length > 0;
-  const [comingSoon, setComingSoon] = useState<string | null>(null);
   const [otherFinanceOpen, setOtherFinanceOpen] = useState(false);
+  const [linkedBanks, setLinkedBanks] = useState<LinkableBank[]>(readLinkedBanks);
+  const [linkStep, setLinkStep] = useState<"list" | "select" | "linking" | "done">("list");
+  const [linkingBank, setLinkingBank] = useState<LinkableBank | null>(null);
+
+  useEffect(() => { localStorage.setItem(LINKED_BANKS_KEY, JSON.stringify(linkedBanks)); }, [linkedBanks]);
+
+  const closeOtherFinance = () => { setOtherFinanceOpen(false); setLinkStep("list"); setLinkingBank(null); };
+
+  const startLinking = (option: LinkableBank) => {
+    setLinkingBank(option);
+    setLinkStep("linking");
+    setTimeout(() => {
+      setLinkedBanks((prev) => [...prev, option]);
+      setLinkStep("done");
+    }, 900);
+  };
   const [emergencyLoan, setEmergencyLoan] = useState(0);
   const [selectedBenefit, setSelectedBenefit] = useState<LifeBenefit | null>(null);
 
@@ -468,9 +502,11 @@ export default function ChildApp() {
           <FinancialTab accounts={[liveAccount]} onAccount={() => setPage("history")} />
         )}
         {tab === "상품" && page === "home" && (
-          <ProductsTab showOwned={false} />
+          <ProductsTab showOwned={false} role="child" onSubscribe={(amount, title) => applyTxn(-amount, title, "가입")} />
         )}
-        {tab === "혜택" && page === "home" && <BenefitsTab />}
+        {tab === "혜택" && page === "home" && (
+          <BenefitsTab role="child" onRedeem={(amount) => applyTxn(amount, "포인트 환급", "포인트 사용")} />
+        )}
         {tab === "주식" && page === "home" && <StocksTab role="child" />}
 
         {/* ── 거래내역 · 송금 (부모 앱과 같은 화면, 색만 나눔은행) ── */}
@@ -762,29 +798,111 @@ export default function ChildApp() {
           <div
             className="absolute inset-0 bg-black/40"
             style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setOtherFinanceOpen(false)}
+            onClick={closeOtherFinance}
           />
           <div
             className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
             style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
           >
             <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[18px] font-bold text-gray-900 mb-1">다른 금융기관 계좌</p>
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" className="w-7 h-7">
-                  <rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" />
-                </svg>
+
+            {linkStep === "list" && (() => {
+              const remaining = LINKABLE_BANKS.filter((b) => !linkedBanks.some((l) => l.bank === b.bank));
+              return (
+                <>
+                  <p className="text-[18px] font-bold text-gray-900 mb-1">다른 금융기관 계좌</p>
+                  {linkedBanks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" className="w-7 h-7">
+                          <rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" />
+                        </svg>
+                      </div>
+                      <p className="text-[14px] font-semibold text-gray-500">연결된 다른 금융기관이 없어요</p>
+                      <p className="text-[12px] text-gray-400 mt-1">계좌를 연결하면 여기서 한번에 볼 수 있어요</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 py-3">
+                      {linkedBanks.map((b) => (
+                        <div key={b.bank} className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3.5">
+                          <BankLogo bank={b.bank} size={34} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[14px] font-semibold text-gray-900">{b.accountName}</p>
+                            <p className="text-[12px] text-gray-400 mt-0.5">{b.bank} {fmtAccount(b.account)}</p>
+                          </div>
+                          <span className="text-[13px] font-bold text-gray-900 shrink-0">{b.balance}원</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {remaining.length > 0 ? (
+                    <button
+                      onClick={() => setLinkStep("select")}
+                      className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
+                    >
+                      계좌 연결하기
+                    </button>
+                  ) : (
+                    <p className="text-[12px] text-gray-400 text-center py-2">연결할 수 있는 금융기관을 모두 연결했어요</p>
+                  )}
+                </>
+              );
+            })()}
+
+            {linkStep === "select" && (
+              <>
+                <p className="text-[18px] font-bold text-gray-900 mb-1">연결할 금융기관을 선택하세요</p>
+                <p className="text-[12px] text-gray-400 mb-4">오픈뱅킹으로 잔액만 안전하게 불러와요</p>
+                <div className="flex flex-col gap-2">
+                  {LINKABLE_BANKS.filter((b) => !linkedBanks.some((l) => l.bank === b.bank)).map((b) => (
+                    <button
+                      key={b.bank}
+                      onClick={() => startLinking(b)}
+                      className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3.5 text-left hover:bg-gray-100 active:scale-[0.98] transition-all"
+                    >
+                      <BankLogo bank={b.bank} size={34} />
+                      <span className="text-[14px] font-semibold text-gray-900">{b.bank}</span>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setLinkStep("list")} className="w-full mt-3 py-2.5 text-[13px] text-gray-400 active:scale-95 transition-transform">
+                  이전으로
+                </button>
+              </>
+            )}
+
+            {linkStep === "linking" && linkingBank && (
+              <div className="flex flex-col items-center gap-4 py-6 text-center">
+                <div className="relative flex h-16 w-16 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-[5px] border-gray-100" />
+                  <div className="absolute inset-0 rounded-full border-[5px] border-[var(--ac-band-icon)] border-t-transparent animate-spin" />
+                  <BankLogo bank={linkingBank.bank} size={44} />
+                </div>
+                <div>
+                  <p className="text-[16px] font-bold text-gray-900">{linkingBank.bank} 연결하고 있어요</p>
+                  <p className="text-[12px] text-gray-400 mt-1">잠시만 기다려주세요</p>
+                </div>
               </div>
-              <p className="text-[14px] font-semibold text-gray-500">연결된 다른 금융기관이 없어요</p>
-              <p className="text-[12px] text-gray-400 mt-1">계좌를 연결하면 여기서 한번에 볼 수 있어요</p>
-            </div>
-            <button
-              onClick={() => { setOtherFinanceOpen(false); setComingSoon("계좌 연결"); }}
-              className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
-            >
-              계좌 연결하기
-            </button>
+            )}
+
+            {linkStep === "done" && linkingBank && (
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M20 6L9 17l-5-5" /></svg>
+                </div>
+                <div>
+                  <p className="text-[13px] text-green-600 font-semibold mb-1">연결 완료</p>
+                  <p className="text-[20px] font-bold text-gray-900">{linkingBank.bank}</p>
+                  <p className="text-[13px] text-gray-400 mt-1">이제 여기서 잔액을 한번에 확인할 수 있어요</p>
+                </div>
+                <button
+                  onClick={() => { setLinkStep("list"); setLinkingBank(null); }}
+                  className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
+                >
+                  확인
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -878,32 +996,6 @@ export default function ChildApp() {
             <button
               onClick={() => setSelectedBenefit(null)}
               className="w-full py-4 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-band-icon)] active:scale-[0.98] transition-all"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── 준비 중 서비스 바텀시트 (계좌 연결 등 외부 인증이 필요한 기능) ───── */}
-      {comingSoon && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            style={{ animation: "fade-in 180ms ease-out both" }}
-            onClick={() => setComingSoon(null)}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-3xl px-5 pt-5 pb-8"
-            style={{ maxWidth: 430, animation: "sheet-up 240ms cubic-bezier(.2,.8,.2,1) both" }}
-          >
-            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-[18px] font-bold text-gray-900">{comingSoon}</p>
-            <p className="text-[13px] text-gray-500 mt-2">곧 만나보실 수 있어요. 조금만 기다려주세요!</p>
-            <button
-              onClick={() => setComingSoon(null)}
-              className="w-full mt-6 py-4 rounded-xl text-[16px] font-bold text-white active:scale-[0.98] transition-all"
-              style={{ background: "var(--ac-500)" }}
             >
               확인
             </button>
