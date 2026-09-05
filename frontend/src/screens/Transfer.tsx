@@ -323,6 +323,24 @@ export default function Transfer({
 
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
+  // 음성 합성 API가 있어도 한국어 목소리가 설치되지 않은 PC 가 있다. 그런 곳에서는
+  // 재생이 무음이거나 영어 목소리가 한글을 읽어버리는데, 사용자에게는 버튼이 그냥
+  // 반응하지 않는 것으로 보인다. 목소리가 실제로 잡혔을 때만 버튼을 노출한다.
+  // 목록은 비동기로 채워지므로 voiceschanged 도 함께 듣는다.
+  const [koreanVoice, setKoreanVoice] = useState<SpeechSynthesisVoice | null>(null);
+
+  useEffect(() => {
+    if (!speechSupported) return;
+    const pickVoice = () => {
+      const voice = window.speechSynthesis.getVoices()
+        .find((candidate) => candidate.lang?.toLowerCase().startsWith("ko"));
+      if (voice) setKoreanVoice(voice);
+    };
+    pickVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", pickVoice);
+  }, [speechSupported]);
+
   const stopAiSpeech = () => {
     if (speechSupported) window.speechSynthesis.cancel();
     speechUtteranceRef.current = null;
@@ -330,7 +348,7 @@ export default function Transfer({
   };
 
   const toggleAiSpeech = (text: string, messageIndex: number, display?: ChatMessage["display"]) => {
-    if (!speechSupported) return;
+    if (!speechSupported || !koreanVoice) return;
     if (speakingMessageIndex === messageIndex) {
       stopAiSpeech();
       return;
@@ -338,7 +356,8 @@ export default function Transfer({
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(formatAiSpeechText(text, display !== "plain"));
-    utterance.lang = "ko-KR";
+    utterance.voice = koreanVoice;
+    utterance.lang = koreanVoice.lang;
     utterance.rate = 0.92;
     utterance.pitch = 1;
     utterance.onend = () => {
@@ -1602,7 +1621,7 @@ export default function Transfer({
                         ? <ReadableAiMessage text={msg.text} />
                         : <p>{msg.text}</p>
                       : msg.text}
-                    {msg.role === "ai" && speechSupported && (
+                    {msg.role === "ai" && koreanVoice && (
                       <button
                         type="button"
                         onClick={() => toggleAiSpeech(
