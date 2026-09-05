@@ -1,3 +1,5 @@
+import { isEmergencySelfReport } from "../emergency-signals.js";
+
 export const ROUTES = Object.freeze({
   STATIC: "STATIC",
   GENERAL: "GENERAL",
@@ -29,8 +31,6 @@ export const REPORT_PATTERN = /(?:경찰|112|금감원|1332|은행|고객센터)
 export const HELP_PATTERN = /(?:도와|도움|살려).{0,4}(?:줘|주세요|달라)(?!서)/i;
 export const CANCEL_PATTERN = /(?:취소|보내지\s*마|중단|멈춰|막아)|그만(?!\s*(?:두|뒀|둬))/i;
 
-const EMERGENCY_SELF_REPORT_PATTERN = /(?:보이스피싱|사기|피싱).{0,10}(?:당하|걸린|걸렸|인\s*것\s*같|일\s*수|아닌지|인가요|맞나요|같아요|당한|신고)|(?:피해|속[았은]).{0,6}(?:당한|입[었은]|것\s*같|인\s*것|거\s*같)|(?:돈을?\s*(?:잃|날린|빼앗|뺏)|사기\s*맞|사기\s*같|이거\s*사기|사기인가|피싱\s*같)|(?:지금\s*위험|급해요|긴급|도움이\s*필요)/i;
-
 export function hasActiveTransfer(transfer = {}) {
   return Number(transfer.amount) > 0
     || Boolean(String(transfer.account || "").trim())
@@ -53,7 +53,7 @@ export function classifyRoute({ text = "", activeTransfer = false, injection = {
   if (FRAUD_INFO_QUESTION_PATTERN.test(text)) {
     return { route: ROUTES.GENERAL, confidence: 0.9, reason: "사기 수법에 대한 일반 지식 질문" };
   }
-  if (EMERGENCY_SELF_REPORT_PATTERN.test(text)) {
+  if (isEmergencySelfReport(text)) {
     return { route: ROUTES.RISK, confidence: 0.99, reason: "사용자 긴급 피해 신고", emergency: true };
   }
   const hasStrongRisk = STRONG_RISK_PATTERN.test(text);

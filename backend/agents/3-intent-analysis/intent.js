@@ -15,6 +15,8 @@ import { retrieveIntentContext } from "./retrieval/rag.js";
 import { retrieveOfficialContent } from "./retrieval/official-content.js";
 import { safeTransferContext, sanitizeMessages } from "./sanitize.js";
 import { retrieveTransactionPattern } from "./text2sql/transaction-pattern.js";
+import { resolveSituation, needsDamageResponse } from "../../../shared/conversation-state.js";
+import { damageResponsePlan } from "./response-plan.js";
 
 const FALLBACK_QUESTIONS = [
   "누가 보내 달라고 했나요?",
@@ -41,10 +43,11 @@ function applyForcedHold(risk, safeTransfer) {
  * @param {{transfer: object, messages: {role: string, text: string}[], turn: number}} body
  * @param {string} apiKey
  */
-export async function handleIntent(body, apiKey, { graphConfig = {}, databaseConfig = {}, middleware = {} } = {}) {
+export async function handleIntent(body, apiKey, { graphConfig = {}, databaseConfig = {} } = {}) {
   const { transfer = {}, messages = [], turn = 1 } = body;
   const initialTransfer = safeTransferContext(transfer);
   const safeMessages = sanitizeMessages(messages);
+  let situation = resolveSituation(safeMessages, body.conversationState?.situation);
   const [ragRetrieval, transactionPattern] = await Promise.all([
     retrieveIntentContext(
       { transfer: initialTransfer, messages: safeMessages },
@@ -57,6 +60,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   ]);
   const safeTransfer = {
     ...initialTransfer,
+    analysis_done: body.conversationState?.analysisDone === true,
     pattern_risk_score: Math.max(
       Number(initialTransfer.pattern_risk_score) || 0,
       Number(transactionPattern.risk_score) || 0,
@@ -75,13 +79,22 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
                  : /Gemini 4/.test(err.message)   ? "auth"
                  : "unavailable";
     console.error(`[intent] Gemini 실패(${reason}) → 폴백:`, err.message.slice(0, 200));
+    if (needsDamageResponse(situation)) {
+      return {
+        message: damageResponsePlan(situation).fallback,
+        done: true, hold: true, risk: { score: HOLD_THRESHOLD, level: "HIGH", labels: ["피해 상황 확인"], codes: [] },
+        intent: { purpose: "", requester: "", channel: "" }, situation,
+        action: "damage_response", fallback: true, fallbackReason: reason,
+      };
+    }
     return {
       ...fallback({ turn, retrieval, safeTransfer, safeMessages }),
       fallbackReason: reason,
     };
   }
 
-  const isEmergency = middleware.emergency === true;
+  situation = resolveSituation(safeMessages, body.conversationState?.situation, llm.situation_facts);
+  const isEmergency = needsDamageResponse(situation);
   const contradictions = normalizeStringList(llm.answer_contradictions);
   const hasConversationContradiction = contradictions.length > 0
     && safeMessages.filter((message) => message.role !== "ai").length >= 2;
@@ -106,16 +119,23 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
   // ── 긴급 피해 신고: 사용자가 직접 피해를 호소하면 즉시 대응한다 ──
   if (isEmergency) {
     const emergencyRisk = { ...risk, score: Math.max(risk.score, HOLD_THRESHOLD), level: "HIGH" };
-    const emergencyMessage = buildEmergencyResponse(fraudType, emergencyRisk);
+    const latestUserText = [...safeMessages].reverse().find((message) => message.role !== "ai")?.text || "";
+    const plan = damageResponsePlan(situation, latestUserText);
+    const response = await personalizeResponse({
+      mode: "damage", fallbackMessage: plan.fallback, requiredMessage: plan.actions.join("\n"),
+      responsePlan: plan, safeTransfer, safeMessages, llm, risk: emergencyRisk, fraudType, retrieval, apiKey,
+    });
     return {
-      message: emergencyMessage,
+      message: response.message,
+      situation,
+      action: "damage_response",
       hold: true,
       done: true,
       risk: emergencyRisk,
       intent: pickIntent(llm),
       analysis,
       fallback: false,
-      responseFallback: false,
+      responseFallback: response.fallback,
     };
   }
 
@@ -225,7 +245,12 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
 async function personalizeResponse({
   mode, fallbackMessage, safeTransfer, safeMessages,
   requiredMessage = fallbackMessage,
-  llm, risk, fraudType, retrieval, apiKey,
+  llm, risk, fraudType, retrieval, apiKey, responsePlan = {
+    situation: resolveSituation(safeMessages),
+    instruction: safeTransfer.analysis_done
+      ? "분석 완료 후의 후속 대화입니다. 지금 질문에 직접 답하고, 기존 위험 설명과 행동 목록을 반복하지 마세요."
+      : "현재 질문과 새로 확인한 사실을 중심으로 설명하세요.",
+  },
 }) {
   try {
     const message = await generateUserResponse({
@@ -237,6 +262,7 @@ async function personalizeResponse({
       fraudType,
       retrieval,
       requiredMessage,
+      responsePlan,
     }, apiKey);
     return { message, fallback: false };
   } catch (error) {
@@ -290,23 +316,24 @@ function selectEvidenceGapQuestion(llm = {}, risk = {}, messages = [], transfer 
     || /(대출|투자|환급|당첨|보증금|수수료|세금|병원비|생활비|용돈|등록금|물건|계약금|안전\s*계좌|범죄.{0,8}연루)/.test(userText);
   const hasRequestedAction = requestedActions.length > 0
     || /(보내|송금|입금|이체|설치|깔|인증번호|비밀번호|신분증|링크|클릭|통화.{0,6}유지|말하지)/.test(userText);
-  const hasCompromiseAnswer = /(이미|아직|전에|지금까지).{0,14}(보냈|보낸|송금|입금|설치|깔았|눌렀|클릭|알려|제공)|(?:안|않|못)\s*(보냈|보낸|설치|눌렀|알려)/.test(userText);
+  const compromiseState = resolveSituation(messages);
+  const known = (...keys) => keys.some(key => compromiseState.facts[key]);
 
   // 이미 노출·설치·송금했는지는 4단계 피해 대응 여부를 바꾸므로 가장 먼저 확인한다.
   const safetyCritical = [
-    (codes.has("CREDENTIAL_REQUEST") || codes.has("PERSONAL_DATA_REQUEST")) && !hasCompromiseAnswer
+    (codes.has("CREDENTIAL_REQUEST") || codes.has("PERSONAL_DATA_REQUEST")) && !known("credential", "personal")
       && !/(이미.*알려|인증번호.*알려|개인정보.*제공)/.test(asked)
       ? "비밀번호나 인증번호를 이미 알려주셨나요?"
       : "",
-    codes.has("APP_INSTALLATION_REQUEST") && !hasCompromiseAnswer
+    codes.has("APP_INSTALLATION_REQUEST") && !known("app")
       && !/(앱을 이미 설치|설치하셨)/.test(asked)
       ? "그 앱을 이미 설치하셨나요?"
       : "",
-    codes.has("MALICIOUS_URL") && !hasCompromiseAnswer
+    codes.has("MALICIOUS_URL") && !known("link")
       && !/(링크를 이미|링크.*누르셨)/.test(asked)
       ? "그 링크를 이미 누르셨나요?"
       : "",
-    codes.has("ADDITIONAL_PAYMENT_REQUEST") && !hasCompromiseAnswer
+    codes.has("ADDITIONAL_PAYMENT_REQUEST") && !known("transfer")
       && !/(이전에.*돈|이미.*보냈|몇 번 보내)/.test(asked)
       ? "이전에 같은 이유로 돈을 보낸 적이 있나요?"
       : "",
@@ -435,11 +462,10 @@ function buildProbeMessage(risk, fraudType, llm, messages = [], preferredQuestio
   ].filter(Boolean).join("\n\n");
 }
 
-const VAGUE_PATTERN_PHRASES = /기존과\s*다른\s*패턴|평소와\s*다른\s*패턴|패턴이\s*달라|패턴이\s*다르|일반적이지\s*않|특이한\s*패턴|비정상적인\s*패턴/g;
 
 function sanitizeReply(text, alreadySaid = "") {
   if (!text) return "";
-  let cleaned = text.replace(VAGUE_PATTERN_PHRASES, "").replace(/\s{2,}/g, " ").trim();
+  let cleaned = text.replace(/\s{2,}/g, " ").trim();
   if (cleaned.length < 5) return "";
   if (alreadySaid.includes(cleaned)) return "";
   return cleaned;
@@ -565,7 +591,6 @@ function softenExplanation(value = "") {
 
 function compactExplanation(value = "") {
   const softened = softenExplanation(value)
-    .replace(VAGUE_PATTERN_PHRASES, "")
     .replace(/\s+/g, " ")
     .trim();
   if (!softened || softened.length < 5) return "말씀하신 내용에 위험한 점이 있어 다시 확인해야 해요.";
@@ -666,15 +691,6 @@ function buildAnalysis(llm, risk, fraudType, retrieval, officialContent) {
     score_components: risk.components,
     official_content: officialContent,
   };
-}
-
-function buildEmergencyResponse(fraudType, risk) {
-  const opening = "말씀해 주셔서 감사해요. 바로 도와드릴게요.";
-  const situation = fraudType.code && fraudType.code !== "none"
-    ? `${RISK_OPENINGS[fraudType.code] || "금융사기가 의심돼요."}`
-    : "말씀하신 상황이 금융사기와 비슷해요.";
-  const action = safeActionFor(fraudType.code || "unknown", risk.codes || []);
-  return [opening, situation, action].filter(Boolean).join("\n\n");
 }
 
 function safeUserId(pattern = {}) {

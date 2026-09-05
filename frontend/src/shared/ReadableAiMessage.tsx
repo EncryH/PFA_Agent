@@ -30,45 +30,8 @@ export function extractEmergencyNumbers(value: string) {
 }
 
 export function formatReadableAiMessage(value: string) {
-  let text = value
-    .replace(/\r\n/g, "\n")
-    .replace(/(?:\[|]|[#*_])+\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요)\s*(?:\[|]|[#*_])*/g, "$1")
-    .replace(/^\s*(?:\[|]|[#*_])+\s*$/gm, "")
-    // 백엔드가 헤더를 문장 중간에 붙여 보낼 때가 있다. 헤더가 어디 있든
-    // 자기 줄로 떼어내야 굵게 렌더링되고 부자연스럽게 안 붙는다.
-    .replace(/\s*(확인한 내용이에요|왜 확인하나요|왜 위험한가요|지금 해야 할 일이에요|한 가지만 확인할게요)\s*/g, "\n\n$1\n\n")
-    .replace(/([^\n])\s+(?=(?:[1-4])\.\s)/g, "$1\n\n")
-    .replace(/\n(?=(?:[2-4])\.\s)/g, "\n\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  const actionHeading = text.match(/지금 해야 할 일이에요[.!]?/);
-  const firstNumber = text.search(/(?:^|\n)1\.\s/);
-  if (!text.includes("확인한 내용이에요") && (actionHeading || firstNumber >= 0)) {
-    const splitIndex = actionHeading?.index ?? firstNumber;
-    const summary = text.slice(0, splitIndex).trim();
-    const actions = text
-      .slice(actionHeading ? splitIndex + actionHeading[0].length : splitIndex)
-      .trim();
-    const sentences = summary
-      .replace(/\n+/g, " ")
-      .match(/[^.!?]+(?:[.!?]+|$)/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) || [];
-    text = [
-      "확인한 내용이에요",
-      sentences.slice(0, 1).join(" "),
-      "왜 위험한가요",
-      sentences.slice(1, 3).join(" ") || "말씀하신 요구는 금융사기 수법과 비슷해요.",
-      "지금 해야 할 일이에요",
-      actions,
-    ].filter(Boolean).join("\n\n");
-  }
-
-  // 이미 구조화된 헤더가 있는 메시지만 포맷팅한다.
-  // 헤더가 없는 자연스러운 대화 응답은 강제 구조화하지 않는다.
-
-  return text;
+  // 본문·문장 순서를 보존한다. 화면은 의미를 추정하거나 문구를 생성하지 않는다.
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export function formatAiSpeechText(value: string, structured = true) {
@@ -90,7 +53,7 @@ export function ReadableAiMessage({ text }: { text: string }) {
         if (AI_MESSAGE_HEADINGS.has(trimmed.replace(/[.!]$/, ""))) {
           return <p key={index} className={`${index > 0 ? "mt-1" : ""} font-extrabold text-[var(--ac-700)]`}>{trimmed.replace(/[.!]$/, "")}</p>;
         }
-        const numbered = trimmed.match(/^([1-4])\.\s*(.+)$/);
+        const numbered = trimmed.match(/^(\d+)\.\s*(.+)$/);
         if (numbered) {
           return (
             <div key={index} className="flex items-start gap-2">

@@ -1,5 +1,6 @@
 // 백엔드 /api/intent 호출.
 // 판정 로직은 전부 backend/ 에 있다 — 여기서는 결과를 받아 화면에 넘기기만 한다.
+import { resolveSituation, needsDamageResponse, type Situation } from "../../../shared/conversation-state.js";
 
 export type ChatMessage = {
   role: "ai" | "user";
@@ -29,6 +30,7 @@ export type TransferContext = {
 };
 
 export type ConversationState = {
+  situation?: Situation;
   resumed: boolean;
   analysisDone: boolean;
   analysisHold: boolean;
@@ -59,6 +61,9 @@ export type OfficialContent = {
 };
 
 export type Verdict = {
+  situation?: Situation;
+  action?: "damage_response" | "family_connect" | "cancel_transfer" | null;
+  responseFallback?: boolean;
   /** 다음에 보여줄 AI 메시지 */
   message: string;
   /** 송금을 보류하고 가족 확인 옵션을 제안할지 — 규칙이 서버에서 판정 */
@@ -126,10 +131,10 @@ export const FIRST_QUESTION = "처음 보내는 계좌예요. 어떤 돈인지 �
 
 /** 네트워크 자체가 끊긴 경우의 최후 폴백 — 데모가 멈추지 않게 한다. */
 const OFFLINE: Verdict = {
-  message: "지금은 확인이 어려워요. 안전을 위해 따님에게 함께 확인받아볼게요.",
+  message: "지금은 연결이 원활하지 않아 분석을 마치지 못했어요. 송금을 잠시 멈추고 은행 공식 고객센터나 신뢰하는 가족과 확인해 주세요.",
   hold: true,
   done: true,
-  risk: { score: 50, labels: ["확인 회피"], level: "HIGH" },
+  risk: { score: 50, labels: ["분석 연결 확인 필요"], level: "HIGH" },
   intent: { purpose: "", requester: "", channel: "" },
   fallback: true,
 };
@@ -150,6 +155,14 @@ export async function takeTurn(
     return await res.json();
   } catch (err) {
     console.warn("[guardian] 백엔드 연결 실패:", err);
+    const situation = resolveSituation(messages, conversationState?.situation);
+    if (needsDamageResponse(situation)) {
+      return { ...OFFLINE, situation, action: "damage_response",
+        message: situation.facts.transfer?.status === "yes"
+          ? "연결이 원활하지 않지만, 이미 송금하셨다는 말씀은 확인했어요. 송금에 이용한 금융회사 공식 고객센터 또는 경찰 112에 즉시 연락해 피해 사실을 알리고 지급정지를 요청하세요. 아래 피해대응 화면에서 필요한 절차를 확인할 수 있어요."
+          : "연결이 원활하지 않아 자세한 분석은 어렵지만, 말씀하신 상황에 대한 대응은 계속할 수 있어요. 의심 앱 설치나 정보 제공이 있었다면 안전한 다른 전화로 금융회사에 보호 조치를 문의해 주세요. 링크 클릭만으로 정보 유출을 단정할 수는 없어요. 아래 피해대응 화면을 확인해 주세요.",
+      };
+    }
     return OFFLINE;
   }
 }

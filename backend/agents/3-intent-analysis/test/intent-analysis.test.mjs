@@ -213,15 +213,9 @@ test("맞춤 답변은 내부 출처와 사기 확정 표현을 차단한다", (
   );
 });
 
-test("고령 사용자용 위험 답변은 행동 번호 사이를 띄워 보여준다", () => {
-  const message = validateUserResponse(
-    "기관에서 송금을 요구했어요. 기관 사칭 수법과 비슷해요.\n\n지금 해야 할 일이에요\n1. 송금하지 마세요.\n2. 공식 번호로 확인하세요.\n3. 요구에 응답하지 마세요.\n4. 대화를 보관하고 신고하세요.",
-    "risk",
-  );
-  assert.match(message, /^확인한 내용이에요\n\n기관에서 송금을 요구했어요\./);
-  assert.match(message, /왜 위험한가요\n\n기관 사칭 수법과 비슷해요\./);
-  assert.match(message, /1\. 송금하지 마세요\.\n\n2\. 공식 번호로 확인하세요\./);
-  assert.match(message, /3\. 요구에 응답하지 마세요\.\n\n4\. 대화를 보관하고 신고하세요\./);
+test("위험 답변의 원문과 설명 순서를 보존한다", () => {
+  const input = "기관에서 송금을 요구했어요. 기관 사칭 수법과 비슷해요.\n\n1. 송금을 멈춰 주세요.\n2. 공식 번호로 확인하세요.";
+  assert.equal(validateUserResponse(input, "risk"), input);
 });
 
 test("추가 확인은 근거 결합에서 가장 중요한 공백 하나만 묻는다", () => {
@@ -300,37 +294,21 @@ test("앱 설치 요구가 확인되면 피해 대응을 바꾸는 설치 여부
   assert.equal(question, "그 앱을 이미 설치하셨나요?");
 });
 
-test("위험 답변에 제목이 없어도 번호 목록을 기준으로 세 구역을 강제한다", () => {
-  const message = validateUserResponse(
-    "검찰이라며 안전계좌로 보내라고 했어요. 국가기관은 개인에게 돈을 요구하지 않아요. 지금 바로 이렇게 행동해 주세요.\n1. 송금하지 마세요.\n2. 공식 번호로 확인하세요.\n3. 요구에 응답하지 마세요.\n4. 대화를 보관하고 신고하세요.",
-    "risk",
-  );
-  assert.match(message, /^확인한 내용이에요/);
-  assert.match(message, /왜 위험한가요/);
-  assert.match(message, /지금 해야 할 일이에요/);
-  assert.match(message, /1\. 송금하지 마세요\./);
+test("제목이 없는 답변에 소제목을 강제로 추가하지 않는다", () => {
+  const input = "검찰이라며 안전계좌로 보내라고 했어요. 지금 바로 은행 공식 고객센터에 확인하세요.";
+  assert.equal(validateUserResponse(input, "risk"), input);
 });
 
-test("Gemini가 제목에 기호를 붙여도 사용자 화면에는 남기지 않는다", () => {
-  const message = validateUserResponse(
-    "[확인한 내용이에요]\n검찰에서 연락이 왔어요.\n\n[왜 위험한가요]\n안전계좌 송금 요구는 위험해요.\n\n[지금 해야 할 일이에요]\n1. 송금하지 마세요.\n2. 공식 번호로 확인하세요.\n3. 요구에 응답하지 마세요.\n4. 대화를 보관하고 신고하세요.",
-    "risk",
-  );
-  assert.equal(message.includes("["), false);
-  assert.match(message, /^확인한 내용이에요/);
+test("사용자가 언급한 공식 기관명은 내부 출처 노출로 거부하지 않는다", () => {
+  const input = "금융보안원이라고 연락받으셨군요. 어떤 요구를 했나요?";
+  assert.equal(validateUserResponse(input, "probe"), input);
 });
 
-test("추가 질문 답변의 제목은 중복 없이 의미 단위로 분리한다", () => {
-  const message = enforceSingleProbeQuestion(
-    "[확인한 내용이에요]\n검찰의 연락을 받아 놀라셨겠어요.\n\n[왜 확인하나요]\n국가기관은 안전계좌 송금을 요구하지 않아요. 사칭 수법과 비슷해요.\n\n[한 가지만 확인할게요]\n기존 질문?",
-    "어떤 전화번호로 연락이 왔나요?",
-  );
-  assert.equal((message.match(/왜 확인하나요/g) || []).length, 1);
-  assert.equal((message.match(/[?？]/g) || []).length, 1);
-  assert.equal(message.includes("["), false);
-  assert.match(message, /확인한 내용이에요[\s\S]*왜 확인하나요[\s\S]*한 가지만 확인할게요/);
+test("추가 질문의 앞뒤 문장을 보존하고 여러 질문은 재작성 대상으로 거부한다", () => {
+  const input = "지금 통화 중이라고 하셨군요. 먼저 통화를 끊고 확인해도 괜찮아요. 어떤 번호로 연락이 왔나요?";
+  assert.equal(enforceSingleProbeQuestion(input, "어떤 번호로 연락이 왔나요?"), input);
+  assert.throws(() => enforceSingleProbeQuestion("누가 요청했나요? 얼마인가요?", "누가 요청했나요?"), /한 가지/);
 });
-
 test("규칙 판정 뒤 Gemini가 사용자 상황을 반영한 자연스러운 위험 답변을 만든다", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({
@@ -398,7 +376,7 @@ test("고위험 개인 거래 패턴이 답변에서 빠지면 한 번 재생성
     }, "test-key");
 
     assert.equal(callCount, 2);
-    assert.match(bodies[1].contents[0].parts[0].text, /재작성 필수/);
+    assert.match(bodies[1].contents[0].parts[0].text, /재작성 사유/);
     assert.match(message, /70만원/);
     assert.match(message, /1,200만원/);
     assert.match(message, /평소와 크게 달라요/);

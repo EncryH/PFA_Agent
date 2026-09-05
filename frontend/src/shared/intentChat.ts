@@ -1,4 +1,5 @@
 import type { OfficialContent } from "../api/guardian";
+import type { Situation } from "../../../shared/conversation-state.js";
 
 export type StoredChatMessage = {
   role: "ai" | "user";
@@ -9,6 +10,7 @@ export type StoredChatMessage = {
 };
 
 export type IntentChatSession = {
+  situation?: Situation;
   schemaVersion: 1;
   id: string;
   createdAt: string;

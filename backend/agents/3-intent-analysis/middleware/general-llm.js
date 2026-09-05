@@ -1,36 +1,27 @@
 import { guardOutput } from "./output-guard.js";
+import { validateContactAdvice, CONTACT_GUIDANCE } from "./response-contract.js";
+import { sanitizeMessages, sanitizeText } from "../sanitize.js";
 
 const DEFAULT_MODEL = "gemini-3.6-flash";
 const GENERAL_FALLBACK = "일반적인 금융 정보는 안내할 수 있지만, 개인 상황에 대한 확정적인 금융 판단은 공식 금융회사에서 다시 확인해 주세요.";
-const CONTINUATION_FALLBACK = "다시 오셨군요.\n\n앞서 확인하던 송금 상담을 이어갈게요.\n\n무엇을 더 도와드릴까요?";
+const CONTINUATION_FALLBACK = "지금은 연결이 원활하지 않아 질문에 답하지 못했어요. 잠시 후 다시 시도해 주세요. 앞서 안내한 주의사항은 계속 확인해 주세요.";
 
 const endpoint = (model, key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
-/** 긴 한 문단을 고령 사용자가 한 줄씩 끊어 읽을 수 있는 의미 단위로 바꾼다.
- *  일반 질문은 최대 3개, 저장된 상담을 재개할 때는 앞선 상황을 자세히 되짚어야
- *  하니 최대 6개까지 허용한다. */
+/** 답변 내용과 문장 순서는 보존하고 줄바꿈만 정리한다. */
 export function formatGeneralResponse(value, maxSentences = 3) {
-  const sentences = String(value || "")
-    .replace(/\r\n/g, "\n")
-    .split(/\n+|(?<=[.!?？])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-
-  if (sentences.length <= maxSentences) return sentences.join("\n\n");
-  // 인사 → 이전 상황 → 현재 질문의 순서를 보존한다. 가운데 설명이 길어져도 한도를 넘기지 않는다.
-  const head = sentences.slice(0, maxSentences - 1);
-  return [...head, sentences.at(-1)].join("\n\n");
+  // 문장 수를 맞추려고 중간 내용을 삭제하지 않는다.
+  void maxSentences;
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export async function generateGeneralResponse(text, apiKey, context = {}) {
-  const messages = Array.isArray(context.messages) ? context.messages : [];
+  text = sanitizeText(text);
+  const messages = sanitizeMessages(Array.isArray(context.messages) ? context.messages : []);
   const conversationState = context.conversationState || {};
-  const isContinuation = conversationState.resumed === true && messages.length > 1;
-  const continuationFallback = conversationState.fraudTypeLabel
-    ? `다시 오셨군요.\n\n앞서 ${conversationState.fraudTypeLabel} 가능성을 확인했어요.\n\n무엇을 더 도와드릴까요?`
-    : CONTINUATION_FALLBACK;
-  const fallbackMessage = isContinuation ? continuationFallback : GENERAL_FALLBACK;
+  const isContinuation = messages.length > 1;
+  const fallbackMessage = isContinuation ? CONTINUATION_FALLBACK : GENERAL_FALLBACK;
   if (!apiKey) return { message: fallbackMessage, fallback: true };
 
   const priorMessages = messages
@@ -50,15 +41,11 @@ export async function generateGeneralResponse(text, apiKey, context = {}) {
     ? `[저장된 상담 상태]\n${sessionSummary}\n\n[이전 대화]\n${priorMessages}\n\n[지금 사용자 입력]\n${text}`
     : text;
 
-  const lengthRule = isContinuation
-    ? `- 재개 응답은 최대 6문장까지 쓸 수 있어요. 다음 순서로 자세히 쓰세요.
-  1) 다시 만난 인사 한 문장
-  2) 그때 어떤 경로로 연락받았는지, 얼마를 보내려던 상황이었는지 구체적으로 되짚는 한두 문장
-  3) [저장된 상담 상태]의 위험 신호·의심 유형을 자연스러운 말로 풀어 설명하는 한두 문장
-  4) 지금은 상황이 어떻게 달라졌는지 묻는 질문 한 문장
-- "기존 위험 신호: OO" 같은 원문 라벨을 그대로 읽지 말고, 어르신이 이해할 쉬운 문장으로 바꿔 설명하세요.`
-    : `- 사용자의 질문에 한국어로 최대 3문장만 답하세요.
-- 문장 하나는 25자 안팎으로 짧게 쓰고, 한 문장에는 한 가지 내용만 담으세요.`;
+  const lengthRule = `- 지금 사용자가 묻는 질문에 먼저 답하세요. 보통 2~4문장이면 충분합니다.
+- 이전 상담은 필요한 맥락으로만 사용하고, 새로 인사하지 않았다면 재입장 인사나 전체 요약을 하지 마세요.
+- 개념·방법 질문에는 질문 자체에 답하고, 불필요하게 새로운 질문으로 끝내지 마세요.
+- 사용자가 현재 상태를 정정하면 그 사실을 반영하세요. 가정 질문을 실제 피해로 해석하지 마세요.
+- 가정 질문에는 '그 경우에는'처럼 조건을 유지하고, 사용자가 실제 피해를 당한 듯 지금 즉시 행동하라고 끝내지 마세요.`;
 
   const model = process.env.GEMINI_GENERAL_MODEL || process.env.GEMINI_MODEL || DEFAULT_MODEL;
   const payload = {
@@ -67,6 +54,7 @@ export async function generateGeneralResponse(text, apiKey, context = {}) {
         text: `당신은 한국 은행 앱 '안심동행 AI'입니다. 어르신 사용자의 사기 송금을 막기 위해
 송금 목적을 확인하고, 그 밖의 궁금한 점도 친절하게 안내하는 도우미입니다.
 ${lengthRule}
+- ${CONTACT_GUIDANCE}
 - 각 문장 사이에는 빈 줄을 하나 넣으세요.
 - 제목이나 번호 목록을 붙이지 말고 일반적인 대화처럼 바로 설명하세요.
 - 질문을 그대로 되풀이하거나 "걱정이 많으셨지요", "궁금하셨군요" 같은 상투적인 공감 문구를 넣지 마세요.
@@ -90,6 +78,7 @@ ${lengthRule}
     },
   };
 
+  for (let attempt = 0; attempt < 2; attempt++) {
   try {
     const response = await fetch(endpoint(model, apiKey), {
       method: "POST",
@@ -100,9 +89,15 @@ ${lengthRule}
 
     const data = await response.json();
     const message = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
+    validateContactAdvice(message);
     return { message: formatGeneralResponse(guardOutput(message, fallbackMessage), isContinuation ? 6 : 3), fallback: false };
   } catch (error) {
+    if (attempt === 0) {
+      payload.contents[0].parts[0].text += `\n\n[재작성 사유]\n${error.message}`;
+      continue;
+    }
     console.warn(`[intent-middleware] 일반 LLM 실패 → 고정 안내 사용: ${error.message}`);
     return { message: fallbackMessage, fallback: true };
+  }
   }
 }

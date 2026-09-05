@@ -1,4 +1,6 @@
-const MAX_MESSAGES = 20;
+import { normalizeSituation } from "../../../../shared/conversation-state.js";
+import { sanitizeText } from "../sanitize.js";
+const MAX_MESSAGES = 80;
 const MAX_MESSAGE_LENGTH = 2_000;
 
 export function normalizeText(value = "") {
@@ -28,11 +30,13 @@ export function normalizeRequest(input = {}) {
     resumed: sourceConversationState.resumed === true,
     analysisDone: sourceConversationState.analysisDone === true,
     analysisHold: sourceConversationState.analysisHold === true,
+    situation: normalizeSituation(sourceConversationState.situation),
     fraudTypeLabel: normalizeText(sourceConversationState.fraudTypeLabel || "").slice(0, 80),
     riskLabels: Array.isArray(sourceConversationState.riskLabels)
       ? sourceConversationState.riskLabels.slice(0, 8).map((label) => normalizeText(label).slice(0, 80))
       : [],
   };
+  for (const fact of Object.values(conversationState.situation.facts)) fact.evidence = sanitizeText(fact.evidence);
 
   return {
     input: {
