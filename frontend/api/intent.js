@@ -28,6 +28,6 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   } catch (error) {
     console.error("[api/intent]", error);
-    return res.status(502).json({ error: error.message });
+    return res.status(502).json({ error: "송금 의도 분석을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
 }

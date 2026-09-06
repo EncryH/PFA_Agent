@@ -37,6 +37,7 @@ export const DEMO_SCENARIOS: { display: string; number: string; label: string }[
   { display: "010-1234-5678",   number: "01012345678",  label: "보이스피싱 신고번호" },
   { display: "1544-4000",       number: "15444000",     label: "신한은행" },
   { display: "010-9999-0000",   number: "01099990000",  label: "투자사기 번호" },
+  { display: "010-3333-4444",   number: "01033334444",  label: "대환대출 상담 사칭" },
   { display: "02-9876-5432",    number: "0298765432",   label: "알 수 없음" },
 ]
 

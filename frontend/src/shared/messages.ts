@@ -33,9 +33,12 @@ export const DEMO_MESSAGES: DemoMessage[] = [
     url: 'https://shinhan.com/security-guide',
   },
   {
-    sender: '010-9876-0000',
-    number: '01098760000',
-    body: '대출 금리 최저 연 2.9%! 지금 바로 신청하세요 → https://secure-login.kr/loan?utm_src=sms',
+    // 전화 시뮬레이션의 "대환대출 상담 사칭"(01033334444, loan-refinance-malware)과
+    // 같은 번호로 맞춰서, 문자를 받고 그 번호로 되걸면 같은 통화 시나리오로 이어지는
+    // 하나의 이야기가 되게 한다.
+    sender: '010-3333-4444',
+    number: '01033334444',
+    body: '[Web발신] 정부지원 저금리 대환대출 대상자로 선정되었습니다. 신청하기 → https://secure-login.kr/loan?utm_src=sms',
     url: 'https://secure-login.kr/loan?utm_src=sms',
   },
   {

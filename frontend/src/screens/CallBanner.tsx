@@ -6,7 +6,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { screenCall, screenCallImmediate, type CallScreenResult } from '../shared/callscreen'
-import { pickRandomCallScript, getUnknownCallerScript, type CallScript, type LinkMessagePreview } from '../shared/callScript'
+import { pickCallScript, getUnknownCallerScript, type CallScript, type LinkMessagePreview } from '../shared/callScript'
 import { markCallScriptFlag, markCallScriptId } from '../shared/callActivity'
 import { DefaultPersonAvatar } from '../shared/ui'
 
@@ -140,7 +140,7 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
   useEffect(() => {
     if (phase !== 'active') return
     if (result.status !== 'danger' && result.status !== 'unknown') return
-    const chosen = result.status === 'danger' ? pickRandomCallScript() : getUnknownCallerScript()
+    const chosen = result.status === 'danger' ? pickCallScript(call.number) : getUnknownCallerScript()
     setScript(chosen)
     setLinkMessage(null)
     markCallScriptId(chosen.id)
@@ -166,7 +166,7 @@ export default function CallBanner({ call, onEnd, onPhaseChange }: Props) {
     showLine(0)
 
     return () => { cancelled = true; timers.forEach(clearTimeout) }
-  }, [phase, result.status])
+  }, [phase, result.status, call.number])
 
   const decline = () => {
     setVisible(false)

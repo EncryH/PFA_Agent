@@ -10,6 +10,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ items });
   } catch (error) {
     console.error("[api/fsc/verify]", error);
-    return res.status(502).json({ error: error.message });
+    return res.status(502).json({ error: "금융기관 조회를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
 }

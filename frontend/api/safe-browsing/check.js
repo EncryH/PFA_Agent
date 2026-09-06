@@ -32,6 +32,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ result: google });
   } catch (error) {
     console.error("[api/safe-browsing/check]", error);
-    return res.status(502).json({ error: error.message });
+    return res.status(502).json({ error: "링크 안전성 확인을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
 }
