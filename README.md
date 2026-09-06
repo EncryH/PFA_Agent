@@ -29,4 +29,4 @@
 
 ## 사기 송금 의도 분석
 
-![사기 송금 의도 분석 파이프라인](/assets/intent-analysis-pipeline.png)
+![사기 송금 의도 분석 파이프라인](/assets/intent-analysis-pipeline-sql.png)
