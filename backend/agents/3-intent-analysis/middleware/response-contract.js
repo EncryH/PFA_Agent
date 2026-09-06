@@ -29,5 +29,15 @@ export function validateDialogueResponse(text = "", context = {}) {
   if (!context.allowedAction && /아래 버튼|하단 버튼/.test(text)) {
     throw new Error("이번 답변에 제공되지 않은 버튼을 안내하지 마세요.");
   }
+  if (context.presentation === "structured_actions") {
+    if (!text.trim().startsWith("지금 해야 할 일이에요") || !/(?:^|\n)1\.\s/.test(text)) {
+      throw new Error("완료 후 다음 행동 답변은 '지금 해야 할 일이에요'와 번호 목록으로 작성하세요.");
+    }
+  }
+  const appConfirmed = context.situation?.facts?.app?.status === "yes";
+  if (context.analysisDone && context.analysisHold && !appConfirmed
+    && /악성\s*앱.{0,24}(?:설치되었|설치됐|깔려|감염되었|감염됐|있을\s*수)/.test(text)) {
+    throw new Error("확인되지 않은 악성 앱 설치·감염 상태를 추측하지 마세요.");
+  }
 }
 export const CONTACT_GUIDANCE = "보이스피싱 긴급 피해 신고·지급정지 요청은 경찰 112 또는 관련 금융회사 공식 고객센터로 안내하세요. 1332는 금융감독원 상담, 118은 인터넷 침해 상담입니다. 182를 긴급 피해 신고 번호로 안내하지 마세요. 확인되지 않은 금융회사 전화번호를 만들지 마세요.";

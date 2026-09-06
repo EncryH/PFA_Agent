@@ -9,6 +9,7 @@ import { generateUserResponse, validateUserResponse } from "../llm/gemini.js";
 import { runIntentAnalysisAgent } from "../agent.js";
 import { routeIntentRequest } from "../middleware/index.js";
 import { validateContactAdvice } from "../middleware/response-contract.js";
+import { inferDialogue } from "../middleware/dialogue.js";
 const user = text => ({ role: "user", text });
 const ai = text => ({ role: "ai", text });
 
@@ -79,6 +80,44 @@ test("피해 후 개념 질문은 상황을 보존하되 새 위험 분석 없�
   assert.equal(routed.handled, true);
   assert.equal(routed.response.middleware.action, "damage_response");
   assert.equal(context.responsePlan.situation.facts.transfer.status, "yes");
+});
+
+test("완료 후 확인과 다음 행동 질문을 새 위험 사실로 오인하지 않는다", () => {
+  assert.equal(inferDialogue("알겠어요").kind, "social");
+  assert.equal(inferDialogue("지금 뭘 해야 하나요?").kind, "progress");
+  assert.equal(inferDialogue("지금 무엇을 해야 하나요?").kind, "progress");
+  assert.equal(inferDialogue("지금 해야 할 일 알려주세요").kind, "progress");
+});
+
+test("완료된 기관 사칭 상담의 다음 행동은 구조화하고 확인되지 않은 앱 상태를 넣지 않는다", async () => {
+  let responsePlan;
+  const routed = await routeIntentRequest({
+    transfer:{amount:10_500_000,recipientName:"강수아",account:"1234567890"},
+    messages:[
+      user("검찰에서 안전계좌로 보내라고 했어요."),
+      ai("기관 사칭 수법과 매우 비슷해요. 송금하지 마세요."),
+      user("지금 뭘 해야 하나요?"),
+    ],
+    conversationState:{
+      analysisDone:true,
+      analysisHold:true,
+      fraudTypeLabel:"은행·기관을 사칭한 사기",
+      riskLabels:["안전계좌 송금 요구", "비밀 유지 요구"],
+      situation:resolveSituation([user("검찰에서 안전계좌로 보내라고 했어요.")]),
+    },
+  }, {
+    generalChat:async (_text,_key,context) => {
+      responsePlan = context.responsePlan;
+      return {message:context.responsePlan.fallback,fallback:false};
+    },
+  });
+
+  assert.equal(routed.handled, true);
+  assert.equal(routed.response.middleware.dialogueKind, "progress");
+  assert.equal(responsePlan.presentation, "structured_actions");
+  assert.match(routed.response.message, /^지금 해야 할 일이에요/);
+  assert.match(routed.response.message, /공식 대표번호/);
+  assert.doesNotMatch(routed.response.message, /악성 앱|감염/);
 });
 
 test("LLM 장애에서도 이미 송금한 사실과 피해대응 연결을 보존한다", async () => {

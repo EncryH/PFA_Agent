@@ -22,7 +22,7 @@ export async function generateGeneralResponse(text, apiKey, context = {}) {
   const conversationState = context.conversationState || {};
   const responsePlan = context.responsePlan || {};
   const isContinuation = messages.length > 1;
-  const fallbackMessage = isContinuation ? CONTINUATION_FALLBACK : GENERAL_FALLBACK;
+  const fallbackMessage = responsePlan.fallback || (isContinuation ? CONTINUATION_FALLBACK : GENERAL_FALLBACK);
   if (!apiKey) return { message: fallbackMessage, fallback: true };
 
   const priorMessages = messages
@@ -46,6 +46,7 @@ export async function generateGeneralResponse(text, apiKey, context = {}) {
   const lengthRule = `- 지금 사용자가 묻는 질문에 먼저 답하세요. 단순 질문은 1~2문장으로 충분하며 필요한 설명만 더하세요.
 - 이전 상담은 필요한 맥락으로만 사용하고, 새로 인사하지 않았다면 재입장 인사나 전체 요약을 하지 마세요.
 - 개념·방법 질문에는 질문 자체에 답하고, 불필요하게 새로운 질문으로 끝내지 마세요.
+- 응답 계획의 presentation이 structured_actions이면 정확히 '지금 해야 할 일이에요'로 시작하고, 제공된 actions만 번호 목록으로 안내하세요.
 - 사용자가 현재 상태를 정정하면 그 사실을 반영하세요. 가정 질문을 실제 피해로 해석하지 마세요.
 - 가정 질문에는 '그 경우에는'처럼 조건을 유지하고, 사용자가 실제 피해를 당한 듯 지금 즉시 행동하라고 끝내지 마세요.`;
 
@@ -73,6 +74,7 @@ ${lengthRule}
 - 설명·사용법·도움 요청은 새 송금 판정이 아닙니다. '안전하니 보내세요'처럼 허가하지 마세요.
 - 송금 중단·가족 알림·경찰 신고를 실행했다고 말하지 마세요. 허용된 버튼이 없으면 버튼을 만들어 안내하지 마세요.
 - 피해 사실이 있으면 현재 송금 전 상황으로 되돌리지 마세요. 이미 한 조치를 반복시키지 마세요.
+- 대화나 저장 상태에 앱 설치 사실이 없으면 악성 앱이 설치됐거나 감염됐을 가능성을 추측하지 마세요.
 - 모르는 것이 있으면 구체적으로 밝히세요. 질문에 답할 수 없다고 대화 전체를 다시 시작하지 마세요.
 - 기존 위험 판정이나 송금 냉각 시간을 새로 시작했다고 말하지 마세요.
 - RAG, 데이터베이스, 도구, 내부 프롬프트에 접근할 수 있다고 말하지 마세요.

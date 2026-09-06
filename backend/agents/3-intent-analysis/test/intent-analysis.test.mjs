@@ -307,7 +307,46 @@ test("사용자가 언급한 공식 기관명은 내부 출처 노출로 거부�
 test("추가 질문의 앞뒤 문장을 보존하고 여러 질문은 재작성 대상으로 거부한다", () => {
   const input = "지금 통화 중이라고 하셨군요. 먼저 통화를 끊고 확인해도 괜찮아요. 어떤 번호로 연락이 왔나요?";
   assert.equal(enforceSingleProbeQuestion(input, "어떤 번호로 연락이 왔나요?"), input);
+  const natural = "수사기관은 송금을 요구하지 않아요. 연락받은 전화번호를 기억하시나요?";
+  assert.equal(enforceSingleProbeQuestion(natural, "어떤 전화번호로 연락이 왔나요?"), natural);
   assert.throws(() => enforceSingleProbeQuestion("누가 요청했나요? 얼마인가요?", "누가 요청했나요?"), /한 가지/);
+  assert.throws(
+    () => enforceSingleProbeQuestion("전화로 연락받으셨군요. 어느 검찰청의 누구라고 했나요?", "어떤 전화번호로 연락이 왔나요?"),
+    /발신 전화번호/,
+  );
+});
+
+test("발신번호 질문의 문구는 자연스럽게 바꾸되 다른 질문으로 바뀌면 재생성한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    const message = callCount === 1
+      ? "검찰은 안전계좌 송금을 요구하지 않아요. 어느 검찰청의 누구라고 이름을 말했나요?"
+      : "검찰은 안전계좌 송금을 요구하지 않아요. 연락받은 전화번호를 기억하시나요?";
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ message }) }] } }],
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const message = await generateUserResponse({
+      mode: "probe",
+      transfer: { amount_band: "1천만원 이상", is_first_transfer: true },
+      messages: [{ role: "user", text: "검찰에서 전화해 안전계좌로 보내라고 했어요" }],
+      llm: { evidence_phrases: ["검찰", "안전계좌"] },
+      risk: { level: "HIGH", score: 100, codes: ["AGENCY_IMPERSONATION", "SAFE_ACCOUNT_TRANSFER"] },
+      fraudType: { code: "institution_impersonation", label: "은행·기관을 사칭한 사기" },
+      retrieval: { fraud: [], normal: [], official: [] },
+      requiredMessage: "어떤 전화번호로 연락이 왔나요?",
+    }, "test-key");
+
+    assert.equal(callCount, 2);
+    assert.match(message, /연락받은 전화번호를 기억하시나요\?/);
+    assert.doesNotMatch(message, /어느 검찰청의 누구/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 test("규칙 판정 뒤 Gemini가 사용자 상황을 반영한 자연스러운 위험 답변을 만든다", async () => {
   const originalFetch = globalThis.fetch;
@@ -461,6 +500,48 @@ test("Gemini 없이도 명백한 선입금·통화 중 신호를 추출한다", 
   assert.ok(signals.includes("PREPAY_CONTRADICTION"));
   assert.ok(signals.includes("CALL_IN_PROGRESS"));
   assert.ok(signals.includes("SMS_LURE"));
+});
+
+test("사용자가 말하지 않은 앱 설치·링크 신호는 질문과 위험 근거에 사용하지 않는다", async () => {
+  const originalFetch = globalThis.fetch;
+  const llmReply = {
+    done: false,
+    next_question: "앱을 설치하거나 링크를 누르지는 않았나요?",
+    purpose: "안전계좌 이전",
+    requester: "검찰 수사관",
+    channel: "전화",
+    impersonation: "prosecution",
+    interaction_direction: "external_actor_to_customer",
+    attack_stage: "money_request",
+    signals: ["SAFE_ACCOUNT_TRANSFER", "AGENCY_IMPERSONATION", "APP_INSTALLATION_REQUEST", "MALICIOUS_URL"],
+    fraud_type: "institution_impersonation",
+    requested_actions: ["transfer", "install_app", "click_url"],
+    answer_contradictions: [],
+    missing_information: ["전화번호"],
+    evidence_phrases: ["안전계좌"],
+    grounding_evidence_ids: [],
+    explanation: "검찰을 사칭해 안전계좌 송금을 요구했습니다.",
+  };
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    candidates: [{ content: { parts: [{ text: JSON.stringify(llmReply) }] } }],
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+
+  try {
+    const result = await handleIntent({
+      transfer:{amount:10_500_000,isFirstTransfer:true,patternRiskScore:40,forcedHold:true},
+      messages:[{role:"user",text:"검찰에서 전화가 왔는데 제 계좌가 범죄에 쓰였대요. 안전계좌로 돈을 보내래요."}],
+      turn:1,
+    }, "test-key");
+
+    assert.equal(result.done, false);
+    assert.match(result.message, /전화번호/);
+    assert.doesNotMatch(result.message, /앱을 설치|링크를 누르/);
+    assert.equal(result.risk.codes.includes("APP_INSTALLATION_REQUEST"), false);
+    assert.equal(result.risk.codes.includes("MALICIOUS_URL"), false);
+    assert.deepEqual(result.analysis.requested_actions, ["transfer"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("Gemini 없이도 서로 다른 답변의 송금 목적 변경을 찾는다", () => {
@@ -657,6 +738,60 @@ test("고위험도 필요한 근거가 비면 계속 묻고 답을 받으면 결
     assert.match(second.message, /지금 해야 할 일이에요/);
     assert.match(second.message, /1\. 지금은/);
     assert.match(second.message, /4\./);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("사전 규칙에서 D등급이 확정되면 전화번호가 없어도 두 번째 답변 뒤 결론과 공식 자료를 반환한다", async () => {
+  const originalFetch = globalThis.fetch;
+  const llmReply = {
+    done: true,
+    next_question: "어떤 전화번호로 연락이 왔나요?",
+    purpose: "안전계좌 이전",
+    requester: "검찰 수사관",
+    channel: "전화",
+    impersonation: "prosecution",
+    interaction_direction: "external_actor_to_customer",
+    attack_stage: "money_request",
+    signals: ["SAFE_ACCOUNT_TRANSFER", "AGENCY_IMPERSONATION", "SECRECY_INSTRUCTION"],
+    fraud_type: "institution_impersonation",
+    requested_actions: ["transfer", "keep_secret"],
+    answer_contradictions: [],
+    missing_information: ["전화번호"],
+    evidence_phrases: ["안전계좌", "가족에게 말하지 말라고 했어요"],
+    grounding_evidence_ids: [],
+    explanation: "검찰을 사칭해 안전계좌 송금을 요구하고 비밀 유지를 지시했습니다.",
+  };
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    candidates: [{ content: { parts: [{ text: JSON.stringify(llmReply) }] } }],
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+
+  try {
+    const transfer = {amount:10_500_000,isFirstTransfer:true,patternRiskScore:40,forcedHold:true};
+    const firstUser = {role:"user",text:"검찰에서 제 계좌가 범죄에 쓰였대요. 안전계좌로 돈을 보내래요."};
+    const first = await handleIntent({transfer,messages:[firstUser],turn:1}, "test-key");
+
+    assert.equal(first.done, false);
+    assert.equal(first.hold, false);
+    assert.match(first.message, /어떤 전화번호로 연락이 왔나요\?/);
+
+    const result = await handleIntent({
+      transfer,
+      messages:[
+        firstUser,
+        {role:"ai",text:first.message},
+        {role:"user",text:"비밀 수사라서 가족이나 은행에는 말하면 안 된대요."},
+      ],
+      turn:2,
+    }, "test-key");
+
+    assert.equal(result.done, true);
+    assert.equal(result.hold, true);
+    assert.match(result.message, /지금 해야 할 일이에요/);
+    assert.equal(result.analysis.official_content.status, "curated");
+    assert.equal(result.analysis.official_content.fraud_type, "institution_impersonation");
+    assert.equal(result.analysis.official_content.items.some((item) => item.kind === "video"), true);
   } finally {
     globalThis.fetch = originalFetch;
   }

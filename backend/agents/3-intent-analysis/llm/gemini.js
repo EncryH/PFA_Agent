@@ -67,7 +67,7 @@ const SYSTEM_PROMPT = `당신은 한국 은행 앱 '안심동행 AI'의 송금 �
 - AGENCY_IMPERSONATION — 기관에서 연락이 왔다고 함
   담아야 하는 예: "검찰청에서", "경찰이", "금감원에서", "국세청", "구청에서 문자", "은행 직원이라며"
 - PERSONAL_ACCOUNT_FOR_AGENCY — 기관이 요구했다는데 받는 곳이 개인 계좌이거나 개인 이름
-- CREDENTIAL_REQUEST — 인증정보를 요구받았거나 앱 설치를 유도받음
+- CREDENTIAL_REQUEST — 비밀번호·OTP·인증번호 등 인증정보를 요구받음
   담아야 하는 예: "OTP 불러달라고", "비밀번호를 알려달라", "앱을 깔라고 해서 깔았어요", "화면 공유"
 - APP_INSTALLATION_REQUEST — 상대방이 특정 앱이나 원격제어 앱 설치를 요구함
 - MALICIOUS_URL — 출처가 확인되지 않은 링크를 누르거나 접속하라고 요구함
@@ -401,6 +401,17 @@ export function enforceSingleProbeQuestion(message, requiredQuestion) {
   const text = String(message || "").trim();
   if ((text.match(/[?？]/g) || []).length !== 1) throw new Error("질문은 필요한 한 가지로 작성하세요");
   if (!requiredQuestion) return text;
+
+  // 문장을 그대로 복사하도록 강제하지 않는다. 다만 서버가 발신 전화번호를 확인하기로
+  // 선택했다면 모델도 같은 정보를 자연스럽게 물어야 한다. 기관명·담당자명처럼 다른
+  // 질문으로 바뀌면 한 번 재생성하고, 계속 어긋나면 서버의 안전 문구를 사용한다.
+  if (/(?:전화번호|연락처|어떤\s*번호|몇\s*번)/.test(requiredQuestion)) {
+    const question = (text.match(/[^.!?？\n]*[?？]/g) || []).at(-1)?.trim() || "";
+    const asksContactNumber = /(?:(?:전화|발신|연락(?:받은|온)?).{0,14}(?:번호|연락처)|(?:번호|연락처).{0,14}(?:전화|연락|왔)|(?:어느|어떤|몇)\s*번(?:호)?(?:에서|으로)?\s*(?:왔|전화|연락))/.test(question);
+    if (!asksContactNumber) {
+      throw new Error("확인 질문의 목적을 발신 전화번호 확인으로 유지하세요. 문구는 자연스럽게 바꿔도 됩니다.");
+    }
+  }
   return text;
 }
 
@@ -445,7 +456,7 @@ export async function generateUserResponse({
     : mode === "risk"
       ? "규칙 엔진이 위험을 판정했습니다. 이번 질문에 직접 답하고 핵심 이유와 필요한 행동을 설명하세요. 행동은 현재 질문에 필요한 것만 골라 쓰세요."
       : mode === "probe"
-        ? "추가 확인이 필요합니다. 사용자가 설명·도움을 요청했다면 먼저 그 요청에 답하세요. 그다음 분석에 필요한 확인 질문을 한 가지만 물으세요."
+        ? "추가 확인이 필요합니다. 사용자가 설명·도움을 요청했다면 먼저 그 요청에 답하세요. 그다음 분석에 필요한 확인 질문을 한 가지만 물으세요. 서버 질문을 그대로 복사할 필요는 없지만 질문 대상과 답으로 받아야 할 정보는 바꾸지 마세요."
         : "현재 확인된 위험 신호가 없다는 판정을 설명하세요. 거래 안전을 보증하지 마세요.";
 
   const systemPrompt = `당신은 은행 모바일 앱 안에서 제공되는 금융사기 예방·피해대응 서비스 '안심동행 AI'의 상담 도우미입니다.

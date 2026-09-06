@@ -5,7 +5,7 @@ import { lastUserText, normalizeRequest } from "./normalize.js";
 import { classifyRoute, hasActiveTransfer, ROUTES } from "./route-classifier.js";
 import { blockedMessage, buildMiddlewareVerdict, staticMessage } from "./static-responses.js";
 import { analysisTurn, classifyDialogue, dialoguePlan } from "./dialogue.js";
-import { damageResponsePlan } from "../response-plan.js";
+import { damageResponsePlan, postVerdictActionPlan } from "../response-plan.js";
 
 export async function routeIntentRequest(input = {}, {
   apiKey = "", generalChat = generateGeneralResponse, dialogueClassifier = classifyDialogue,
@@ -48,9 +48,13 @@ export async function routeIntentRequest(input = {}, {
   const action = damage ? "damage_response"
     : activeTransfer && ["family_connect","cancel_transfer"].includes(requested) ? requested : null;
   const route = dialogue.kind === "action" ? ROUTES.ACTION : ROUTES.GENERAL;
+  const completedActionPlan = state.analysisDone && state.analysisHold && dialogue.kind === "progress"
+    ? postVerdictActionPlan(state)
+    : null;
   const responsePlan = {
     ...dialoguePlan(dialogue),situation,
     ...(damage ? {damageActions:damageResponsePlan(situation,text).actions} : {}),
+    ...(completedActionPlan || {}),
     allowedAction:action,requestedAction:requested,
     capabilities:"현재 화면은 송금 의도 상담입니다. 가족 확인은 제공된 버튼에서 사용자가 요청하며, 해당 위험 거래 확인에 필요한 최소정보만 공유합니다. 부모의 전체 거래내역과 잔액을 공유하지 않습니다. 가족은 송금을 직접 실행하지 않습니다. 신고·지급정지는 관계기관에서 처리합니다. AI는 직접 전화하거나 송금을 실행·취소하거나 기관 접수를 완료하지 않습니다. 가족 연결 여부와 보호 수준이 제공되지 않았다면 자동 알림·차단을 약속하지 마세요.",
   };

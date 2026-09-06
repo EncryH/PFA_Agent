@@ -277,12 +277,14 @@ export default function Transfer({
   const analysisHoldRef = useRef(analysisHold);
   const riskLabelsRef = useRef(riskLabels);
   const fraudTypeLabelRef = useRef(fraudTypeLabel);
+  const officialRef = useRef<OfficialContent | null>(official);
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { turnCountRef.current = turnCount; }, [turnCount]);
   useEffect(() => { chatDoneRef.current = chatDone; }, [chatDone]);
   useEffect(() => { analysisHoldRef.current = analysisHold; }, [analysisHold]);
   useEffect(() => { riskLabelsRef.current = riskLabels; }, [riskLabels]);
   useEffect(() => { fraudTypeLabelRef.current = fraudTypeLabel; }, [fraudTypeLabel]);
+  useEffect(() => { officialRef.current = official; }, [official]);
   const [intentSessionId, setIntentSessionId] = useState<string | null>(null);
   const intentSessionIdRef = useRef<string | null>(null);
   const [emergencyStage, setEmergencyStage] = useState<EmergencyStage>("review");
@@ -446,6 +448,7 @@ export default function Transfer({
     setChatDone(session.analysisDone ?? session.analysisHold ?? false);
     setAnalysisHold(session.analysisHold ?? false);
     setOfficial(session.official ?? null);
+    officialRef.current = session.official ?? null;
     // 저장된 대화에 이미 공식 자료가 붙어 있었다면(또는 옛 저장본이라 메시지에는
     // 없어도 official이 남아 있다면), 이어서 새 turn이 나올 때 중복으로 다시 붙이지 않는다.
     officialShownRef.current = session.messages.some((m) => m.officialContent) || Boolean(session.official);
@@ -671,6 +674,7 @@ export default function Transfer({
     setAccount(""); setBank(""); setName(""); setAmt(""); setBankOpen(false);
     setMessages([]); setInput(""); setTurnCount(0); setChatDone(false);
     setIsTyping(false); setFallback(false); setRiskLabels([]); setFraudTypeLabel(""); setAnalysisHold(false); setOfficial(null); setPlayingVideo(null); setResumeNotice(false);
+    officialRef.current = null;
     setCancelRequested(false);
     setFamilyConfirmationOpen(false);
     officialShownRef.current = false;
@@ -927,9 +931,19 @@ export default function Transfer({
         setFraudTypeLabel(suspectedType.label);
       }
       const officialContent = verdict.analysis?.official_content ?? null;
-      setOfficial(officialContent);
+      // 경량 후속 답변에는 analysis가 없으므로 null이 온다. 이때 최초 판정에서 받은
+      // 공식 사례를 지우지 않고 보존해야 저장·재개와 누락 복구가 가능하다.
+      const retainedOfficialContent = officialContent?.status === "curated"
+        ? officialContent
+        : officialRef.current?.status === "curated"
+          ? officialRef.current
+          : officialContent ?? officialRef.current;
+      officialRef.current = retainedOfficialContent ?? null;
+      setOfficial(retainedOfficialContent ?? null);
       const middlewareRoute = verdict.middleware?.route;
-      const display: ChatMessage["display"] = middlewareRoute && middlewareRoute !== "RISK" ? "plain" : "structured";
+      const display: ChatMessage["display"] = middlewareRoute === "RISK" || isStructuredAiMessage(verdict.message)
+        ? "structured"
+        : "plain";
       // 사용자가 직접 피해를 호소한 긴급 신고는 4단계 긴급 대응(지급정지·피해구제) 화면으로
       // 바로 연결하는 버튼을 함께 준다 — 전화만 안내하고 끝내면 다음 행동이 막막해진다.
       const action = verdict.action ?? (needsDamageResponse(situationRef.current)
@@ -938,11 +952,16 @@ export default function Transfer({
       if (action === "cancel_transfer") setCancelRequested(true);
       // 사기 유형이 확정된 바로 이 메시지에 공식 사례·영상을 함께 붙인다. 전역 상태로만
       // 관리하면 계속 대화할 때마다 카드가 맨 아래로 밀려 내려가는 것처럼 보인다.
-      const showOfficial = !needsDamageResponse(situationRef.current) && !officialShownRef.current && verdict.done && verdict.hold && officialContent?.status === "curated";
+      const completedRiskVerdict = (verdict.done && verdict.hold)
+        || (analysisWasAlreadyDone && analysisHoldRef.current);
+      const showOfficial = !needsDamageResponse(situationRef.current)
+        && !officialShownRef.current
+        && completedRiskVerdict
+        && retainedOfficialContent?.status === "curated";
       if (showOfficial) officialShownRef.current = true;
       const withAiReply: ChatMessage[] = [...history, {
         role: "ai" as const, text: verdict.message, display, action,
-        officialContent: showOfficial ? officialContent : null,
+        officialContent: showOfficial ? retainedOfficialContent : null,
       }];
       messagesRef.current = withAiReply;
       setMessages(withAiReply);
@@ -974,7 +993,7 @@ export default function Transfer({
           fallback: verdict.fallback || verdict.responseFallback === true,
           analysisDone: true,
           analysisHold: verdict.done ? verdict.hold : analysisHoldRef.current,
-          official: officialContent ?? official,
+          official: retainedOfficialContent ?? null,
           freezeSecsLeft: !analysisWasAlreadyDone && verdict.hold && protectionPolicy.delaySeconds > 0
             ? Math.max(freezeSecsLeft ?? 0, protectionPolicy.delaySeconds)
             : freezeSecsLeft,

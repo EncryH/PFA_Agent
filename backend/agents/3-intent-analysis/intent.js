@@ -29,6 +29,38 @@ const DEFAULT_PROBE = "조금만 더 여쭤볼게요. 그분이 정확히 어떤
 
 const PASS_MESSAGE = "확인했어요.\n\n지금 말씀해 주신 내용에서는 위험한 점이 발견되지 않았어요.\n\n송금을 계속할 수 있어요.";
 
+// 실제 실행·피해 대응 단계를 바꾸는 신호는 검색 사례나 모델의 추정만으로 인정하지 않는다.
+// 사용자 발화 또는 앱이 전달한 행동 신호에서 규칙으로 확인됐을 때만 질문·분석에 사용한다.
+const STRICTLY_GROUNDED_SIGNALS = new Set([
+  "CREDENTIAL_REQUEST",
+  "APP_INSTALLATION_REQUEST",
+  "MALICIOUS_URL",
+  "PERSONAL_DATA_REQUEST",
+  "CALL_IN_PROGRESS",
+  "ADDITIONAL_PAYMENT_REQUEST",
+]);
+
+const ACTION_SIGNAL_REQUIREMENTS = Object.freeze({
+  install_app: "APP_INSTALLATION_REQUEST",
+  remote_control: "APP_INSTALLATION_REQUEST",
+  click_url: "MALICIOUS_URL",
+  share_otp: "CREDENTIAL_REQUEST",
+  submit_personal_information: "PERSONAL_DATA_REQUEST",
+  submit_id: "PERSONAL_DATA_REQUEST",
+  keep_call: "CALL_IN_PROGRESS",
+  additional_payment: "ADDITIONAL_PAYMENT_REQUEST",
+});
+
+function groundSensitiveLlmClaims(llm = {}, messages = [], transfer = {}) {
+  const ruleSignals = new Set(extractRuleSignals(messages, transfer));
+  const signals = normalizeStringList(llm.signals)
+    .filter((code) => !STRICTLY_GROUNDED_SIGNALS.has(code) || ruleSignals.has(code));
+  const requestedActions = normalizeStringList(llm.requested_actions)
+    .filter((action) => !ACTION_SIGNAL_REQUIREMENTS[action]
+      || ruleSignals.has(ACTION_SIGNAL_REQUIREMENTS[action]));
+  return { ...llm, signals, requested_actions: requestedActions, ruleSignals: [...ruleSignals] };
+}
+
 /**
  * 사전 분석에서 이미 D등급(강제 최고 위험 포함)으로 확정된 상담은, 대화 내용이
  * 아무리 그럴듯해도(예: "여행 자금이야") 이 판정 로직만으로 안전 쪽으로 결론 내지 않는다.
@@ -95,6 +127,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     };
   }
 
+  llm = groundSensitiveLlmClaims(llm, safeMessages, safeTransfer);
   situation = resolveSituation(safeMessages, body.conversationState?.situation, llm.situation_facts);
   const isEmergency = needsDamageResponse(situation);
   const contradictions = normalizeStringList(llm.answer_contradictions);
@@ -102,6 +135,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     && safeMessages.filter((message) => message.role !== "ai").length >= 2;
   const observedSignals = [
     ...(Array.isArray(llm.signals) ? llm.signals : []),
+    ...(Array.isArray(llm.ruleSignals) ? llm.ruleSignals : []),
     ...(safeTransfer.call_in_progress ? ["CALL_IN_PROGRESS"] : []),
     ...(hasConversationContradiction ? ["ANSWER_CONTRADICTION"] : []),
   ];
@@ -304,6 +338,7 @@ function selectEvidenceGapQuestion(llm = {}, risk = {}, messages = [], transfer 
     .filter((message) => message.role !== "ai")
     .map((message) => message.text)
     .join(" ");
+  const userTurnCount = messages.filter((message) => message.role !== "ai").length;
   const isKnown = (value) => {
     const normalized = String(value || "").trim().toLowerCase();
     return Boolean(normalized)
@@ -401,8 +436,11 @@ function selectEvidenceGapQuestion(llm = {}, risk = {}, messages = [], transfer 
 
   const candidates = [
     ...safetyCritical,
-    ...sourceAndIntent,
-    ...discriminators,
+    // D등급이어도 첫 답변에서는 전화번호 등 확인 가치가 큰 정보 한 가지를 묻는다.
+    // 두 번째 답변부터는 이런 보조 정보가 없어도 판정을 끝내되, 앱 설치·인증정보
+    // 노출처럼 피해대응 단계가 달라지는 안전 핵심 질문은 위에서 계속 확인한다.
+    ...(transfer.forced_hold && userTurnCount > 1 ? [] : sourceAndIntent),
+    ...(transfer.forced_hold && userTurnCount > 1 ? [] : discriminators),
   ].filter(Boolean);
 
   return candidates.find((question) => !asked.includes(question)) || "";

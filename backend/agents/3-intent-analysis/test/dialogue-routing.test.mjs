@@ -43,11 +43,28 @@ test("피해 후 도움 요청은 고정 ACTION 문구로 우회하지 않는다
 });
 
 test("질문에 실제 위험 상황이 함께 있으면 전체 분석을 유지한다",async () => {
-  for (const text of ["검찰이 안전계좌로 보내래요. 왜 위험해요?","상대가 앱 깔라는데 어떻게 해요?","인증번호는 알려줬어요. 도와주세요"]) {
+  for (const text of [
+    "검찰이 안전계좌로 보내래요. 왜 위험해요?",
+    "상대가 앱 깔라는데 어떻게 해요?",
+    "인증번호는 알려줬어요. 도와주세요",
+    "비밀 수사라서 가족이나 은행에는 말하면 안 된대요.",
+  ]) {
     const routed = await routeIntentRequest({transfer,messages:[u(text)]},{generalChat});
     assert.equal(routed.handled,false,text);
     assert.equal(routed.input.dialogue.newFacts,true);
   }
+});
+
+test("검찰 사칭 시나리오의 비밀 유지 답변은 일반 대화로 빠지지 않는다",async () => {
+  const messages = [
+    u("검찰에서 전화가 왔는데 제 계좌가 범죄에 쓰였대요. 안전계좌로 돈을 보내래요."),
+    a("상대방이 비밀로 하라고 했나요?"),
+    u("비밀 수사라서 가족이나 은행에는 말하면 안 된대요."),
+  ];
+  const routed = await routeIntentRequest({transfer,messages,turn:2},{generalChat});
+  assert.equal(routed.handled,false);
+  assert.equal(routed.middleware.route,"RISK");
+  assert.equal(routed.input.dialogue.newFacts,true);
 });
 
 test("실행 질문·부정과 명시적인 실행 요청은 구별한다",async () => {
