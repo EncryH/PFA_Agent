@@ -131,21 +131,26 @@ const LOAN_REFINANCE_MALWARE: CallScript = {
   ],
 };
 
-// 5) 자녀 납치빙자 — 아이 울음소리(AI 음성 합성)로 겁을 준 뒤, "합의금"을 이유로
-//    적금 해지와 송금을 동시에 요구. 기관 사칭이 아니라 협박형이라 안내 문구도 다르게 쓴다.
-const CHILD_KIDNAPPING_THREAT: CallScript = {
-  id: "child-kidnapping-threat",
-  closingGuidance: "실제 위급 상황이라도 전화 한 통만으로 확인하면 안 돼요. 전화를 끊고 자녀에게 직접 연락하거나, 학교·보호자·112에 먼저 사실 여부를 확인하세요.",
+// 5) 성인 자녀 납치빙자 — 사기범이 자녀인 척 위장하는 게 아니라, 성인 자녀를
+//    붙잡고 있다며 협박하는 구조다. AI 음성 합성으로 딸의 울먹이는 목소리를 들려주고,
+//    "회사 사고 합의금"을 이유로 긴급 송금과 예·적금 해지를 동시에 요구한다.
+//    기관 사칭이 아니라 협박형이라 안내 문구도 다르게 쓴다.
+const ADULT_CHILD_KIDNAPPING_THREAT: CallScript = {
+  id: "adult-child-kidnapping-threat",
+  closingGuidance: "실제 위급 상황이라도 전화 한 통만으로 확인하면 안 돼요. 전화를 끊고 자녀에게 직접 연락하거나, 자녀의 직장·가족·112를 통해 먼저 사실 여부를 확인하세요.",
   lines: [
-    { text: "민준이 엄마시죠? 울지 말고 똑바로 얘기해." },
-    { text: "(AI로 합성한 것으로 추정되는 아이 목소리) 엄마… 아저씨가 나 때렸어…", voiceClone: true },
-    { text: "방금 제가 길가에서 담배를 피우고 있는데, 얘가 저보고 욕을 했어요." },
-    { text: "그래서 제가 너무 열받아서 애를 차에 태웠고요. 지금 골목길에 주차해놨습니다." },
-    { text: "핸드폰으로 신고할 생각 하지 마세요, 바로 알 수 있으니까." },
-    { text: "상세한 위치는 이따가 알려드릴 거고, 제가 전화드린 이유는 딱 한 가지예요." },
-    { text: "욕을 했으면 대가를 치러야죠. 합의금이 급하게 필요하실 텐데, 가입하신 적금 있으시면 지금 바로 해지해주세요.", flags: ["savingsCloseRequest"] },
-    { text: "해지하신 돈으로 5,000,000원 지금 바로 보내주셔야 애 다치는 일 없이 끝납니다.", flags: ["transferRequest"] },
-    { text: "10분 안에 안 들어오면 그다음은 저도 장담 못 해요." },
+    { text: "여보세요, 지혜 씨 어머님 되시죠?" },
+    { text: "지혜 씨가 오늘 저희 쪽 사람이랑 마찰이 좀 있었어요. 지금 저희가 데리고 있습니다." },
+    { text: "다니시는 회사 이름이랑 나이까지 이미 다 확인했으니까, 허튼짓 안 하시는 게 좋을 거예요." },
+    { text: "못 믿으시겠으면 직접 목소리 들려드릴게요." },
+    { text: "(AI로 변조된 목소리로)" },
+    { text: "엄마, 나 지금 너무 무서워. 빨리 도와줘….", voiceClone: true },
+    { text: "들으셨죠? 경찰에 신고하거나 다른 가족한테 연락하면 따님이 위험해집니다." },
+    { text: "전화 절대 끊지 마세요." },
+    { text: "지혜 씨가 회사에서 사고를 냈는데, 피해자 쪽이랑 조용히 합의를 봐야 하는 상황이에요." },
+    { text: "합의금으로 5,000,000원이 필요한데, 10분 안에 보내주셔야 지혜 씨가 안전합니다.", flags: ["transferRequest"] },
+    { text: "계좌에 여윳돈이 없으시면, 가입하신 적금 있으실 텐데 지금 바로 해지해서 마련하세요.", flags: ["savingsCloseRequest"] },
+    { text: "10분 안에 안 들어오면 그다음은 저도 책임 못 집니다.", flags: ["transferRequest"] },
   ],
 };
 
@@ -173,7 +178,7 @@ export const CALL_SCRIPTS: CallScript[] = [
   COURT_NOTICE_IMPERSONATION,
   CARD_DELIVERY_TWO_STAGE,
   LOAN_REFINANCE_MALWARE,
-  CHILD_KIDNAPPING_THREAT,
+  ADULT_CHILD_KIDNAPPING_THREAT,
 ];
 
 export function pickRandomCallScript(): CallScript {
@@ -187,7 +192,7 @@ const NUMBER_TO_SCRIPT_ID: Record<string, string> = {
   "07012341234": "prosecutor-safe-account",     // 070 기관사칭
   "01012345678": "court-notice-impersonation",  // 보이스피싱 신고번호
   "01099990000": "card-delivery-two-stage",     // 투자사기 번호
-  "+639471234567": "child-kidnapping-threat",   // 해외(필리핀) 발신 의심전화
+  "+639471234567": "adult-child-kidnapping-threat", // 해외(필리핀) 발신 의심전화
   "01033334444": "loan-refinance-malware",      // 대환대출 상담
 };
 

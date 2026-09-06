@@ -41,6 +41,21 @@ export const DEMO_SCENARIOS: { display: string; number: string; label: string }[
   { display: "02-9876-5432",    number: "0298765432",   label: "알 수 없음" },
 ]
 
+// 첫 세 번은 심사 시연 순서를 고정한다 — 검찰 사칭 안전계좌 → 자녀 납치빙자 → 대환대출
+// 악성 프로그램. 이 세 번호는 shared/callScript.ts의 NUMBER_TO_SCRIPT_ID와도 맞춰져
+// 있어서 매번 같은 대사가 재생된다. 그 뒤로는 나머지 6개 번호 중에서 무작위로 고른다.
+const FIXED_INTRO_NUMBERS = ["07012341234", "+639471234567", "01033334444"]
+
+/** 전화 버튼을 pressCount번째 눌렀을 때(0부터 시작) 걸려올 시나리오를 고른다. */
+export function pickDemoScenario(pressCount: number): { display: string; number: string; label: string } {
+  if (pressCount < FIXED_INTRO_NUMBERS.length) {
+    const number = FIXED_INTRO_NUMBERS[pressCount]
+    return DEMO_SCENARIOS.find((s) => s.number === number)!
+  }
+  const pool = DEMO_SCENARIOS.filter((s) => !FIXED_INTRO_NUMBERS.includes(s.number))
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
 function reportedRiskDetail(hit: { reportCount: number; scamTypes: string[] }) {
   if (hit.scamTypes.includes('투자사기')) {
     return '신고 이력상 투자 사기 위험이 있어요. 투자 권유나 송금을 요구하면 공식 채널로 먼저 확인하세요.'

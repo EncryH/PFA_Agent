@@ -26,7 +26,7 @@ import LimitIncrease from "./screens/LimitIncrease";
 import CustomerCenter from "./screens/CustomerCenter";
 import PrivacyPolicy from "./screens/PrivacyPolicy";
 import LockScreen from "./screens/LockScreen";
-import { DEMO_SCENARIOS } from "./shared/callscreen";
+import { DEMO_SCENARIOS, pickDemoScenario } from "./shared/callscreen";
 import { DEMO_MESSAGES } from "./shared/messages";
 import { INITIAL_SIGNALS, type BehaviorSignals } from "./shared/behavior";
 import { FinancialTab, ProductsTab, BenefitsTab, StocksTab } from "./screens/TabPages";
@@ -51,6 +51,10 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [largeText, setLargeText] = useState(() => localStorage.getItem("ansimLargeText") === "true");
   const [demoIdx, setDemoIdx] = useState(0);
+  // 다음 번 "전화" 버튼을 누르면 걸려올 시나리오 — 처음 세 번은 고정 순서, 그 뒤로는
+  // 무작위라서 버튼 라벨과 실제로 거는 번호가 어긋나지 않으려면 미리 뽑아 상태로 들고
+  // 있어야 한다(렌더마다 다시 뽑으면 라벨이 버튼 누를 때마다 바뀌어 보인다).
+  const [nextScenario, setNextScenario] = useState(() => pickDemoScenario(0));
   const [activeCall, setActiveCall] = useState<typeof DEMO_SCENARIOS[number] | null>(null);
   const [msgIdx, setMsgIdx] = useState(0);
   const [activeMessage, setActiveMessage] = useState<typeof DEMO_MESSAGES[number] | null>(null);
@@ -139,6 +143,7 @@ export default function App() {
     setActiveMessage(null);
     setMsgIdx(0);
     setDemoIdx(0);
+    setNextScenario(pickDemoScenario(0));
     setShowNotifications(false);
     setShowSearch(false);
     setShowCooldownPopup(false);
@@ -249,8 +254,20 @@ export default function App() {
   const triggerDemoCall = () => {
     if (activeCall) return;
     markCallStarted(); // 10분 내 통화 기록 판단용 — 카운트를 이 시각부터 다시 센다
-    setActiveCall(DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length]);
-    setDemoIdx((i) => (i + 1) % DEMO_SCENARIOS.length);
+    setActiveCall(nextScenario);
+    const next = demoIdx + 1;
+    setDemoIdx(next);
+    setNextScenario(pickDemoScenario(next));
+  };
+
+  // 시나리오 1·2 단축 버튼 — 순환 순서와 무관하게 특정 시나리오를 바로 확인하고 싶을 때 쓴다.
+  // 눌러도 전화 버튼의 순환 순서(nextScenario)는 건드리지 않는다.
+  const triggerSpecificCall = (number: string) => {
+    if (activeCall) return;
+    const scenario = DEMO_SCENARIOS.find((s) => s.number === number);
+    if (!scenario) return;
+    markCallStarted();
+    setActiveCall(scenario);
   };
 
   const triggerDemoMessage = () => {
@@ -259,7 +276,7 @@ export default function App() {
     setMsgIdx((i) => (i + 1) % DEMO_MESSAGES.length);
   };
 
-  const scenarioLabel = DEMO_SCENARIOS[demoIdx % DEMO_SCENARIOS.length].label;
+  const scenarioLabel = nextScenario.label;
   const messageLabel  = DEMO_MESSAGES[msgIdx % DEMO_MESSAGES.length].sender;
 
   const goHome = (targetTab: typeof parentTabs[number] = "홈") => { setTab(targetTab); setPage("home"); };
@@ -555,27 +572,53 @@ export default function App() {
       </div>
 
       {/* ── 앱 외부 데모 조작 ── */}
-      <div className="fixed left-[calc(50%+235px)] top-5 z-[90] flex items-center gap-2 max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24">
-        <button
-          type="button"
-          onClick={toggleRole}
-          className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-300 group-hover:rotate-180"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
-          {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowAmountResetConfirm(true)}
-          className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
-          aria-label="심사용 시나리오 초기화"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" aria-hidden="true">
-            <path d="M20 11a8 8 0 10-2.34 5.66" />
-            <path d="M20 4v7h-7" />
-          </svg>
-          시나리오 초기화
-        </button>
+      <div className="fixed left-[calc(50%+235px)] top-5 z-[90] flex items-start gap-2 max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-24">
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={toggleRole}
+            className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-300 group-hover:rotate-180"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></svg>
+            {role === "parent" ? "자녀 앱으로 전환" : "부모 앱으로 전환"}
+          </button>
+          {paired && (
+            <button
+              type="button"
+              onClick={() => triggerSpecificCall("07012341234")}
+              disabled={!!activeCall}
+              className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" /></svg>
+              시나리오 1
+            </button>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAmountResetConfirm(true)}
+            className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200"
+            aria-label="심사용 시나리오 초기화"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-180" aria-hidden="true">
+              <path d="M20 11a8 8 0 10-2.34 5.66" />
+              <path d="M20 4v7h-7" />
+            </svg>
+            시나리오 초기화
+          </button>
+          {paired && (
+            <button
+              type="button"
+              onClick={() => triggerSpecificCall("+639471234567")}
+              disabled={!!activeCall}
+              className="group flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-bold text-gray-700 shadow-lg hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-xl active:scale-95 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" /></svg>
+              시나리오 2
+            </button>
+          )}
+        </div>
       </div>
 
       {showAmountResetConfirm && (
@@ -628,7 +671,7 @@ export default function App() {
       {/* ── 앱 외부 시뮬레이션 버튼 (안심동행 연결 후 기능 1번 데모로만 노출) ── */}
       {paired && (
         <div
-          className="fixed z-50 flex flex-col items-center gap-3.5 left-[calc(50%+235px)] top-[84px] max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-44"
+          className="fixed z-50 flex flex-col items-center gap-3.5 left-[calc(50%+235px)] top-[156px] max-[760px]:left-auto max-[760px]:right-3 max-[760px]:top-auto max-[760px]:bottom-44"
         >
           {/* 전화 수신 버튼 */}
           <div className="flex flex-col items-center gap-2">
