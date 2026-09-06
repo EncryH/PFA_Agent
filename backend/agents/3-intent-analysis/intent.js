@@ -200,7 +200,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     });
     return {
       message: response.message,
-      hold: false,
+      hold: true,
       done: false,
       risk,
       intent: pickIntent(llm),
@@ -240,7 +240,7 @@ export async function handleIntent(body, apiKey, { graphConfig = {}, databaseCon
     });
     return {
       message: response.message,
-      hold: false,
+      hold: true,
       done: false,
       risk,
       intent: pickIntent(llm),
@@ -779,7 +779,7 @@ function fallback({
       || selectProbeQuestion(localLlm, risk, safeMessages, safeTransfer);
     return {
       message: buildProbeMessage(risk, fraudType, localLlm, safeMessages, probeQuestion),
-      hold: false,
+      hold: true,
       done: false,
       risk,
       intent: pickIntent(localLlm),

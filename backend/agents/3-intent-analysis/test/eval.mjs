@@ -1,10 +1,15 @@
 // 3단계 의도 분석 평가셋 러너
 //
-//   node backend/eval.mjs [baseUrl]
+//   node backend/eval.mjs --eval [baseUrl]
 //
 // 개발 서버가 떠 있어야 한다. 기본 http://localhost:5173
 
-const BASE = process.argv[2] || "http://localhost:5173";
+if (!process.argv.includes("--eval")) {
+  console.log("평가셋 러너는 --eval 플래그를 지정할 때만 실행합니다.");
+  process.exit(0);
+}
+
+const BASE = process.argv.find((arg) => /^https?:\/\//.test(arg)) || "http://localhost:5173";
 
 // 판정 규칙과 같은 상한을 쓴다 (signals.js MAX_TURNS)
 const MAX_TURNS = 4;

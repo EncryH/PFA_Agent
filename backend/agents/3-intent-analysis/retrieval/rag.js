@@ -1,10 +1,55 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { retrieveVectorContext } from "./vector-search.js";
 import { retrieveGraphContext } from "./neo4j-search.js";
 
 const corpusUrl = new URL("../datasets/rag/runtime/intent-rag-corpus.json", import.meta.url);
-const corpus = JSON.parse(readFileSync(corpusUrl, "utf8"));
+const EMPTY_CORPUS = Object.freeze({
+  schema_version: "embedded-fallback-v1",
+  summary: {
+    ready: true,
+    records: 3,
+    fallback: true,
+    reason: "intent_rag_corpus_missing",
+  },
+  records: [
+    {
+      id: "fallback:fraud:loan-advance-fee",
+      kind: "fraud_context_candidate",
+      source_dataset: "embedded_fallback",
+      review_status: "curated_summary",
+      text: "대출 승인, 저금리 전환, 신용등급 조정 등을 이유로 보증금이나 수수료를 먼저 송금하라고 요구하면 대출 선입금 사기 위험 신호로 본다.",
+      candidate_signals: ["PREPAY_CONTRADICTION", "SMS_LURE", "CALL_IN_PROGRESS"],
+    },
+    {
+      id: "fallback:normal:known-purpose",
+      kind: "normal_financial_control",
+      source_dataset: "embedded_fallback",
+      review_status: "curated_summary",
+      text: "정상 대출은 보증금이나 수수료를 먼저 보내야 승인되는 절차가 아니다. 생활비, 병원비, 경조사비처럼 수취인과 송금 목적을 사용자가 독립적으로 알고 기존 관계나 공식 연락처로 확인되는 경우에만 정상 거래 근거로 본다.",
+      normal_actions: ["no_advance_fee_for_loan", "known_recipient", "independent_confirmation"],
+    },
+    {
+      id: "fallback:official:financial-fraud",
+      kind: "official_fraud_document",
+      source_dataset: "embedded_fallback",
+      review_status: "official_summary",
+      title: "전기통신금융사기 예방 안내",
+      publisher: "금융감독원",
+      source_url: "https://www.fss.or.kr/fss/bbs/B0000206/list.do?menuNo=200690",
+      page: 1,
+      text: "금융회사와 수사기관은 대출 보증금, 안전계좌 이체, 수수료 선납을 이유로 개인에게 먼저 송금을 요구하지 않는다는 예방 안내를 제공한다.",
+      usage: "runtime_fallback",
+    },
+  ],
+});
+
+function loadCorpus() {
+  if (!existsSync(corpusUrl)) return EMPTY_CORPUS;
+  return JSON.parse(readFileSync(corpusUrl, "utf8"));
+}
+
+const corpus = loadCorpus();
 
 function normalize(text = "") {
   return String(text)
@@ -118,7 +163,7 @@ function buildQuery({ messages = [], transfer = {} } = {}) {
 
 function lexicalContext(query) {
   return {
-    method: "local_idf_weighted_lexical_rag",
+    method: prepared.length ? "local_idf_weighted_lexical_rag" : "rag_unavailable_no_runtime_corpus",
     corpus_version: corpus.schema_version,
     fraud: search("fraud_context_candidate", query, 3),
     normal: search("normal_financial_control", query, 3),

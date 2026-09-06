@@ -713,7 +713,7 @@ test("고위험도 필요한 근거가 비면 계속 묻고 답을 받으면 결
     const firstUser = { role: "user", text: "검찰청에서 전화가 와서 안전계좌로 옮기라고 했어요" };
     const first = await handleIntent(body(1, [firstUser]), "test-key");
     assert.equal(first.risk.level, "HIGH");     // 위험은 이미 확인됐다
-    assert.equal(first.hold, false);            // 그래도 아직 보류하지 않는다
+    assert.equal(first.hold, true);             // 추가 확인 중에도 송금 보류는 유지한다
     assert.equal(first.done, false);            // 대화를 계속한다
     assert.match(first.message, /확인한 내용이에요/);
     assert.match(first.message, /한 가지만 확인할게요/);
@@ -721,10 +721,12 @@ test("고위험도 필요한 근거가 비면 계속 묻고 답을 받으면 결
     assert.equal((first.message.match(/[?？]/g) || []).length, 1);
 
     const unanswered = await handleIntent(body(2, [firstUser]), "test-key");
+    assert.equal(unanswered.hold, true);
     assert.equal(unanswered.done, false);
     assert.match(unanswered.message, /어떤 전화번호/);
 
     const stillMissingAtFourth = await handleIntent(body(4, [firstUser]), "test-key");
+    assert.equal(stillMissingAtFourth.hold, true);
     assert.equal(stillMissingAtFourth.done, false);
     assert.match(stillMissingAtFourth.message, /어떤 전화번호/);
 
@@ -773,7 +775,7 @@ test("사전 규칙에서 D등급이 확정되면 전화번호가 없어도 두 
     const first = await handleIntent({transfer,messages:[firstUser],turn:1}, "test-key");
 
     assert.equal(first.done, false);
-    assert.equal(first.hold, false);
+    assert.equal(first.hold, true);
     assert.match(first.message, /어떤 전화번호로 연락이 왔나요\?/);
 
     const result = await handleIntent({
@@ -804,12 +806,12 @@ test("LLM 없이 폴백이어도 근거가 비면 4턴 이후 계속 묻고 채�
   const first = await handleIntent({ transfer, messages: [firstUser], turn: 1 }, "");   // 키 없음 → 폴백
   assert.equal(first.fallback, true);
   assert.equal(first.risk.level, "HIGH");
-  assert.equal(first.hold, false);
+  assert.equal(first.hold, true);
   assert.equal(first.done, false);
 
   const fourth = await handleIntent({ transfer, messages: [firstUser], turn: 4 }, "");
   assert.equal(fourth.fallback, true);
-  assert.equal(fourth.hold, false);
+  assert.equal(fourth.hold, true);
   assert.equal(fourth.done, false);
 
   const completedMessages = [

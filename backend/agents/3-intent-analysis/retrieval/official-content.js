@@ -8,10 +8,45 @@
 // 갱신은 런타임이 아니라 오프라인 스크립트가 한다.
 // (datasets/rag/cases/official-content-catalog.json — 공식 사례·영상 카탈로그)
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const catalogUrl = new URL("../datasets/rag/cases/official-content-catalog.json", import.meta.url);
-const catalog = JSON.parse(readFileSync(catalogUrl, "utf8"));
+const EMPTY_CATALOG = Object.freeze({
+  curated_at: "embedded-fallback",
+  sources: [{
+    key: "fss_phishing_keeper",
+    name: "금융감독원 보이스피싱 지킴이",
+    base: "https://www.fss.or.kr",
+    boards: {
+      cases: "/fss/bbs/B0000206/list.do?menuNo=200690",
+    },
+  }],
+  byFraudType: {
+    loan_advance_fee: {
+      headline: "대출 전에 보증금·수수료를 먼저 요구하는 경우",
+      caseLabel: "대출사기 예방 사례",
+      caseBoard: "cases",
+      video: {
+        title: "대출사기 예방 안내",
+        duration: "공식 영상",
+        source: "금융감독원",
+        id: "9J7lT4L7YVA",
+      },
+    },
+    other: {
+      headline: "송금 요구 전 공식 경로 확인",
+      caseLabel: "보이스피싱 예방 사례",
+      caseBoard: "cases",
+    },
+  },
+});
+
+function loadCatalog() {
+  if (!existsSync(catalogUrl)) return EMPTY_CATALOG;
+  return JSON.parse(readFileSync(catalogUrl, "utf8"));
+}
+
+const catalog = loadCatalog();
 
 const FSS = catalog.sources.find((source) => source.key === "fss_phishing_keeper");
 

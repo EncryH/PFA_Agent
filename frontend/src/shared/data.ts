@@ -62,6 +62,13 @@ export const fmtAmt = (v: string) => {
 
 export const parseAmt = (v: string) => parseInt(v.replace(/,/g, ""), 10) || 0;
 
+export const validateTransferAmount = (amount: number, balance: number, remainingLimit: number) => {
+  if (!Number.isSafeInteger(amount) || amount <= 0) return "invalid_amount";
+  if (!Number.isSafeInteger(balance) || amount > balance) return "insufficient_funds";
+  if (Number.isNaN(remainingLimit) || amount > remainingLimit) return "daily_limit";
+  return null;
+};
+
 /** 계좌별 거래내역 — 계좌번호를 키로 쓴다. amount 가 양수면 입금, 음수면 출금. */
 export type TxnRow = { date: string; time: string; name: string; memo: string; amount: number; balance: number };
 
@@ -155,23 +162,21 @@ export const lookupHolder = (account: string) => {
 
   if (isMyAccount(account)) return "본인";
 
-  const known = KNOWN_RECIPIENTS.find((k) => clean.startsWith(k.account.slice(0, 8)));
+  const known = KNOWN_RECIPIENTS.find((k) => clean === k.account);
   if (known) return known.name;
 
   const sum = [...clean].reduce((a, c) => a + Number(c), 0);
   return HOLDER_POOL[sum % HOLDER_POOL.length];
 };
 
-/** 본인 명의 계좌인지 — 맞으면 금액과 무관하게 검사 대상이 아니다.
- * 반드시 앞자리부터 일치해야 한다 — includes()로 어디든 포함되면 매치되던 예전 버전은
- * "9911022233" 같은 무관한 계좌도 내 계좌(11022233)로 오인해 사기 탐지를 통째로 우회시켰다. */
+/** 계좌 전체가 일치할 때만 본인 계좌로 취급한다. 앞자리 일치는 소유 근거가 아니다. */
 export const isMyAccount = (account: string) => {
   const clean = account.replace(/\D/g, "");
-  return clean.length >= 8 && MY_ACCOUNTS.some((m) => clean.startsWith(m.account.slice(0, 8)));
+  return MY_ACCOUNTS.some((m) => clean === m.account);
 };
 
 /** 3단계 의도분석 진입 여부를 정하는 클라이언트 폴백용 빠른 사전 필터. */
-export const runIntentPrefilter = (account: string, amt: number, name: string): "success" | "db-warning" | "ai-chat" => {
+export const runIntentPrefilter = (account: string, amt: number, _name: string): "success" | "db-warning" | "ai-chat" => {
   const clean = account.replace(/\D/g, "");
 
   // 내 계좌 간 이체는 사기가 성립하지 않는다 — 항상 통과
@@ -181,7 +186,7 @@ export const runIntentPrefilter = (account: string, amt: number, name: string): 
     return "db-warning";
 
   const known = KNOWN_RECIPIENTS.find(
-    (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name
+    (k) => clean === k.account
   );
 
   if (known && amt > 0 && amt <= known.maxSafe) return "success";

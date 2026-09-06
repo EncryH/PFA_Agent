@@ -65,7 +65,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (success) return;
+    if (success || shake) return;
     const { x, y } = toLocal(e.clientX, e.clientY);
     const hit = hitDot(x, y);
     if (hit === -1) return;
@@ -116,10 +116,28 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         </svg>
       </div>
       <p className="mt-4 text-[17px] font-bold text-gray-900 tracking-tight">한결은행</p>
-      <p className={`mt-1.5 text-[12px] font-medium transition-colors ${statusColor}`}>{statusText}</p>
+      <p aria-live="polite" className={`mt-1.5 text-[12px] font-medium transition-colors ${statusColor}`}>{statusText}</p>
 
       <div
         ref={containerRef}
+        role="group"
+        tabIndex={0}
+        aria-label="잠금 패턴 입력"
+        aria-describedby="pattern-keyboard-help"
+        onKeyDown={(e) => {
+          if (success || shake || drawing) return;
+          if (/^[1-9]$/.test(e.key)) {
+            e.preventDefault();
+            const hit = Number(e.key) - 1;
+            setPath((previous) => previous.includes(hit) ? previous : [...previous, hit]);
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            finish(path);
+          } else if (e.key === "Escape" || e.key === "Backspace") {
+            e.preventDefault();
+            setPath([]);
+          }
+        }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -164,6 +182,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         })}
       </div>
 
+      <p id="pattern-keyboard-help" className="sr-only">왼쪽 위부터 1번에서 9번 점입니다. 숫자 키로 패턴을 입력하고 Enter로 확인하세요. Escape로 지울 수 있습니다.</p>
       <p className="mt-9 text-[11px] text-gray-300">힌트 · ㄱ 자 모양으로 그어보세요</p>
       </div>
     </div>

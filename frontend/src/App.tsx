@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { parentTabs, parentIcons } from "./shared/ui";
-import { MY_ACCOUNTS, parseAmt, type Role, type TxnRow } from "./shared/data";
+import { MY_ACCOUNTS, parseAmt, validateTransferAmount, type Role, type TxnRow } from "./shared/data";
 import Transfer from "./screens/Transfer";
 import Guardian from "./screens/Guardian";
 import ParentHome from "./screens/ParentHome";
@@ -163,10 +163,12 @@ export default function App() {
   };
 
   const handleTransferSuccess = (fromIdx: number, amount: number, recipientName: string, toAccount: string) => {
-    setDailyTransferred((previous) => previous + amount);
     const acc = liveAccounts[fromIdx];
+    if (!acc || toAccount.replace(/\D/g, "") === acc.account) return false;
     const current = parseAmt(acc.balance);
-    const next = Math.max(0, current - amount);
+    if (validateTransferAmount(amount, current, Math.max(0, dailyLimit - dailyTransferred))) return false;
+    setDailyTransferred((previous) => previous + amount);
+    const next = current - amount;
 
     const now = new Date();
     const date = `${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
@@ -174,7 +176,7 @@ export default function App() {
     const outRow: TxnRow = { date, time, name: recipientName, memo: "이체", amount: -amount, balance: next };
 
     const cleanTo = toAccount.replace(/\D/g, "");
-    const toIdx = liveAccounts.findIndex((m, i) => i !== fromIdx && cleanTo.length >= 8 && cleanTo.includes(m.account.slice(0, 8)));
+    const toIdx = liveAccounts.findIndex((m, i) => i !== fromIdx && cleanTo === m.account);
 
     setBalanceOverrides((prev) => {
       const updated = { ...prev, [fromIdx]: next.toLocaleString("ko-KR") };

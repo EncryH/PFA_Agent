@@ -68,7 +68,7 @@ export default function Verify({ onBack }: { onBack: () => void }) {
 
   const handleVerify = async () => {
     const q = input.trim();
-    if (!q) return;
+    if (!q || loading) return;
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setResult(null);
@@ -80,12 +80,24 @@ export default function Verify({ onBack }: { onBack: () => void }) {
       else r = await verifyInstitution(q);
       if (requestId !== requestIdRef.current) return;
       setResult(r);
+    } catch {
+      if (requestId === requestIdRef.current) setResult({
+        status: "caution",
+        label: "검증을 완료하지 못했어요",
+        detail: "잠시 후 다시 시도해 주세요. 확인이 끝나기 전에는 송금하지 마세요.",
+      });
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
-  const reset = () => { requestIdRef.current++; setInput(""); setResult(null); setCheckedPhone(""); };
+  const invalidateRequest = () => {
+    requestIdRef.current++;
+    setLoading(false);
+    setResult(null);
+    setCheckedPhone("");
+  };
+  const reset = () => { invalidateRequest(); setInput(""); };
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -131,8 +143,8 @@ export default function Verify({ onBack }: { onBack: () => void }) {
             value={input}
             onChange={(e) => {
               const v = tab === "전화번호" ? formatPhoneNumber(e.target.value) : e.target.value;
+              invalidateRequest();
               setInput(v);
-              setResult(null);
             }}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             placeholder={PLACEHOLDERS[tab]}

@@ -1,7 +1,14 @@
 // 합성 대화로 실제 LLM의 관련성·연속성 검사. 외부 호출: --live 필수.
 import assert from "node:assert/strict";
 import {runIntentAnalysisAgent} from "../agent.js";
-if (!process.argv.includes("--live") || !process.env.GEMINI_API_KEY) throw new Error("--live와 Gemini 설정이 필요합니다");
+if (!process.argv.includes("--live")) {
+  console.log("라이브 경량 대화 검사는 --live 플래그를 지정할 때만 실행합니다.");
+  process.exit(0);
+}
+if (!process.env.GEMINI_API_KEY) {
+  console.log("Gemini 설정이 없어 라이브 경량 대화 검사를 건너뜁니다.");
+  process.exit(0);
+}
 const u=text=>({role:"user",text});
 const a=text=>({role:"ai",text});
 const transfer={amount:100000,isFirstTransfer:true,forcedHold:true};

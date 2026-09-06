@@ -1,8 +1,14 @@
 // 합성 시나리오만 전송한다. 실행: node --env-file=.env .../live-conversation-quality.mjs --live
 import assert from "node:assert/strict";
 import { runIntentAnalysisAgent } from "../agent.js";
-if (!process.argv.includes("--live")) throw new Error("외부 LLM을 호출하려면 --live를 지정하세요");
-if (!process.env.GEMINI_API_KEY) throw new Error("Gemini 설정이 없습니다");
+if (!process.argv.includes("--live")) {
+  console.log("라이브 대화 품질 검사는 --live 플래그를 지정할 때만 실행합니다.");
+  process.exit(0);
+}
+if (!process.env.GEMINI_API_KEY) {
+  console.log("Gemini 설정이 없어 라이브 대화 품질 검사를 건너뜁니다.");
+  process.exit(0);
+}
 const user = text => ({role:"user",text});
 const ai = text => ({role:"ai",text});
 const transfer = {amount:12000000, recipientName:"가상수취인", bank:"가상은행", isFirstTransfer:true};

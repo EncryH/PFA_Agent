@@ -10,7 +10,7 @@ import { takeTurn, FIRST_QUESTION, type ChatMessage, type OfficialContent } from
 import { BankAvatar, BankLogo, PageHeader, RECIPIENT_ICONS, shortBank } from "../shared/ui";
 import {
   MY_ACCOUNTS, KNOWN_RECIPIENTS, BLACKLISTED_ACCOUNTS, BANKS, BROKERAGES, DEMO_ALERT, lookupHolder,
-  fmtAccount, fmtAmt, parseAmt, runIntentPrefilter, isMyAccount, nowTime,
+  fmtAccount, fmtAmt, parseAmt, runIntentPrefilter, isMyAccount, nowTime, validateTransferAmount,
   type TransferStep,
 } from "../shared/data";
 import {
@@ -201,7 +201,7 @@ export default function Transfer({
   onResumeHandled?: () => void;
   initialStep?: "input" | "already-sent";
   behaviorSignals?: BehaviorSignals;
-  onSuccess?: (fromIdx: number, amount: number, recipientName: string, toAccount: string) => void;
+  onSuccess?: (fromIdx: number, amount: number, recipientName: string, toAccount: string) => boolean | void;
   defaultFromIdx?: number;
   dailyLimit?: number;
   dailyTransferred?: number;
@@ -386,7 +386,7 @@ export default function Transfer({
       return { score: 100, label: "DB 경고", msg: "신고된 계좌예요 — 즉시 차단됩니다" };
 
     const known = KNOWN_RECIPIENTS.find(
-      (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name
+      (k) => clean === k.account
     );
     let score = 0;
     if (!known && clean.length >= 8) score += 25;
@@ -475,8 +475,8 @@ export default function Transfer({
     const clean = account.replace(/\D/g, "");
     if (clean.length < 8) return;
     const hit =
-      MY_ACCOUNTS.find((m) => clean.includes(m.account.slice(0, 8))) ??
-      KNOWN_RECIPIENTS.find((k) => clean.includes(k.account.slice(0, 8)));
+      MY_ACCOUNTS.find((m) => clean === m.account) ??
+      KNOWN_RECIPIENTS.find((k) => clean === k.account);
     if (hit) { setBank(hit.bank); setName(hit.name); }
   }, [account, step]);
 
@@ -501,7 +501,7 @@ export default function Transfer({
 
     const clean = account.replace(/\D/g, "");
     const known = KNOWN_RECIPIENTS.find(
-      (k) => (clean.length >= 8 && clean.startsWith(k.account.slice(0, 8))) || name === k.name,
+      (k) => clean === k.account,
     );
 
     // 최근 통화 대사에서 구체적인 송금 요구가 감지됐는지 — 10분 창 안에서만 유효하다.
@@ -628,7 +628,11 @@ export default function Transfer({
       setStep("hold");
       return;
     }
-    onSuccess?.(fromIdx, parseAmt(amt), name, account);
+    if (!canSubmit) {
+      setStep("amount");
+      return;
+    }
+    if (onSuccess?.(fromIdx, parseAmt(amt), name, account) === false) setStep("amount");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -851,7 +855,7 @@ export default function Transfer({
     const clean = account.replace(/\D/g, "");
     if (clean.length < 8) return false;
     if (isMyAccount(account)) return false;
-    return !KNOWN_RECIPIENTS.some((k) => clean.includes(k.account.slice(0, 8)));
+    return !KNOWN_RECIPIENTS.some((k) => clean === k.account);
   }, [account]);
 
   const accountReady = account.replace(/\D/g, "").length >= 8 && !!bank;
@@ -859,7 +863,9 @@ export default function Transfer({
   const hasDailyLimit = Number.isFinite(dailyLimit);
   const remainingDailyLimit = hasDailyLimit ? Math.max(dailyLimit - dailyTransferred, 0) : Number.POSITIVE_INFINITY;
   const exceedsDailyLimit = hasDailyLimit && amountValue > remainingDailyLimit;
-  const canSubmit = accountReady && amountValue > 0 && !exceedsDailyLimit;
+  const amountError = validateTransferAmount(amountValue, parseAmt(accounts[fromIdx].balance), remainingDailyLimit);
+  const isSameAccount = account.replace(/\D/g, "") === accounts[fromIdx].account.replace(/\D/g, "");
+  const canSubmit = accountReady && amountError === null && !isSameAccount;
   const completedEmergencyFollowups = [reliefSigned, policeReportDone, evidenceSaved, safetyConfirmed, bankFollowupConfirmed].filter(Boolean).length;
   const reliefPdfScale = typeof window === "undefined" ? 0.57 : Math.min(0.57, Math.max(0.42, (window.innerWidth - 24) / 680));
 
@@ -1252,6 +1258,12 @@ export default function Transfer({
             </button>
           </div>
 
+          {(amountError === "insufficient_funds" || isSameAccount) && (
+            <p role="alert" className="mt-2 text-[13px] font-semibold text-red-600">
+              {isSameAccount ? "출금 계좌와 받는 계좌가 같아요. 다른 계좌를 선택해 주세요." : "출금 계좌의 잔액이 부족해요."}
+            </p>
+          )}
+
           {/* 실시간 위험 미리보기도 안심동행 기능 — 연결 전에는 띄우지 않는다 */}
           {exceedsDailyLimit && (
             <div className="mt-2 flex shrink-0 items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3">
@@ -1296,7 +1308,7 @@ export default function Transfer({
             disabled={!canSubmit}
             className="w-full py-3.5 mt-2 shrink-0 rounded-xl text-[16px] font-bold text-white bg-[var(--ac-500)] hover:bg-[var(--ac-600)] active:scale-[0.98] transition-all disabled:bg-gray-200 disabled:text-gray-400"
           >
-            {exceedsDailyLimit ? "이체한도 초과" : canSubmit ? `${amt}원 보내기` : "다음"}
+            {isSameAccount ? "동일 계좌 이체 불가" : amountError === "insufficient_funds" ? "잔액 부족" : exceedsDailyLimit ? "이체한도 초과" : canSubmit ? `${amt}원 보내기` : "다음"}
           </button>
         </div>
       )}
@@ -1339,7 +1351,7 @@ export default function Transfer({
 
           <button
             onClick={() => {
-              if (parseAmt(amt) > remainingDailyLimit) {
+              if (!canSubmit) {
                 setStep("amount");
                 return;
               }
