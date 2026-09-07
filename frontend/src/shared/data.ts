@@ -182,7 +182,7 @@ export const runIntentPrefilter = (account: string, amt: number, _name: string):
   // 내 계좌 간 이체는 사기가 성립하지 않는다 — 항상 통과
   if (isMyAccount(account)) return "success";
 
-  if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.startsWith(b.slice(0, 7))))
+  if (BLACKLISTED_ACCOUNTS.some((b) => clean === b))
     return "db-warning";
 
   const known = KNOWN_RECIPIENTS.find(
