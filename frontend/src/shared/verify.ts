@@ -1,6 +1,6 @@
 // 상대방 검증 — 전화번호 / URL / 기관명 검증 로직
 
-import officialContacts from "../../../shared/official-contacts.json";
+import officialContacts from "../../../shared/official-contacts.json" with { type: "json" };
 
 export interface VerifyResult {
   status: "safe" | "caution" | "danger" | "unknown";
@@ -254,14 +254,23 @@ async function fetchSafeBrowsing(url: string): Promise<{
 // ─── URL 검증 ───────────────────────────────────────────────────────────────
 export async function verifyUrl(raw: string): Promise<VerifyResult> {
   const lower = raw.toLowerCase().trim();
+  let parsedUrl: URL | null = null;
+  try {
+    const hasScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(lower);
+    parsedUrl = new URL(hasScheme ? lower : `https://${lower}`);
+  } catch {
+    parsedUrl = null;
+  }
+  const hostname = parsedUrl?.hostname.toLowerCase() ?? "";
 
   // IP 주소 직접 접속 패턴
-  if (/https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(lower)) {
+  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
     return { status: "danger", label: "IP 직접 접속", detail: "IP 주소로 직접 접속하는 URL은 피싱 사이트일 가능성이 높습니다." };
   }
 
-  // 블랙리스트 키워드
-  const blackHit = BLACKLISTED_DOMAINS.find((b) => lower.includes(b.toLowerCase()));
+  // 블랙리스트는 주소 전체가 아니라 호스트명에서만 찾는다. 정상 사이트의 경로나
+  // 쿼리스트링에 "secure-login" 같은 문구가 있다는 이유로 피싱으로 오인하면 안 된다.
+  const blackHit = BLACKLISTED_DOMAINS.find((b) => hostname.includes(b.toLowerCase()));
   if (blackHit) {
     const tc = await callTheCheAt(raw).catch(() => null);
     return {
@@ -275,18 +284,12 @@ export async function verifyUrl(raw: string): Promise<VerifyResult> {
   // 화이트리스트 도메인 — 반드시 호스트명 기준으로 비교한다. URL 전체 문자열에 대한
   // includes()는 "gov.kr.evil-phish.tk" 같은 사칭 도메인도 "gov.kr"을 포함한다는 이유로
   // 안전 판정을 내리는 구멍이 된다.
-  let hostname = "";
-  try {
-    hostname = new URL(lower.startsWith("http") ? lower : `https://${lower}`).hostname;
-  } catch {
-    hostname = "";
-  }
   const whiteHit = officialContacts.domains.find(
     ({ value }) => hostname === value || hostname.endsWith(`.${value}`),
   );
   if (whiteHit) {
     // HTTPS 여부도 확인
-    if (!lower.startsWith("https")) {
+    if (parsedUrl?.protocol !== "https:") {
       return {
         status: "caution",
         label: `${whiteHit.name} 공식 도메인 · HTTP`,
