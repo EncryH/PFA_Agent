@@ -58,34 +58,12 @@ const GRADES = Object.freeze([
 const LIMIT_BUMP_ESCALATION_AMOUNT = 10_000_000;
 const LIMIT_BUMP_ESCALATION_REASON = "이체한도 상향 직후 고액 송금 — 최고 위험으로 강제 상향";
 
-export function scoreTransferRisk({ counterparty = {}, behavior = {}, transaction = {} } = {}) {
-  const counterpartyResult = runCounterpartyVerificationAgent({
-    ...counterparty,
-    isKnownRecipient: transaction.isKnownRecipient === true,
-  });
-
-  if (counterpartyResult.decision === "PASS" || counterpartyResult.decision === "BLOCK") {
-    const score = counterpartyResult.decision === "BLOCK" ? 100 : 0;
-    const { grade, gradeLabel, gradeColor } = GRADES.find(({ min }) => score >= min);
-    return {
-      score,
-      grade,
-      gradeLabel,
-      gradeColor,
-      counterpartyScore: counterpartyResult.score,
-      behaviorScore: 0,
-      transferSignalScore: 0,
-      reasons: counterpartyResult.reasons,
-      stoppedAt: counterpartyResult.agent,
-      ...(counterpartyResult.thecheat ? { thecheat: counterpartyResult.thecheat } : {}),
-    };
-  }
-
+export function scoreTransferRisk({ behavior = {}, transaction = {} } = {}) {
   const behaviorResult = runBehaviorDetectionAgent(behavior);
   const transferSignalResult = evaluateTransferPrefilter(transaction);
 
-  let score = Math.min(100, counterpartyResult.score + behaviorResult.score + transferSignalResult.score);
-  const reasons = [...counterpartyResult.reasons, ...behaviorResult.reasons, ...transferSignalResult.reasons];
+  let score = Math.min(100, behaviorResult.score + transferSignalResult.score);
+  const reasons = [...behaviorResult.reasons, ...transferSignalResult.reasons];
 
   const limitBumps = Number(behavior.limitIncreased ?? 0);
   const amount = Number(transaction.amount ?? 0);
@@ -101,7 +79,6 @@ export function scoreTransferRisk({ counterparty = {}, behavior = {}, transactio
     grade,
     gradeLabel,
     gradeColor,
-    counterpartyScore: counterpartyResult.score,
     behaviorScore: behaviorResult.score,
     transferSignalScore: transferSignalResult.score,
     reasons,

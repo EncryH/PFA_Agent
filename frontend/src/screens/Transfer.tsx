@@ -382,7 +382,7 @@ export default function Transfer({
     if (isMyAccount(account))
       return { score: 0, label: "내 계좌", msg: "본인 명의 계좌 — 확인 없이 바로 보내드려요" };
 
-    if (BLACKLISTED_ACCOUNTS.some((b) => clean === b))
+    if (BLACKLISTED_ACCOUNTS.some((b) => clean.length >= 7 && clean.startsWith(b.slice(0, 7))))
       return { score: 100, label: "DB 경고", msg: "신고된 계좌예요 — 즉시 차단됩니다" };
 
     const known = KNOWN_RECIPIENTS.find(

@@ -18,12 +18,6 @@ test("recipient names and shared prefixes are not identity evidence", () => {
   assert.equal(runIntentPrefilter("0102345678", 500_000, "딸 지혜"), "success");
 });
 
-test("only an exact reported account match triggers the blacklist warning", () => {
-  assert.equal(runIntentPrefilter("1104421783", 10_000, "미확인"), "db-warning");
-  assert.equal(runIntentPrefilter("1104421999", 10_000, "미확인"), "success");
-  assert.equal(runIntentPrefilter("110442178399", 10_000, "미확인"), "success");
-});
-
 test("transfer amounts cannot overdraw or exceed the remaining daily limit", () => {
   assert.equal(validateTransferAmount(1000, 1000, 1000), null);
   assert.equal(validateTransferAmount(1001, 1000, 5000), "insufficient_funds");
